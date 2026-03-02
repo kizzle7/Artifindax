@@ -1,4 +1,4 @@
-const BASE_URL = 'https://artifinda-test-aaf09bed12f5.herokuapp.com';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artifinda-test-aaf09bed12f5.herokuapp.com';
 
 export const API_CONFIG = {
     BASE_URL,
