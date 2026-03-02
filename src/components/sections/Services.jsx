@@ -1,19 +1,17 @@
-import React from 'react';
-import imgChair from '../../assets/material-symbols-light--chair-outline 1 (1).png';
-import imgCleaning from '../../assets/material-symbols-light--cleaning-bucket-outline 1 (1).png';
-import imgComputer from '../../assets/material-symbols-light--computer-outline-rounded 1 (1).png';
-import imgTruck from '../../assets/material-symbols-light--delivery-truck-bolt-outline-rounded 1 (1).png';
-import imgPlant from '../../assets/material-symbols-light--potted-plant-outline-rounded 1 (1).png';
-import imgDrill from '../../assets/material-symbols-light--tools-power-drill-outline 1 (1).png';
+import React, { useState, useEffect } from 'react';
 import arrowRight from '../../assets/arrow-rights.png';
+import serviceService from '../../services/serviceService';
 
-const ServiceCard = ({ image, title, textColor }) => {
+const ServiceCard = ({ image, title, color }) => {
+    // Ensure color is visible on white background
+    const textColor = color && color.toLowerCase() !== '#ffffff' ? color : '#1e4e82';
+
     return (
-        <div className="group cursor-pointer bg-white rounded-2xl p-6 flex flex-col items-center justify-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-100 shadow-sm">
-            <div className="mb-4 flex items-center justify-center">
-                <img src={image} alt={title} className="w-12 h-12 object-contain transition-all scale-90 group-hover:scale-100" />
+        <div className="group cursor-pointer bg-white rounded-2xl p-6 flex flex-col items-center justify-center transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border border-gray-100 shadow-sm h-full">
+            <div className="mb-4 flex items-center justify-center h-16 w-16">
+                <img src={image} alt={title} className="max-w-full max-h-full object-contain transition-all scale-90 group-hover:scale-100 rounded-lg" />
             </div>
-            <h3 className={`text-center font-bold text-xs md:text-sm transition-colors ${textColor}`}>
+            <h3 className="text-center font-bold text-xs md:text-sm transition-colors mt-auto" style={{ color: textColor }}>
                 {title}
             </h3>
         </div>
@@ -21,20 +19,51 @@ const ServiceCard = ({ image, title, textColor }) => {
 };
 
 const ServicesGrid = () => {
-    const baseServices = [
-        { image: imgComputer, title: 'Plumbing', textColor: 'text-[#1E40AF]' },
-        { image: imgDrill, title: 'Repairs', textColor: 'text-[#059668]' },
-        { image: imgPlant, title: 'Gardening', textColor: 'text-[#DA5D5D]' },
-        { image: imgChair, title: 'Woodwork', textColor: 'text-[#D09617]' },
-        { image: imgCleaning, title: 'Cleaning', textColor: 'text-[#7D28AE]' },
-        { image: imgTruck, title: 'Deliveries', textColor: 'text-[#E65C83]' },
-    ];
+    const [services, setServices] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    // Create the reversed version for the second row
-    const reversedServices = [...baseServices].reverse();
+    useEffect(() => {
+        const fetchServices = async () => {
+            try {
+                const data = await serviceService.getPopularServices();
+                // Map the API data: name and category.image
+                const mappedServices = data.slice(0, 12).map(item => ({
+                    image: item.category?.image || item.category?.icon || '',
+                    title: item.name || item.category?.name || 'Service',
+                    color: item.category?.color || '#1e4e82'
+                }));
+                setServices(mappedServices);
+                setLoading(false);
+            } catch (err) {
+                console.error('Failed to fetch services:', err);
+                setError('Failed to load services');
+                setLoading(false);
+            }
+        };
 
-    // Combine for a total of 12 services (6 up, 6 down)
-    const services = [...baseServices, ...reversedServices];
+        fetchServices();
+    }, []);
+
+    if (loading) {
+        return (
+            <section id="services" className="bg-white -mt-16 lg:-mt-14 relative z-20">
+                <div className="max-w-6xl mx-auto px-6 py-20 text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E4E82]"></div>
+                </div>
+            </section>
+        );
+    }
+
+    if (error) {
+        return (
+            <section id="services" className="bg-white -mt-16 lg:-mt-14 relative z-20">
+                <div className="max-w-6xl mx-auto px-6 py-20 text-center text-red-500 font-medium">
+                    {error}
+                </div>
+            </section>
+        );
+    }
 
     return (
         <section id="services" className="bg-white -mt-16 lg:-mt-14 relative z-20">

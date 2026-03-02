@@ -50,7 +50,7 @@ const Steps = () => {
                 </div>
 
                 <div className="flex flex-col items-center mt-20">
-                    <Link to="/signup?role=user">
+                    <Link to="/signup/user">
                         <Button
                             variant="plain"
                             className="px-20 py-3 text-md font-bold bg-[#ACCBEC] text-[#133253] rounded-xl hover:bg-[#99bbdd] transition-all shadow-md"
@@ -186,7 +186,7 @@ const ArtisanPartner = () => (
                             />
                         </div>
 
-                        <Link to="/signup?role=artisan">
+                        <Link to="/signup/artisan">
                             <Button
                                 variant="plain"
                                 type="button"

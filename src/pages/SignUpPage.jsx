@@ -5,40 +5,23 @@ import {
     SprayCan, Droplets, PlugZap, PaintRoller, Armchair, Trees, Zap, Smartphone, HardHat,
     Car, WashingMachine, PartyPopper, Utensils, Scissors, GraduationCap, Pill, Truck, Sparkles, X, Check
 } from 'lucide-react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import signupBg from '../assets/SIGNUP.png';
 import successIllustration from '../assets/Frame 1000004078.png';
+import authService from '../services/authService';
+import categoryService from '../services/categoryService';
 
-const CATEGORIES = [
-    { id: 'cleaning', label: 'Cleaning', icon: SprayCan, color: '#9333ea' },
-    { id: 'plumbing', label: 'Plumbing', icon: Droplets, color: '#1e4e82' },
-    { id: 'electronics', label: 'Electronics', icon: PlugZap, color: '#991b1b' },
-    { id: 'painting', label: 'Painting', icon: PaintRoller, color: '#eab308' },
-    { id: 'carpentry', label: 'Carpentry', icon: Armchair, color: '#713f12' },
-    { id: 'gardening', label: 'Gardening', icon: Trees, color: '#22c55e' },
-    { id: 'welding', label: 'Welding & metal work', icon: Zap, color: '#1e293b' },
-    { id: 'gadget', label: 'Gadget Repairs', icon: Smartphone, color: '#059669' },
-    { id: 'masonry', label: 'Masonry', icon: HardHat, color: '#475569' },
-    { id: 'automobile', label: 'Automobile', icon: Car, color: '#0ea5e9' },
-    { id: 'laundry', label: 'Laundry', icon: WashingMachine, color: '#1e3a8a' },
-    { id: 'events', label: 'Events & Planning', icon: PartyPopper, color: '#7c3aed' },
-    { id: 'catering', label: 'Catering', icon: Utensils, color: '#ea580c' },
-    { id: 'fashion', label: 'Fashion', icon: Scissors, color: '#eab308' },
-    { id: 'tutoring', label: 'Tutoring', icon: GraduationCap, color: '#2563eb' },
-    { id: 'health', label: 'Health & wellness', icon: Pill, color: '#dc2626' },
-    { id: 'delivery', label: 'Delivery', icon: Truck, color: '#f97316' },
-    { id: 'beauty', label: 'Beauty & Wellness', icon: Sparkles, color: '#db2777' },
-];
-
-const SKILLS_BY_CATEGORY = {
-    plumbing: ['Bathroom Installation', 'Leak Repairs', 'Plumbing Design', 'Drainage Systems', 'Water Tank Installation & Cleaning', 'Water Pressure Issues', 'Burst Pipe Repairs', 'Borehole Drilling & Maintenance', 'Pump Installation & Repairs', 'Full Bathroom Plumbing', 'Filtration & Treatment', 'Blocked Drain Clearing', 'Water Heater Installation', 'Copper & PVC Piping', 'Soakaway Construction & Maintenance', 'Septic Tank Installation'],
-    // Mocking others for now...
-    cleaning: ['Deep Cleaning', 'Office Cleaning', 'Home Cleaning', 'Window Cleaning', 'Post-Construction'],
-    electronics: ['TV Repair', 'Laptop Repair', 'AC Repair', 'Fridge Repair', 'Washing Machine Repair'],
+// Fallback icons if API returns names we don't have
+const ICON_MAP = {
+    SprayCan, Droplets, PlugZap, PaintRoller, Armchair, Trees, Zap, Smartphone, HardHat,
+    Car, WashingMachine, PartyPopper, Utensils, Scissors, GraduationCap, Pill, Truck, Sparkles
 };
 
-const CategorySelection = ({ selectedCategory, onSelect, onNext, onPrev }) => (
+const getIcon = (iconName) => ICON_MAP[iconName] || Smartphone;
+
+
+const CategorySelection = ({ categories, selectedCategory, onSelect, onNext, onPrev, loading }) => (
     <div className="min-h-screen bg-white p-6 max-w-lg mx-auto flex flex-col pt-12 items-center text-center">
         <div className="w-full mb-8">
             <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
@@ -48,22 +31,31 @@ const CategorySelection = ({ selectedCategory, onSelect, onNext, onPrev }) => (
         <h1 className="text-xl font-bold text-[#0f172a] mb-2 px-4">Set up your account</h1>
         <p className="text-sm text-gray-500 mb-8 px-4 leading-snug">Please select category your occupation is classified under</p>
 
-        <div className="grid grid-cols-3 gap-3 mb-10 w-full max-w-md">
-            {CATEGORIES.map((cat) => (
-                <button
-                    key={cat.id}
-                    onClick={() => onSelect(cat.id)}
-                    className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all border-2 h-24 ${selectedCategory === cat.id ? 'border-[#1e4e82] bg-[#f0f9ff] shadow-inner' : 'border-gray-100 bg-white hover:border-gray-200 shadow-sm'}`}
-                >
-                    <cat.icon size={26} style={{ color: cat.color }} className="mb-2" />
-                    <span className="text-[9px] font-bold text-center leading-tight">{cat.label}</span>
-                </button>
-            ))}
-        </div>
+        {loading ? (
+            <div className="flex-1 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E4E82]"></div>
+            </div>
+        ) : (
+            <div className="grid grid-cols-3 gap-3 mb-10 w-full max-w-md">
+                {categories.map((cat) => {
+                    const Icon = getIcon(cat.icon);
+                    return (
+                        <button
+                            key={cat.id}
+                            onClick={() => onSelect(cat.id)}
+                            className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all border-2 h-24 ${selectedCategory === cat.id ? 'border-[#1e4e82] bg-[#f0f9ff] shadow-inner' : 'border-gray-100 bg-white hover:border-gray-200 shadow-sm'}`}
+                        >
+                            <Icon size={26} style={{ color: cat.color || '#1E4E82' }} className="mb-2" />
+                            <span className="text-[9px] font-bold text-center leading-tight">{cat.name}</span>
+                        </button>
+                    )
+                })}
+            </div>
+        )}
 
         <Button
             onClick={selectedCategory ? onNext : null}
-            disabled={!selectedCategory}
+            disabled={!selectedCategory || loading}
             style={{ backgroundColor: !selectedCategory ? '#D6E5F5' : '#1E4E82' }}
             className={`w-full max-w-sm py-3.5 rounded-2xl text-lg text-white font-bold mb-6 transition-all relative group shadow-lg ${!selectedCategory ? 'cursor-not-allowed' : 'hover:bg-[#163a61] active:scale-95'}`}
         >
@@ -73,9 +65,8 @@ const CategorySelection = ({ selectedCategory, onSelect, onNext, onPrev }) => (
     </div>
 );
 
-const SkillMapping = ({ category, selectedSkills, onToggle, onNext, onPrev }) => {
-    const skills = SKILLS_BY_CATEGORY[category] || [];
-    const categoryInfo = CATEGORIES.find(c => c.id === category);
+const SkillMapping = ({ category, skills, selectedSkills, onToggle, onNext, onPrev, categories, loading }) => {
+    const categoryInfo = categories.find(c => c.id === category);
 
     return (
         <div className="min-h-screen bg-white p-6 max-w-md mx-auto flex flex-col pt-12">
@@ -87,37 +78,51 @@ const SkillMapping = ({ category, selectedSkills, onToggle, onNext, onPrev }) =>
             <h1 className="text-xl font-bold text-[#0f172a] mb-2">Set up your account</h1>
             <p className="text-xs text-gray-500 mb-8">Select the skills that apply to you in this category</p>
 
-            <div className="flex items-center gap-2 mb-4 bg-[#f0f9ff] py-1.5 px-3 rounded-full self-start">
-                {categoryInfo && <categoryInfo.icon size={14} style={{ color: categoryInfo.color }} />}
-                <span className="text-[#1E4E82] text-xs font-bold">{categoryInfo?.label}</span>
-            </div>
-
-            <div className="min-h-[120px] p-4 border-2 border-gray-300 rounded-2xl mb-8 flex flex-wrap gap-2 items-start content-start shadow-sm bg-gray-50/30">
-                {selectedSkills.map(skill => (
-                    <div key={skill} className="bg-[#1E4E82] text-white px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-2 shadow-sm animate-in fade-in zoom-in duration-200">
-                        {skill}
-                        <button onClick={() => onToggle(skill)}><X size={14} /></button>
+            {loading ? (
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E4E82]"></div>
+                </div>
+            ) : (
+                <>
+                    <div className="flex items-center gap-2 mb-4 bg-[#f0f9ff] py-1.5 px-3 rounded-full self-start">
+                        {categoryInfo && (() => {
+                            const Icon = getIcon(categoryInfo.icon);
+                            return <Icon size={14} style={{ color: categoryInfo.color }} />
+                        })()}
+                        <span className="text-[#1E4E82] text-xs font-bold">{categoryInfo?.name}</span>
                     </div>
-                ))}
-            </div>
 
-            <div className="flex flex-wrap gap-2 mb-10 pb-4 overflow-y-auto max-h-[300px]">
-                {skills.filter(s => !selectedSkills.includes(s)).map(skill => (
-                    <button
-                        key={skill}
-                        onClick={() => onToggle(skill)}
-                        className="bg-[#D6E5F5] text-[#1E4E82] px-4 py-1.5 rounded-full text-[11px] font-bold hover:bg-[#c8def5] transition-colors border border-transparent active:scale-95"
-                    >
-                        + {skill}
-                    </button>
-                ))}
-            </div>
+                    <div className="min-h-[120px] p-4 border-2 border-gray-300 rounded-2xl mb-8 flex flex-wrap gap-2 items-start content-start shadow-sm bg-gray-50/30">
+                        {selectedSkills.map(skillId => {
+                            const skill = skills.find(s => s.id === skillId);
+                            if (!skill) return null;
+                            return (
+                                <div key={skillId} className="bg-[#1E4E82] text-white px-3 py-1.5 rounded-full text-[11px] font-bold flex items-center gap-2 shadow-sm animate-in fade-in zoom-in duration-200">
+                                    {skill.name}
+                                    <button onClick={() => onToggle(skillId)}><X size={14} /></button>
+                                </div>
+                            )
+                        })}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-10 pb-4 overflow-y-auto max-h-[300px]">
+                        {skills.filter(s => !selectedSkills.includes(s.id)).map(skill => (
+                            <button
+                                key={skill.id}
+                                onClick={() => onToggle(skill.id)}
+                                className="bg-[#D6E5F5] text-[#1E4E82] px-4 py-1.5 rounded-full text-[11px] font-bold hover:bg-[#c8def5] transition-colors border border-transparent active:scale-95"
+                            >
+                                {skill.name}
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
 
             <Button
                 onClick={selectedSkills.length > 0 ? onNext : null}
-                disabled={selectedSkills.length === 0}
-                style={{ backgroundColor: selectedSkills.length === 0 ? '#D6E5F5' : '#1E4E82' }}
-                className={`w-full py-3.5 rounded-2xl text-lg text-white font-bold mb-6 transition-all relative group shadow-lg ${selectedSkills.length === 0 ? 'cursor-not-allowed' : 'hover:bg-[#163a61] active:scale-95'}`}
+                disabled={selectedSkills.length === 0 || loading}
+                className="w-full mt-auto py-3.5 rounded-2xl text-white font-bold bg-[#1E4E82] relative group"
             >
                 <span>Next</span>
                 <ArrowRight size={20} className="absolute right-8 transition-transform group-hover:translate-x-1" />
@@ -341,7 +346,7 @@ const BioSet = ({ value, onChange, onNext, onPrev }) => (
     </div>
 );
 
-const NextOfKin = ({ data, onChange, onNext, onPrev }) => {
+const NextOfKin = ({ data, onChange, onNext, onPrev, loading, error }) => {
     const isValid = data.name && data.relationship && data.phone && data.email && data.email.includes('@');
 
     return (
@@ -395,15 +400,21 @@ const NextOfKin = ({ data, onChange, onNext, onPrev }) => {
                     </div>
                 </div>
 
+                {error && <p className="text-red-500 text-xs mt-4 text-center">{error}</p>}
+
                 <Button
                     variant="primary"
                     type="submit"
-                    disabled={!isValid}
-                    style={{ backgroundColor: !isValid ? '#D6E5F5' : '#1E4E82' }}
-                    className={`w-full py-4 rounded-2xl text-lg text-white font-bold mt-4 transition-all relative group shadow-lg ${!isValid ? 'cursor-not-allowed' : 'hover:bg-[#163a61] active:scale-95'}`}
+                    disabled={!isValid || loading}
+                    style={{ backgroundColor: (!isValid || loading) ? '#D6E5F5' : '#1E4E82' }}
+                    className={`w-full py-4 rounded-2xl text-lg text-white font-bold mt-4 transition-all relative group shadow-lg ${(!isValid || loading) ? 'cursor-not-allowed' : 'hover:bg-[#163a61] active:scale-95'}`}
                 >
-                    <span>Next</span>
-                    <ArrowRight size={22} className="absolute right-8 transition-transform group-hover:translate-x-1" />
+                    {loading ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div> : (
+                        <>
+                            <span>Complete</span>
+                            <ArrowRight size={22} className="absolute right-8 transition-transform group-hover:translate-x-1" />
+                        </>
+                    )}
                 </Button>
             </form>
         </div>
@@ -434,6 +445,58 @@ const ArtisanSuccess = ({ successIllustration, navigate }) => (
     </div>
 );
 
+const SetPinStep = ({ pin, setPin, onNext, onPrev, loading, error }) => {
+    const handlePinChange = (index, value) => {
+        if (value.length > 1) return;
+        const newPin = [...pin];
+        newPin[index] = value;
+        setPin(newPin);
+        if (value && index < 5) document.getElementById(`pin-${index + 1}`)?.focus();
+    };
+
+    const isPinComplete = pin.every(digit => digit !== '');
+
+    return (
+        <div className="min-h-screen bg-white p-6 max-w-md mx-auto flex flex-col pt-12 items-center text-center">
+            <div className="w-full mb-8 flex items-center">
+                <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
+                    <ChevronLeft size={18} />
+                </button>
+            </div>
+            <h1 className="text-xl font-bold text-[#0f172a] mb-2 px-4">Set a 6-Digit PIN</h1>
+            <p className="text-sm text-gray-500 mb-8 px-4 leading-snug">
+                For quick and secure access to your account, please create a 6-digit login PIN. You’ll use this every time you open the app.
+            </p>
+
+            <div className="flex gap-2 mb-4 justify-center w-full">
+                {pin.map((digit, idx) => (
+                    <input
+                        key={idx}
+                        id={`pin-${idx}`}
+                        type="text"
+                        inputMode="numeric"
+                        maxLength={1}
+                        value={digit}
+                        onChange={(e) => handlePinChange(idx, e.target.value.replace(/[^0-9]/g, ''))}
+                        className="w-[45px] h-[55px] text-center text-xl font-bold border border-gray-300 rounded-xl focus:outline-none focus:border-[#1E4E82] transition-all"
+                    />
+                ))}
+            </div>
+
+            {error && <p className="text-red-500 text-xs mb-6 px-4">{error}</p>}
+
+            <Button
+                onClick={isPinComplete ? onNext : null}
+                disabled={!isPinComplete || loading}
+                style={{ backgroundColor: (!isPinComplete || loading) ? '#D6E5F5' : '#1E4E82' }}
+                className={`w-full py-3.5 rounded-2xl text-lg text-white font-bold mb-6 transition-all relative shadow-lg ${(!isPinComplete || loading) ? 'cursor-not-allowed' : 'hover:bg-[#163a61] active:scale-95'}`}
+            >
+                {loading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mx-auto"></div> : <span>Set</span>}
+            </Button>
+        </div>
+    );
+};
+
 // --- Step Components (Defined outside to prevent focus loss) ---
 
 const RegistrationForm = ({ navigate, nextStep, showPassword, setShowPassword, showConfirmPassword, setShowConfirmPassword, regData, setRegData }) => {
@@ -456,7 +519,9 @@ const RegistrationForm = ({ navigate, nextStep, showPassword, setShowPassword, s
     const handleBlur = (field) => setTouched({ ...touched, [field]: true });
 
     const handlePhoneChange = (val) => {
-        const numbersOnly = val.replace(/[^0-9]/g, '');
+        let numbersOnly = val.replace(/[^0-9]/g, '');
+        if (numbersOnly.startsWith('234')) numbersOnly = numbersOnly.slice(3);
+        if (numbersOnly.startsWith('0')) numbersOnly = numbersOnly.slice(1);
         setRegData({ ...regData, phone: numbersOnly });
     };
 
@@ -572,7 +637,7 @@ const RegistrationForm = ({ navigate, nextStep, showPassword, setShowPassword, s
     );
 };
 
-const OtpVerification = ({ otp, handleOtpChange, formatTime, timer, nextStep, prevStep }) => {
+const OtpVerification = ({ otp, handleOtpChange, formatTime, timer, onVerify, onResend, prevStep, loading, error }) => {
     const isValid = otp.every(digit => digit !== '');
 
     return (
@@ -585,10 +650,7 @@ const OtpVerification = ({ otp, handleOtpChange, formatTime, timer, nextStep, pr
             </div>
 
             <div className="relative z-10 w-full max-w-sm p-6 lg:bg-white/70 lg:backdrop-blur-md lg:rounded-[40px] lg:shadow-2xl mx-4 text-center flex flex-col items-center">
-                <form
-                    onSubmit={(e) => { e.preventDefault(); if (isValid) nextStep(); }}
-                    className="w-full flex flex-col items-center"
-                >
+                <div className="w-full flex flex-col items-center">
                     <h1 className="text-[22px] font-bold text-[#0f172a] mb-2">Verify your phone number</h1>
                     <p className="text-gray-600 text-[14px] mb-8 leading-snug max-w-[300px]">
                         We've sent a 4-digit verification code to your phone number. Please enter it below to continue.
@@ -610,24 +672,31 @@ const OtpVerification = ({ otp, handleOtpChange, formatTime, timer, nextStep, pr
                     <div className="text-[14px] text-gray-600 mb-10 self-start lg:self-center">
                         Didn't get code? <button
                             type="button"
-                            disabled={timer > 0}
+                            onClick={onResend}
+                            disabled={timer > 0 || loading}
                             className={`text-[#1E4E82] font-semibold ml-1 ${timer > 0 ? 'opacity-50 cursor-not-allowed' : 'hover:underline'}`}
                         >
                             Resend {timer > 0 && formatTime(timer)}
                         </button>
                     </div>
 
+                    {error && <p className="text-red-500 text-xs mb-4">{error}</p>}
+
                     <Button
                         variant="primary"
-                        type="submit"
-                        disabled={!isValid}
-                        style={{ backgroundColor: !isValid ? '#D6E5F5' : '#1E4E82' }}
-                        className={`w-full py-3 rounded-[15px] text-lg font-bold transition-all relative group ${!isValid ? 'cursor-not-allowed' : 'hover:bg-[#163a61]'}`}
+                        onClick={onVerify}
+                        disabled={!isValid || loading}
+                        style={{ backgroundColor: (!isValid || loading) ? '#D6E5F5' : '#1E4E82' }}
+                        className={`w-full py-3 rounded-[15px] text-lg font-bold transition-all relative group ${(!isValid || loading) ? 'cursor-not-allowed' : 'hover:bg-[#163a61]'}`}
                     >
-                        <span>Verify</span>
-                        <ArrowRight size={18} className="absolute right-8 transition-transform group-hover:translate-x-1" />
+                        {loading ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div> : (
+                            <>
+                                <span>Verify</span>
+                                <ArrowRight size={18} className="absolute right-8 transition-transform group-hover:translate-x-1" />
+                            </>
+                        )}
                     </Button>
-                </form>
+                </div>
             </div>
         </div>
     );
@@ -667,7 +736,7 @@ const FinalSuccess = ({ successIllustration, prevStep, navigate }) => (
         <div className="w-full mb-8"><img src={successIllustration} alt="All Set" className="w-[80%] mx-auto" /></div>
         <h1 className="text-2xl font-extrabold text-[#0f172a] mb-4 text-center">You're all Set!</h1>
         <p className="text-gray-600 text-center text-sm mb-10">Start browsing trusted artisans near you and request help anytime.</p>
-        <Button variant="primary" onClick={() => navigate('/')} className="w-full py-3 rounded-xl text-lg font-bold transition-all relative group bg-[#1E4E82]">
+        <Button variant="primary" onClick={() => navigate('/dashboard')} className="w-full py-3 rounded-xl text-lg font-bold transition-all relative group bg-[#1E4E82]">
             <span>Go to Home page</span>
             <ArrowRight size={20} className="absolute right-8 transition-transform group-hover:translate-x-1" />
         </Button>
@@ -675,7 +744,7 @@ const FinalSuccess = ({ successIllustration, prevStep, navigate }) => (
 );
 
 // --- Onboarding Step Helper ---
-const OnboardingStep = ({ title, subtitle, children, onNext, onPrev, disabled }) => (
+const OnboardingStep = ({ title, subtitle, children, onNext, onPrev, disabled, nextLabel = "Next", loading = false }) => (
     <div className="min-h-screen bg-white p-6 max-w-md mx-auto flex flex-col pt-12">
         <div className="mb-8">
             <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
@@ -689,12 +758,18 @@ const OnboardingStep = ({ title, subtitle, children, onNext, onPrev, disabled })
 
         <Button
             onClick={onNext}
-            disabled={disabled}
-            style={{ backgroundColor: disabled ? '#D6E5F5' : '#1E4E82' }}
-            className={`w-full py-3.5 rounded-2xl text-lg text-white font-bold mb-6 transition-all relative group shadow-lg ${disabled ? 'cursor-not-allowed' : 'hover:bg-[#163a61] active:scale-95'}`}
+            disabled={disabled || loading}
+            style={{ backgroundColor: (disabled || loading) ? '#D6E5F5' : '#1E4E82' }}
+            className={`w-full py-3.5 rounded-2xl text-lg text-white font-bold mb-6 transition-all relative group shadow-lg ${(disabled || loading) ? 'cursor-not-allowed' : 'hover:bg-[#163a61] active:scale-95'}`}
         >
-            <span>Next</span>
-            <ArrowRight size={20} className="absolute right-8 transition-transform group-hover:translate-x-1" />
+            {loading ? (
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div>
+            ) : (
+                <>
+                    <span>{nextLabel}</span>
+                    <ArrowRight size={20} className="absolute right-8 transition-transform group-hover:translate-x-1" />
+                </>
+            )}
         </Button>
     </div>
 );
@@ -703,24 +778,55 @@ const OnboardingStep = ({ title, subtitle, children, onNext, onPrev, disabled })
 
 const SignUpPage = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const initialRole = searchParams.get('role') || 'user';
+    const { role: urlRole } = useParams();
+    const initialRole = urlRole || 'user';
     const [userType, setUserType] = useState(initialRole);
     const [step, setStep] = useState(1);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [otp, setOtp] = useState(['', '', '', '']);
+    const [pin, setPin] = useState(['', '', '', '', '', '']);
+    const [signupRef, setSignupRef] = useState('');
     const [timer, setTimer] = useState(179);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const [isGenderOpen, setIsGenderOpen] = useState(false);
     const [isExperienceOpen, setIsExperienceOpen] = useState(false);
     const dropdownRef = useRef(null);
     const expDropdownRef = useRef(null);
+    const addressInputRef = useRef(null);
+    const autocompleteRef = useRef(null);
+
+    const [apiCategories, setApiCategories] = useState([]);
+    const [apiSkills, setApiSkills] = useState([]);
+    const [fetchingCategories, setFetchingCategories] = useState(false);
+    const [fetchingSkills, setFetchingSkills] = useState(false);
+    const [isGoogleLoaded, setIsGoogleLoaded] = useState(!!window.google);
+
+    const validateEmail = (email) => {
+        return String(email)
+            .toLowerCase()
+            .match(
+                /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+            );
+    };
 
     const [regData, setRegData] = useState({ phone: '', firstName: '', lastName: '', password: '', confirmPassword: '' });
-    const [formData, setFormData] = useState({ email: '', gender: '', idType: '', address: '', dob: '', idFile: null, profilePic: null });
+    const [formData, setFormData] = useState({
+        email: '',
+        gender: '',
+        idType: '',
+        idNumber: '',
+        address: '',
+        dob: '',
+        idFile: null,
+        profilePic: null,
+        latitude: 0,
+        longitude: 0
+    });
     const [artisanData, setArtisanData] = useState({
-        category: '',
-        skills: [],
+        category: '', // This will hold the numeric ID from API
+        skills: [],    // This will hold numeric IDs from API
         experience: '',
         serviceMode: '',
         rate: '',
@@ -739,9 +845,113 @@ const SignUpPage = () => {
 
     useEffect(() => {
         let interval;
-        if (step === 2 && timer > 0) interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+        if (step === 3 && timer > 0) interval = setInterval(() => setTimer(prev => prev - 1), 1000);
         return () => clearInterval(interval);
     }, [step, timer]);
+
+    // Check for Google Maps availability periodically if not loaded
+    useEffect(() => {
+        if (!isGoogleLoaded) {
+            const checkGoogle = setInterval(() => {
+                if (window.google && window.google.maps && window.google.maps.places) {
+                    console.log("Google Maps Places library loaded successfully!");
+                    setIsGoogleLoaded(true);
+                    clearInterval(checkGoogle);
+                } else {
+                    console.log("Waiting for Google Maps Places library...");
+                }
+            }, 1000);
+            return () => clearInterval(checkGoogle);
+        }
+    }, [isGoogleLoaded]);
+
+    // Fetch categories when step becomes 14
+    useEffect(() => {
+        if (step === 14 && apiCategories.length === 0) {
+            const fetchCategories = async () => {
+                setFetchingCategories(true);
+                try {
+                    const data = await categoryService.getCategories();
+                    setApiCategories(data);
+                } catch (err) {
+                    setError('Failed to load categories. Please try again.');
+                } finally {
+                    setFetchingCategories(false);
+                }
+            };
+            fetchCategories();
+        }
+    }, [step, apiCategories.length]);
+
+    // Initialize Google Places Autocomplete when step is 9
+    useEffect(() => {
+        if (step === 9 && isGoogleLoaded) {
+            const initAutocomplete = () => {
+                if (!addressInputRef.current) {
+                    console.warn("Address input ref not ready yet");
+                    return;
+                }
+
+                try {
+                    console.log("Initializing Google Autocomplete on input...");
+                    autocompleteRef.current = new window.google.maps.places.Autocomplete(addressInputRef.current, {
+                        componentRestrictions: { country: "ng" },
+                        fields: ["formatted_address", "geometry", "name"]
+                    });
+
+                    autocompleteRef.current.addListener("place_changed", () => {
+                        const place = autocompleteRef.current.getPlace();
+                        console.log("Place selected:", place);
+                        if (place.geometry) {
+                            setFormData(prev => ({
+                                ...prev,
+                                address: place.formatted_address || place.name,
+                                latitude: place.geometry.location.lat(),
+                                longitude: place.geometry.location.lng()
+                            }));
+                        }
+                    });
+
+                    // Prevent form submission/next step when selecting from dropdown with Enter
+                    const inputElement = addressInputRef.current;
+                    const handleKeyDown = (e) => {
+                        if (e.key === 'Enter') {
+                            const pacContainer = document.querySelector('.pac-container');
+                            if (pacContainer && pacContainer.style.display !== 'none') {
+                                e.preventDefault();
+                                e.stopPropagation();
+                            }
+                        }
+                    };
+                    inputElement.addEventListener('keydown', handleKeyDown);
+                    return () => inputElement.removeEventListener('keydown', handleKeyDown);
+                } catch (err) {
+                    console.error("Autocomplete init error:", err);
+                }
+            };
+
+            const timer = setTimeout(initAutocomplete, 300);
+            return () => clearTimeout(timer);
+        }
+    }, [step, isGoogleLoaded]);
+
+    // Fetch skills when a category is selected and we move to step 15
+    useEffect(() => {
+        if (step === 15 && artisanData.category) {
+            const fetchSkills = async () => {
+                setFetchingSkills(true);
+                try {
+                    const data = await categoryService.getSkills(artisanData.category);
+                    setApiSkills(data);
+                } catch (err) {
+                    setError('Failed to load skills for this category.');
+                } finally {
+                    setFetchingSkills(false);
+                }
+            };
+            fetchSkills();
+        }
+    }, [step, artisanData.category]);
 
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
@@ -757,39 +967,203 @@ const SignUpPage = () => {
         if (value && index < 3) document.getElementById(`otp-${index + 1}`)?.focus();
     };
 
+
     const nextStep = () => {
-        if (step === 10) {
-            if (userType === 'artisan') {
-                setStep(12); // Go to Categories
-            } else {
-                setStep(11); // Success
-            }
+        if (step === 12 && (userType === 'customer' || userType === 'user')) {
+            handleSubmitOnboarding();
+        } else if (step === 20 && userType === 'artisan') {
+            handleSubmitOnboarding();
+        } else if (step === 12 && userType === 'artisan') {
+            setStep(14); // Go to Categories
         } else {
             setStep(step + 1);
         }
     };
     const prevStep = () => {
-        if (step === 12) {
-            setStep(10);
+        if (step === 13) {
+            setStep(11);
+        } else if (step === 1) {
+            navigate(-1);
         } else {
             setStep(step - 1);
         }
     };
 
+    const handleSignUp = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const payload = {
+                firstName: regData.firstName,
+                lastName: regData.lastName,
+                countryCode: "234",
+                phoneNumber: regData.phone,
+                password: regData.password,
+                deviceType: "MOBILE",
+                deviceIdentifier: authService.getDeviceIdentifier(),
+                accountType: userType === 'artisan' ? 'ARTISAN' : 'CUSTOMER',
+                loginPin: pin.join('')
+            };
+            const response = await authService.signUp(payload);
+            setSignupRef(response.signupRef);
+            setStep(3); // Move to OTP
+        } catch (err) {
+            setError(err.message || 'Signup failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAutoLogin = async () => {
+        try {
+            const loginPayload = {
+                username: regData.phone,
+                secret: pin.join(''),
+                loginMode: 'LOGINPIN',
+                deviceIdentifier: authService.getDeviceIdentifier(),
+                countryCode: "234",
+                deviceType: 'MOBILE'
+            };
+            await authService.login(loginPayload);
+        } catch (err) {
+            console.error('Auto-login failed:', err);
+        }
+    };
+
+    const handleVerifyOtp = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const payload = {
+                signupRef: signupRef,
+                countryCode: "234",
+                phoneNumber: regData.phone,
+                otp: otp.join('')
+            };
+            await authService.verifyPhoneNumber(payload);
+
+            // Auto-login after verification to get the token for KYC
+            await handleAutoLogin();
+
+            setStep(4); // Move to AccountCreated
+        } catch (err) {
+            setError(err.message || 'Verification failed. Please check your code.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        try {
+            await authService.initiateOtp({
+                countryCode: "234",
+                phoneNumber: regData.phone,
+                otpType: "PHONE_VERIFICATION"
+            });
+            setTimer(179);
+        } catch (err) {
+            console.error('Resend failed:', err);
+        }
+    };
+
+    const handleSubmitOnboarding = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const genderMap = { 'Male': 'MALE', 'Female': 'FEMALE', 'Other': 'OTHER' };
+            const idTypeMap = {
+                'NIN': 'NIN',
+                'Voters Card': 'VOTERS_CARD',
+                'Drivers License': 'DRIVERS_LICENSE',
+                'International Passport': 'INTERNATIONAL_PASSPORT'
+            };
+            const experienceMap = {
+                '< 1 year': 0,
+                '1 - 2 years': 2,
+                '3 - 4 years': 4,
+                '5 - 6 years': 6,
+                '7 - 8 years': 8,
+                '9 - 10 years': 10,
+                '> 10 years': 15
+            };
+            const serviceModeMap = {
+                'Home Service': ['HOME_SERVICE'],
+                'Work Station': ['WORK_STATION'],
+                'Both': ['HOME_SERVICE', 'WORK_STATION']
+            };
+
+            const basePayload = {
+                emailAddress: formData.email,
+                gender: genderMap[formData.gender] || 'MALE',
+                identificationType: idTypeMap[formData.idType] || 'NIN',
+                identification: formData.idNumber || "string",
+                address: formData.address,
+                addressVerificationFile: formData.idFile ? formData.idFile.name : "string",
+                profilePicture: formData.profilePic ? formData.profilePic.name : "string",
+                latitude: formData.latitude || 0,
+                longitude: formData.longitude || 0,
+                dateOfBirth: formData.dob || "2000-01-01"
+            };
+
+            if (userType === 'customer' || userType === 'user') {
+                await authService.submitCustomerOnboarding(basePayload);
+                setStep(13);
+            } else {
+                // Transform availability to array format
+                const availabilityArray = Object.entries(artisanData.availability).map(([day, schedule]) => ({
+                    dayOfWeek: day.toUpperCase(),
+                    startTime: schedule.from.split(' ')[0] || "08:00",
+                    endTime: schedule.to.split(' ')[0] || "17:00"
+                }));
+
+                // Split next of kin name
+                const nokNameParts = (artisanData.nextOfKin.name || "").trim().split(' ');
+                const nokFirstName = nokNameParts[0] || "string";
+                const nokLastName = nokNameParts.slice(1).join(' ') || "string";
+
+                const artisanPayload = {
+                    countryCode: "234",
+                    phoneNumber: regData.phone,
+                    ...basePayload,
+                    categoryId: artisanData.category,
+                    skillIds: artisanData.skills,
+                    bio: artisanData.bio,
+                    proof: formData.idFile ? formData.idFile.name : "string",
+                    yearsOfExperience: experienceMap[artisanData.experience] || 0,
+                    serviceModes: serviceModeMap[artisanData.serviceMode] || ["HOME_SERVICE"],
+                    availability: availabilityArray,
+                    nextOfKin: {
+                        firstName: nokFirstName,
+                        lastName: nokLastName,
+                        phoneNumber: artisanData.nextOfKin.phone,
+                        emailAddress: artisanData.nextOfKin.email
+                    }
+                };
+                await authService.submitArtisanOnboarding(artisanPayload);
+                setStep(21);
+            }
+        } catch (err) {
+            setError(err.message || 'Onboarding submission failed.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const renderStep = () => {
         switch (step) {
-            case 1: return <RegistrationForm navigate={navigate} nextStep={nextStep} showPassword={showPassword} setShowPassword={setShowPassword} showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} regData={regData} setRegData={setRegData} />;
-            case 2: return <OtpVerification otp={otp} handleOtpChange={handleOtpChange} formatTime={formatTime} timer={timer} nextStep={nextStep} prevStep={prevStep} />;
-            case 3: return <AccountCreated successIllustration={successIllustration} prevStep={prevStep} nextStep={nextStep} navigate={navigate} />;
-            case 4: return (
-                <OnboardingStep title="Set up your account" subtitle="Please enter your valid email address" onNext={nextStep} onPrev={prevStep} disabled={!formData.email.includes('@')}>
+            case 1: return <RegistrationForm navigate={navigate} nextStep={() => setStep(2)} showPassword={showPassword} setShowPassword={setShowPassword} showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} regData={regData} setRegData={setRegData} />;
+            case 2: return <SetPinStep pin={pin} setPin={setPin} onNext={handleSignUp} onPrev={() => setStep(1)} loading={loading} error={error} />;
+            case 3: return <OtpVerification otp={otp} handleOtpChange={handleOtpChange} formatTime={formatTime} timer={timer} onVerify={handleVerifyOtp} onResend={handleResendOtp} prevStep={() => setStep(2)} loading={loading} error={error} />;
+            case 4: return <AccountCreated successIllustration={successIllustration} prevStep={() => setStep(3)} nextStep={nextStep} navigate={navigate} />;
+            case 5: return (
+                <OnboardingStep title="Set up your account" subtitle="Please enter your valid email address" onNext={nextStep} onPrev={prevStep} disabled={!validateEmail(formData.email)}>
                     <div className="relative">
                         <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-4 py-3 border border-gray-600 rounded-xl focus:outline-none text-sm" />
-                        {formData.email.includes('@') && formData.email.includes('.') && <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600" size={20} />}
+                        {validateEmail(formData.email) && <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600" size={20} />}
                     </div>
                 </OnboardingStep>
             );
-            case 5: return (
+            case 6: return (
                 <OnboardingStep title="Set up your account" subtitle="Please select your gender" onNext={nextStep} onPrev={prevStep} disabled={!formData.gender}>
                     <div className="relative" ref={dropdownRef}>
                         <div
@@ -818,7 +1192,7 @@ const SignUpPage = () => {
                     </div>
                 </OnboardingStep>
             );
-            case 6: return (
+            case 7: return (
                 <OnboardingStep title="Set up your account" subtitle="Please select your preferred means of identification" onNext={nextStep} onPrev={prevStep} disabled={!formData.idType}>
                     <div className="space-y-6 pt-4">
                         {['NIN', 'Voters Card', 'Drivers License', 'International Passport'].map((id) => (
@@ -833,20 +1207,38 @@ const SignUpPage = () => {
                     </div>
                 </OnboardingStep>
             );
-            case 7: return (
-                <OnboardingStep title="Set up your account" subtitle="Please enter your current residential address" onNext={nextStep} onPrev={prevStep} disabled={formData.address.length < 5}>
+            case 8: return (
+                <OnboardingStep title="Set up your account" subtitle={`Please enter your ${formData.idType || 'ID'} number`} onNext={nextStep} onPrev={prevStep} disabled={formData.idNumber.length < 5}>
                     <div className="relative">
-                        <input type="text" value={formData.address} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full px-4 py-3 border border-gray-600 rounded-xl focus:outline-none text-sm" />
-                        {formData.address.length > 5 && <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600" size={20} />}
+                        <input type="text" value={formData.idNumber} onChange={e => setFormData({ ...formData, idNumber: e.target.value })} className="w-full px-4 py-3 border border-gray-600 rounded-xl focus:outline-none text-sm" placeholder="1234567890" />
+                        {formData.idNumber.length > 5 && <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600" size={20} />}
                     </div>
                 </OnboardingStep>
             );
-            case 8: return (
+            case 9: return (
+                <OnboardingStep title="Set up your account" subtitle="Please enter your current residential address" onNext={nextStep} onPrev={prevStep} disabled={formData.address.length < 5}>
+                    <div className="relative">
+                        <input
+                            ref={addressInputRef}
+                            type="text"
+                            value={formData.address}
+                            onChange={e => setFormData({ ...formData, address: e.target.value })}
+                            className="w-full px-4 py-3 border border-gray-600 rounded-xl focus:outline-none text-sm"
+                            placeholder={isGoogleLoaded ? "Start typing your address..." : "Enter your address details..."}
+                        />
+                        {formData.address.length > 5 && <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600" size={20} />}
+                    </div>
+                    {!isGoogleLoaded && (
+                        <p className="text-[10px] text-gray-400 mt-2">Note: Location suggestions are currently loading...</p>
+                    )}
+                </OnboardingStep>
+            );
+            case 10: return (
                 <OnboardingStep title="Set up your account" subtitle="Please state your date of birth" onNext={nextStep} onPrev={prevStep} disabled={!formData.dob}>
                     <input type="date" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} className="w-full px-4 py-3 border border-gray-600 rounded-xl focus:outline-none text-sm" />
                 </OnboardingStep>
             );
-            case 9: return (
+            case 11: return (
                 <OnboardingStep title="Set up your account" subtitle={`Please upload an image of your ${formData.idType || 'ID'} for verification`} onNext={nextStep} onPrev={prevStep} disabled={!formData.idFile}>
                     <label className="w-full cursor-pointer">
                         <input type="file" className="hidden" onChange={(e) => setFormData({ ...formData, idFile: e.target.files[0] })} />
@@ -856,8 +1248,16 @@ const SignUpPage = () => {
                     </label>
                 </OnboardingStep>
             );
-            case 10: return (
-                <OnboardingStep title="Set up your account" subtitle="Upload your profile picture" onNext={nextStep} onPrev={prevStep} disabled={!formData.profilePic}>
+            case 12: return (
+                <OnboardingStep
+                    title="Set up your account"
+                    subtitle="Upload your profile picture"
+                    onNext={nextStep}
+                    onPrev={prevStep}
+                    disabled={!formData.profilePic}
+                    loading={loading}
+                    nextLabel={userType === 'customer' ? 'Complete' : 'Next'}
+                >
                     <div className="flex flex-col items-center justify-center pt-8">
                         <label className="relative cursor-pointer">
                             <input type="file" className="hidden" onChange={(e) => setFormData({ ...formData, profilePic: e.target.files[0] })} />
@@ -866,33 +1266,39 @@ const SignUpPage = () => {
                             </div>
                             <div className="absolute bottom-2 right-2 p-3 bg-[#1e4e82] text-white rounded-full shadow-lg border-2 border-white"><Camera size={20} /></div>
                         </label>
+                        {error && <p className="text-red-500 text-xs mt-4">{error}</p>}
                     </div>
                 </OnboardingStep>
             );
-            case 11: return <FinalSuccess successIllustration={successIllustration} prevStep={prevStep} navigate={navigate} />;
-            case 12: return (
+            case 13: return <FinalSuccess successIllustration={successIllustration} prevStep={() => setStep(12)} navigate={navigate} />;
+            case 14: return (
                 <CategorySelection
+                    categories={apiCategories}
                     selectedCategory={artisanData.category}
                     onSelect={(cat) => setArtisanData({ ...artisanData, category: cat })}
                     onNext={nextStep}
                     onPrev={prevStep}
+                    loading={fetchingCategories}
                 />
             );
-            case 13: return (
+            case 15: return (
                 <SkillMapping
                     category={artisanData.category}
+                    categories={apiCategories}
+                    skills={apiSkills}
                     selectedSkills={artisanData.skills}
-                    onToggle={(skill) => {
-                        const newSkills = artisanData.skills.includes(skill)
-                            ? artisanData.skills.filter(s => s !== skill)
-                            : [...artisanData.skills, skill];
+                    onToggle={(skillId) => {
+                        const newSkills = artisanData.skills.includes(skillId)
+                            ? artisanData.skills.filter(s => s !== skillId)
+                            : [...artisanData.skills, skillId];
                         setArtisanData({ ...artisanData, skills: newSkills });
                     }}
                     onNext={nextStep}
                     onPrev={prevStep}
+                    loading={fetchingSkills}
                 />
             );
-            case 14: return (
+            case 16: return (
                 <ExperienceSelection
                     value={artisanData.experience}
                     onChange={(exp) => setArtisanData({ ...artisanData, experience: exp })}
@@ -903,7 +1309,7 @@ const SignUpPage = () => {
                     dropdownRef={expDropdownRef}
                 />
             );
-            case 15: return (
+            case 17: return (
                 <ServiceModeSelection
                     value={artisanData.serviceMode}
                     onChange={(mode) => setArtisanData({ ...artisanData, serviceMode: mode })}
@@ -911,7 +1317,7 @@ const SignUpPage = () => {
                     onPrev={prevStep}
                 />
             );
-            case 16: return (
+            case 18: return (
                 <AvailabilitySelection
                     artisanData={artisanData}
                     setArtisanData={setArtisanData}
@@ -919,7 +1325,7 @@ const SignUpPage = () => {
                     onPrev={prevStep}
                 />
             );
-            case 17: return (
+            case 19: return (
                 <BioSet
                     value={artisanData.bio}
                     onChange={(val) => setArtisanData({ ...artisanData, bio: val })}
@@ -927,15 +1333,17 @@ const SignUpPage = () => {
                     onPrev={prevStep}
                 />
             );
-            case 18: return (
+            case 20: return (
                 <NextOfKin
                     data={artisanData.nextOfKin}
                     onChange={(val) => setArtisanData({ ...artisanData, nextOfKin: val })}
                     onNext={nextStep}
                     onPrev={prevStep}
+                    loading={loading}
+                    error={error}
                 />
             );
-            case 19: return <ArtisanSuccess successIllustration={successIllustration} navigate={navigate} />;
+            case 21: return <ArtisanSuccess successIllustration={successIllustration} navigate={navigate} />;
             default: return null;
         }
     };

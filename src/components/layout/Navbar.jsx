@@ -66,10 +66,10 @@ const Navbar = () => {
 
                 {/* Action Buttons */}
                 <div className="hidden lg:flex items-center gap-4">
-                    <Link to="/signup?role=artisan">
+                    <Link to="/signup/artisan">
                         <Button variant="plain" className="px-5 py-2 text-sm bg-[#D6E5F5] text-[#1E4E82] hover:bg-[#c8d9eb]">Join as Artisan</Button>
                     </Link>
-                    <Link to="/signup?role=user">
+                    <Link to="/signup/user">
                         <Button variant="plain" className="px-5 py-2 text-sm bg-[#1E4E82] text-white hover:bg-[#163a61]">Get Started</Button>
                     </Link>
                 </div>
@@ -133,10 +133,10 @@ const Navbar = () => {
                                 })}
                                 <div className="w-full h-px bg-gray-100 my-2" />
                                 <div className="flex flex-col gap-3 w-full">
-                                    <Link to="/signup?role=artisan" onClick={() => setIsOpen(false)} className="w-full">
+                                    <Link to="/signup/artisan" onClick={() => setIsOpen(false)} className="w-full">
                                         <Button variant="plain" className="w-full py-4 text-md bg-[#D6E5F5] text-[#1E4E82]">Join as Artisan</Button>
                                     </Link>
-                                    <Link to="/signup?role=user" onClick={() => setIsOpen(false)} className="w-full">
+                                    <Link to="/signup/user" onClick={() => setIsOpen(false)} className="w-full">
                                         <Button variant="plain" className="w-full py-4 text-md bg-[#1E4E82] text-white">Get Started</Button>
                                     </Link>
                                 </div>

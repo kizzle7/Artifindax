@@ -7,13 +7,13 @@ const Footer = () => {
 
     const footerLinks = {
         'For Customers': [
-            { name: 'Find Artisans', href: '/signup?role=user' },
+            { name: 'Find Artisans', href: '/signup/user' },
             { name: 'How it works', href: '/#how-it-works' },
             { name: 'Safety&trust', href: '/about?tab=safety' },
             { name: 'Help Center', href: '/about?tab=faq' },
         ],
         'For Artisans': [
-            { name: 'Join as Artisan', href: '/signup?role=artisan' },
+            { name: 'Join as Artisan', href: '/signup/artisan' },
             { name: 'Pro Support', href: '#' },
             { name: 'Success stories', href: '#' },
             { name: 'Resources', href: '#' },

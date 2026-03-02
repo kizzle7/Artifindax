@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import loginBg from '../assets/RP.png';
 import successIllustration from '../assets/Frame 1000004078.png';
+import authService from '../services/authService';
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -13,7 +14,10 @@ const LoginPage = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [loginData, setLoginData] = useState({ phone: '', password: '' });
     const [recoverData, setRecoverData] = useState({ phone: '' });
-    const [resetData, setResetData] = useState({ password: '', confirmPassword: '' });
+    const [resetData, setResetData] = useState({ password: '', confirmPassword: '', otp: '' });
+    const [timer, setTimer] = useState(179);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const validatePassword = (pass) => ({
         hasUpper: /[A-Z]/.test(pass),
@@ -25,7 +29,93 @@ const LoginPage = () => {
     const resetValidation = validatePassword(resetData.password);
     const passwordsMatch = resetData.password === resetData.confirmPassword && resetData.password !== '';
     const isResetValid = resetValidation.hasUpper && resetValidation.hasLower &&
-        resetValidation.hasSpecial && resetValidation.isLongEnough && passwordsMatch;
+        resetValidation.hasSpecial && resetValidation.isLongEnough && passwordsMatch && resetData.otp.length === 4;
+
+    useEffect(() => {
+        let interval;
+        if (step === 3 && timer > 0) interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+        return () => clearInterval(interval);
+    }, [step, timer]);
+
+    const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        try {
+            await authService.login({
+                username: loginData.phone,
+                secret: loginData.password,
+                loginMode: 'USERNAMEPASSWORD',
+                deviceIdentifier: authService.getDeviceIdentifier(),
+                countryCode: "234",
+                deviceType: 'MOBILE'
+            });
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message || 'Login failed. Please check your credentials.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRecover = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        try {
+            await authService.initiateForgotPasswordOtp({
+                countryCode: "234",
+                phoneNumber: recoverData.phone,
+                otpType: "FORGOT_PASSWORD"
+            });
+            setStep(3);
+            setTimer(179);
+        } catch (err) {
+            setError(err.message || 'Failed to send reset code.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleReset = async (e) => {
+        e.preventDefault();
+        if (!isResetValid) return;
+        setLoading(true);
+        setError('');
+        try {
+            await authService.changePassword({
+                password: resetData.password,
+                countryCode: "234",
+                phoneNumber: recoverData.phone,
+                otp: resetData.otp
+            });
+            setStep(4);
+        } catch (err) {
+            setError(err.message || 'Failed to reset password. Check your OTP.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleResendOtp = async () => {
+        try {
+            await authService.initiateForgotPasswordOtp({
+                countryCode: "234",
+                phoneNumber: recoverData.phone,
+                otpType: "FORGOT_PASSWORD"
+            });
+            setTimer(179);
+        } catch (err) {
+            console.error('Resend failed:', err);
+        }
+    };
 
     const renderStep = () => {
         switch (step) {
@@ -36,7 +126,7 @@ const LoginPage = () => {
                             <h1 className="text-2xl font-bold text-[#0f172a] mb-2 lg:hidden">Login</h1>
                             <p className="text-gray-600 text-sm lg:hidden">Welcome back! Please enter your details to login.</p>
                         </div>
-                        <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); navigate('/dashboard'); }}>
+                        <form className="space-y-6" onSubmit={handleLogin}>
                             <div>
                                 <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Phone Number</label>
                                 <div className="flex">
@@ -82,18 +172,20 @@ const LoginPage = () => {
                                 By signing up you agree to our <a href="#" className="text-[#1E4E82] font-semibold hover:underline">terms of use</a> and <a href="#" className="text-[#1E4E82] font-semibold hover:underline">privacy policy</a>
                             </p>
 
+                            {error && step === 1 && <p className="text-red-500 text-xs text-center">{error}</p>}
+
                             <Button
                                 variant="primary"
                                 type="submit"
-                                disabled={!loginData.phone || !loginData.password}
-                                style={{ backgroundColor: (!loginData.phone || !loginData.password) ? '#D6E5F5' : '#1E4E82' }}
-                                className={`w-full py-4 rounded-xl text-lg font-bold transition-all relative group ${(!loginData.phone || !loginData.password) ? 'cursor-not-allowed' : 'hover:bg-[#163a61]'}`}
+                                disabled={!loginData.phone || !loginData.password || loading}
+                                style={{ backgroundColor: (!loginData.phone || !loginData.password || loading) ? '#D6E5F5' : '#1E4E82' }}
+                                className={`w-full py-4 rounded-xl text-lg font-bold transition-all relative group ${(!loginData.phone || !loginData.password || loading) ? 'cursor-not-allowed' : 'hover:bg-[#163a61]'}`}
                             >
-                                <span>Login</span>
+                                {loading ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div> : <span>Login</span>}
                             </Button>
 
                             <p className="text-center text-sm text-gray-600">
-                                Don't have an account? <Link to="/signup" className="text-[#1E4E82] font-bold hover:underline">Sign Up</Link>
+                                Don't have an account? <Link to="/signup/user" className="text-[#1E4E82] font-bold hover:underline">Register</Link>
                             </p>
                         </form>
                     </div>
@@ -108,7 +200,7 @@ const LoginPage = () => {
                                 No worries! Enter your registered phone number and we’ll send you a link to reset your password.
                             </p>
                         </div>
-                        <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
+                        <form className="space-y-6" onSubmit={handleRecover}>
                             <div>
                                 <label className="block text-xs font-semibold text-gray-500 mb-1.5 uppercase tracking-wider">Phone Number</label>
                                 <div className="flex">
@@ -119,20 +211,26 @@ const LoginPage = () => {
                                     <input
                                         type="tel"
                                         value={recoverData.phone}
-                                        onChange={(e) => setRecoverData({ phone: e.target.value.replace(/[^0-9]/g, '') })}
-                                        placeholder="+234"
+                                        onChange={(e) => {
+                                            let val = e.target.value.replace(/[^0-9]/g, '');
+                                            if (val.startsWith('234')) val = val.slice(3);
+                                            if (val.startsWith('0')) val = val.slice(1);
+                                            setRecoverData({ phone: val });
+                                        }}
+                                        placeholder="8012345678"
                                         className="w-full px-4 py-3.5 border border-[#1e4e82] rounded-r-xl focus:outline-none text-sm"
                                     />
                                 </div>
                             </div>
+                            {error && step === 2 && <p className="text-red-500 text-xs">{error}</p>}
                             <Button
                                 variant="primary"
                                 type="submit"
-                                disabled={!recoverData.phone}
-                                style={{ backgroundColor: !recoverData.phone ? '#D6E5F5' : '#1E4E82' }}
-                                className={`w-full py-4 rounded-xl text-lg font-bold transition-all ${!recoverData.phone ? 'cursor-not-allowed' : 'hover:bg-[#163a61]'}`}
+                                disabled={!recoverData.phone || loading}
+                                style={{ backgroundColor: (!recoverData.phone || loading) ? '#D6E5F5' : '#1E4E82' }}
+                                className={`w-full py-4 rounded-xl text-lg font-bold transition-all ${(!recoverData.phone || loading) ? 'cursor-not-allowed' : 'hover:bg-[#163a61]'}`}
                             >
-                                <span>Send</span>
+                                {loading ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div> : <span>Send</span>}
                             </Button>
                         </form>
                     </div>
@@ -147,7 +245,17 @@ const LoginPage = () => {
                                 Enter your new password below. Make sure it’s strong and secure.
                             </p>
                         </div>
-                        <form className="space-y-6" onSubmit={(e) => { e.preventDefault(); if (isResetValid) setStep(4); }}>
+                        <form className="space-y-6" onSubmit={handleReset}>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider ml-1">Verification Code (OTP)</label>
+                                <input
+                                    type="text"
+                                    value={resetData.otp}
+                                    onChange={(e) => setResetData({ ...resetData, otp: e.target.value.replace(/[^0-9]/g, '').slice(0, 4) })}
+                                    placeholder="0000"
+                                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:border-[#1e4e82] text-sm shadow-sm"
+                                />
+                            </div>
                             <div>
                                 <label className="block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider ml-1">New Password</label>
                                 <div className="relative">
@@ -194,14 +302,27 @@ const LoginPage = () => {
                                 </div>
                             </div>
 
+                            <div className="text-[14px] text-gray-600 mb-6 text-center">
+                                Didn't get code? <button
+                                    type="button"
+                                    onClick={handleResendOtp}
+                                    disabled={timer > 0 || loading}
+                                    className={`text-[#1E4E82] font-semibold ml-1 ${timer > 0 ? 'opacity-50 cursor-not-allowed' : 'hover:underline'}`}
+                                >
+                                    Resend {timer > 0 && formatTime(timer)}
+                                </button>
+                            </div>
+
+                            {error && step === 3 && <p className="text-red-500 text-xs">{error}</p>}
+
                             <Button
                                 variant="primary"
                                 type="submit"
-                                disabled={!isResetValid}
-                                style={{ backgroundColor: !isResetValid ? '#D6E5F5' : '#1E4E82' }}
-                                className={`w-full py-4 rounded-xl text-lg font-bold shadow-lg transition-all ${!isResetValid ? 'cursor-not-allowed' : 'hover:bg-[#163a61]'}`}
+                                disabled={!isResetValid || loading}
+                                style={{ backgroundColor: (!isResetValid || loading) ? '#D6E5F5' : '#1E4E82' }}
+                                className={`w-full py-4 rounded-xl text-lg font-bold shadow-lg transition-all ${(!isResetValid || loading) ? 'cursor-not-allowed' : 'hover:bg-[#163a61]'}`}
                             >
-                                <span>Send</span>
+                                {loading ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div> : <span>Update Password</span>}
                             </Button>
                         </form>
                     </div>
