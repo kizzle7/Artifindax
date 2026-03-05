@@ -3,11 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     Phone, MessageSquare, ChevronLeft, ChevronRight, MapPin, Clock, Calendar, CreditCard, Plus, X, Star, Filter,
     SprayCan, Droplets, PlugZap, Car, PaintRoller, Smartphone, Armchair, Trees, Menu, Home, Briefcase, Settings, MessageCircle, Bell, Search,
-    Mic, Send, Camera, Copy, Download, Share2, CheckCircle2, AlertCircle, MoreVertical, Flag, Ban, Wallet, ArrowRight, ChevronDown
+    Mic, Send, Camera, Copy, Download, Share2, CheckCircle2, AlertCircle, MoreVertical, Flag, Ban, Wallet, ArrowRight, ChevronDown, PlusCircle,
+    User, Image, ShieldCheck, RefreshCw, History, Bookmark, Info, HelpCircle, Lock, Shield, LogOut, Eye, EyeOff, Mail, Github, Instagram, Facebook, Twitter, Smartphone as MobilePhone
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import logo from '../assets/Artifinda logo 3.png';
+import categoryService from '../services/categoryService';
+import customerService from '../services/customerService';
+import SearchSkeleton from '../components/ui/SearchSkeleton';
+import { setKey, fromLatLng } from 'react-geocode';
+
+const GEOCODE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBbubeKt-xGh-XJ4XDkbjsunTha2hPhEYM';
+setKey(GEOCODE_API_KEY);
 
 // Mock Data
 const CATEGORIES = [
@@ -27,11 +35,19 @@ const POPULAR_SERVICES = [
     { id: 3, title: 'Solar Installation', price: '10000', image: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?auto=format&fit=crop&q=80&w=400' },
 ];
 
-const TOP_ARTISANS = [
-    { id: 1, name: 'Ayo Falokun', role: 'Plumber', rating: 4.8, distance: '1.2km', skills: ['Fixes', 'Pipe Installations', 'Drainage', 'Maintenance', 'Borehole sinking'], image: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&q=80&w=200', price: '3500' },
-    { id: 2, name: 'Janet Oge', role: 'Electrician', rating: 4.8, distance: '1.2km', skills: ['Wiring', 'Installations', 'Solar installations', 'Solar upgrades'], image: 'https://images.unsplash.com/photo-1567532939604-b6c5b0adcc2c?auto=format&fit=crop&q=80&w=200', price: '2500' },
-    { id: 3, name: 'Aaron Black', role: 'Painter', rating: 4.8, distance: '1.2km', skills: ['Wall painting', 'Wall art', 'Murals', 'Screeding', 'Interior'], image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200', price: '3000', isVerified: true },
-];
+const USER_PROFILE = {
+    firstName: '',
+    lastName: '',
+    phone: '',
+    gender: '',
+    dob: '',
+    email: '',
+    addresses: [
+        { id: 1, type: 'Home', address: '', isDefault: true, status: 'verified' }
+    ]
+};
+
+
 
 const BOOKINGS = [
     { id: '#001345', title: 'AC Repair', status: 'scheduled', date: '24th June, 2025', time: '12:00pm', address: '14 Selsun Street, Maitama, Abuja', artisan: 'Chinedu Eze', artisanRole: 'Electrician', artisanRating: 4.8, artisanReviews: 120, artisanLocation: 'Ikorodu, Lagos', price: '5800', type: 'active' },
@@ -58,6 +74,25 @@ const BANNERS = [
     { title: 'Get 5% off', sub: 'on your 5th order', tag: 'New User', color: 'bg-[#C7E9C7]', icon: '💎' },
 ];
 
+const FAQ_DATA = [
+    { id: 1, category: 'General', q: "What is Artifinda?", a: "Artifinda is a platform that connects you with skilled artisans for your home and office needs." },
+    { id: 2, category: 'General', q: "Is Artifinda available in my city?", a: "We are currently operating in major cities across Nigeria and expanding rapidly." },
+    { id: 3, category: 'Account & Profile', q: "How do I create an account?", a: "Simply click the sign-up button on the landing page and follow the prompts." },
+    { id: 4, category: 'Account & Profile', q: "How do I verify my account?", a: "Go to settings, then addresses to upload your verification documents." },
+    { id: 5, category: 'Account & Profile', q: "Can I change my profile information?", a: "Yes, you can update your details in the Profile section of your settings." },
+    { id: 6, category: 'Account & Profile', q: "How do I change my password?", a: "Navigate to Settings > Change Password to update your login credentials." },
+    { id: 7, category: 'Account & Profile', q: "How do I switch to an artisan account?", a: "You can apply to be an artisan from your profile settings page." },
+    { id: 8, category: 'Account & Profile', q: "What if I forgot my password?", a: "Use the 'Forgot Password' link on the login page to reset it via email." },
+    { id: 9, category: 'Bookings', q: "How do I book an artisan?", a: "Search for a service, pick an artisan, and click the 'Book Now' button." },
+    { id: 10, category: 'Bookings', q: "Can I cancel or reschedule my booking?", a: "Yes, you can do this from the Bookings tab before the artisan starts the job." },
+    { id: 11, category: 'Bookings', q: "How do I pay for services?", a: "You can pay via card, bank transfer, or USSD through our secure payment gateway." },
+    { id: 12, category: 'Bookings', q: "What if I'm not satisfied with the service?", a: "You can raise a dispute or contact support if the work doesn't meet requirements." },
+    { id: 13, category: 'Bookings', q: "How do I track my booking?", a: "Real-time tracking is available in the 'Order Details' view once the artisan is en route." },
+    { id: 14, category: 'Bookings', q: "Can I communicate with the artisan?", a: "Yes, use the built-in chat feature to talk with your assigned artisan." },
+    { id: 15, category: 'Bookings', q: "What happens if the artisan doesn't show up?", a: "Contact support immediately for a reschedule or a full refund." },
+    { id: 16, category: 'Payments', q: "Is payment safe?", a: "Yes, we use industry-standard encryption to protect your financial data." },
+];
+
 const Sidebar = ({ currentView, setCurrentView, setSelectedBooking }) => (
     <div className="hidden lg:flex w-[240px] bg-[#1E4E82] h-screen fixed left-0 top-0 flex-col p-6 text-white z-50">
         <div className="mb-10"><img src={logo} alt="Artifinda" className="h-8 brightness-0 invert" /></div>
@@ -81,28 +116,50 @@ const Sidebar = ({ currentView, setCurrentView, setSelectedBooking }) => (
     </div>
 );
 
-const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking, setSelectedBooking, notificationsViewStep, setNotificationsViewStep, currentChat, messagesViewStep, setCurrentView, selectedArtisan, setSelectedArtisan }) => {
+const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking, setSelectedBooking, notificationsViewStep, setNotificationsViewStep, currentChat, messagesViewStep, setCurrentView, selectedArtisan, setSelectedArtisan, settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep }) => {
+    const getHeaderTitle = () => {
+        if (selectedBooking) return 'Order Details';
+        if (currentView === 'messages' && messagesViewStep === 'chat') return currentChat?.artisan;
+        if (currentView === 'notifications' && notificationsViewStep === 'detail') return 'Notifications';
+        if (currentView === 'search') return selectedArtisan ? 'View Profile' : 'Search';
+        if (currentView === 'settings') {
+            if (settingsStep === 'profile') return 'Profile';
+            if (settingsStep === 'password' || settingsStep === 'password_otp' || settingsStep === 'password_reset') return 'Change Password';
+            if (settingsStep === 'pin' || settingsStep === 'pin_new') return 'Change Pin';
+            if (settingsStep === 'addresses') return settingsSubStep === 'add' ? 'Add Address' : 'My Addresses';
+            if (settingsStep === 'faq') return 'FAQs';
+            if (settingsStep === 'contact') return 'Contact Us';
+            if (settingsStep === 'about') return 'About Artifinda';
+            return 'Settings';
+        }
+        return currentView;
+    };
+
+    const handleBack = () => {
+        if (selectedBooking) setSelectedBooking(null);
+        else if (selectedArtisan) setSelectedArtisan(null);
+        else if (currentView === 'notifications' && notificationsViewStep === 'detail') setNotificationsViewStep('list');
+        else if (currentView === 'settings') {
+            if (settingsStep === 'main') setCurrentView('home');
+            else if (settingsStep === 'addresses' && settingsSubStep === 'add') setSettingsSubStep('list');
+            else setSettingsStep('main');
+        }
+        else setCurrentView('home');
+    };
+
     return (
-        <header className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-white z-50 px-5 flex items-center justify-between border-b border-gray-100 backdrop-blur-md bg-white/90">
+        <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white z-50 px-5 flex items-center justify-between border-b border-gray-100 backdrop-blur-md bg-white/90">
             <div className="flex items-center gap-3">
-                {(currentView !== 'home' || selectedBooking || (currentView === 'notifications' && notificationsViewStep === 'detail') || selectedArtisan) && (
-                    <button onClick={() => {
-                        if (selectedBooking) setSelectedBooking(null);
-                        else if (selectedArtisan) setSelectedArtisan(null);
-                        else if (currentView === 'notifications' && notificationsViewStep === 'detail') setNotificationsViewStep('list');
-                        else setCurrentView('home');
-                    }} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform">
-                        <ChevronLeft size={22} strokeWidth={2.5} />
+                {(currentView !== 'home' || selectedBooking || (currentView === 'notifications' && notificationsViewStep === 'detail') || selectedArtisan || (currentView === 'settings' && settingsStep !== 'main')) && (
+                    <button onClick={handleBack} className="w-10 h-10 -ml-1 text-[#0f172a] active:scale-95 transition-all border border-gray-100 rounded-[12px] flex items-center justify-center bg-white shadow-sm hover:bg-slate-50">
+                        <ChevronLeft size={20} strokeWidth={2.5} />
                     </button>
                 )}
                 <h1 className={`${(currentView === 'notifications' && notificationsViewStep === 'detail') ? 'text-base' : 'text-lg'} font-black text-[#0f172a] capitalize tracking-tight`}>
-                    {selectedBooking ? 'Order Details' :
-                        (currentView === 'messages' && messagesViewStep === 'chat') ? currentChat?.artisan :
-                            (currentView === 'notifications' && notificationsViewStep === 'detail') ? 'Notifications' :
-                                (currentView === 'search' ? (selectedArtisan ? 'View Profile' : 'Search') : currentView)}
+                    {getHeaderTitle()}
                 </h1>
             </div>
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-gray-900">{isMenuOpen ? <X size={20} /> : <Menu size={20} />}</button>
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-gray-900">{isMenuOpen ? <X size={22} /> : <Menu size={22} />}</button>
         </header>
     );
 };
@@ -134,7 +191,7 @@ const MobileMenu = ({ isMenuOpen, setIsMenuOpen, currentView, setCurrentView, se
     </AnimatePresence>
 );
 
-const HomeView = ({ setCurrentView, setNotificationsViewStep, TOP_ARTISANS, setIsMenuOpen, isMenuOpen }) => {
+const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topArtisans, loadingTopRated, setIsMenuOpen, isMenuOpen, handleCategoryClick, popularServices, setSearchQuery, loadingPopular }) => {
     const repeatedBanners = [...BANNERS, ...BANNERS, ...BANNERS];
     return (
         <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 transition-all duration-300">
@@ -145,7 +202,7 @@ const HomeView = ({ setCurrentView, setNotificationsViewStep, TOP_ARTISANS, setI
                     </div>
                     <div>
                         <h2 className="text-base font-black text-[#0f172a] leading-tight">Welcome</h2>
-                        <p className="text-gray-400 text-[8px] flex items-center gap-1 font-black uppercase tracking-widest opacity-70"><MapPin size={8} /> 17 Ajao Rd, Ikeja, Lagos</p>
+                        <p className="text-gray-400 text-[8px] flex items-center gap-1 font-black uppercase tracking-widest opacity-70"><MapPin size={8} /> {userProfile.addresses[0]?.address || '17 Ajao Rd, Ikeja, Lagos'}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -171,17 +228,71 @@ const HomeView = ({ setCurrentView, setNotificationsViewStep, TOP_ARTISANS, setI
                     ))}
                 </motion.div>
             </div>
+            <h3 className="text-xs font-black text-[#0f172a] mb-4 uppercase tracking-[0.1em] opacity-80">Popular Services</h3>
+            {loadingPopular ? (
+                <SearchSkeleton type="category" />
+            ) : (
+                <div className="grid grid-cols-4 gap-3 mb-8 px-1 overflow-x-auto pb-2 -mx-1 lg:mx-0 lg:overflow-visible">
+                    {popularServices.slice(0, 4).map((item) => (
+                        <button
+                            key={item.id}
+                            onClick={() => handleCategoryClick(item.category)}
+                            className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-gray-50 hover:border-blue-200 transition-all active:scale-95 min-w-[80px]"
+                        >
+                            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-blue-900 shadow-inner overflow-hidden">
+                                {item.category?.image ? <img src={item.category.image} alt="" className="w-full h-full object-cover" /> : <Info size={16} />}
+                            </div>
+                            <span className="text-[8px] font-black text-[#0f172a] uppercase tracking-tighter text-center line-clamp-1">{item.name}</span>
+                        </button>
+                    ))}
+                </div>
+            )}
+
             <h3 className="text-xs font-black text-[#0f172a] mb-4 uppercase tracking-[0.1em] opacity-80">Top Rated</h3>
             <div className="flex flex-col gap-2.5 pb-24">
-                {TOP_ARTISANS.map(artisan => (
-                    <div key={artisan.id} className="bg-white p-3.5 rounded-[16px] border border-gray-100 flex items-center gap-3.5 shadow-sm hover:border-[#1E4E82]/20 transition-all group overflow-hidden">
-                        <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform"><img src={artisan.image} alt="" className="w-full h-full object-cover" /></div>
-                        <div className="flex-1 min-w-0">
-                            <h4 className="font-bold text-xs text-[#0f172a] truncate">{artisan.name}</h4>
-                            <div className="flex items-center gap-2 text-[9px] text-gray-400 font-bold uppercase tracking-tight"><span>{artisan.role}</span><span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating}</span></div>
-                        </div>
-                    </div>
-                ))}
+                {loadingTopRated ? (
+                    <SearchSkeleton type="results" />
+                ) : (
+                    <>
+                        {topArtisans.length > 0 ? (
+                            topArtisans.map(artisan => (
+                                <div 
+                                    key={artisan.id} 
+                                    onClick={() => {
+                                        const role = artisan.artisanRole || artisan.role || 'Professional';
+                                        const service = popularServices.find(s => s.name.toLowerCase().includes(role.toLowerCase()));
+                                        if (service) {
+                                            setCurrentView('search');
+                                            handleCategoryClick(service.category);
+                                        } else {
+                                            setCurrentView('search');
+                                            setSearchQuery(role);
+                                        }
+                                    }}
+                                    className="bg-white p-3.5 rounded-[16px] border border-gray-100 flex items-center gap-3.5 shadow-sm hover:border-[#1E4E82]/20 transition-all group cursor-pointer overflow-hidden active:scale-[0.98]"
+                                >
+                                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform">
+                                        <img src={artisan.profilePicture || artisan.image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"} alt="" className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <h4 className="font-bold text-xs text-[#0f172a] truncate">
+                                            {artisan.firstName ? `${artisan.firstName} ${artisan.lastName}` : (artisan.name || 'Artisan')}
+                                        </h4>
+                                        <div className="flex items-center gap-2 text-[9px] text-gray-400 font-bold uppercase tracking-tight">
+                                            <span>{artisan.artisanRole || artisan.role || 'Service Partner'}</span>
+                                            <span className="flex items-center gap-1">
+                                                <Star size={10} className="text-yellow-400 fill-yellow-400" /> 
+                                                {artisan.rating || artisan.artisanRating || 5.0}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="text-center py-10 text-gray-300 font-black uppercase tracking-widest text-[8px]">No top artisans found in your area</div>
+                        )}
+                    </>
+                )}
             </div>
         </div>
     );
@@ -194,21 +305,21 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
             <h1 className="hidden lg:block text-base font-black text-[#0f172a] mb-4 uppercase tracking-[0.05em]">Bookings</h1>
             <div className="flex items-center gap-5 border-b border-gray-50 mb-4 overflow-x-auto scrollbar-hide">
                 {['active', 'completed', 'canceled'].map(tab => (
-                    <button key={tab} onClick={() => setBookingTab(tab)} className={`pb-2 text-[8px] font-black uppercase tracking-[0.15em] relative whitespace-nowrap ${bookingTab === tab ? 'text-[#1E4E82]' : 'text-gray-400'}`}>
+                    <button key={tab} onClick={() => setBookingTab(tab)} className={`pb-2 text-xs font-black uppercase tracking-[0.15em] relative whitespace-nowrap ${bookingTab === tab ? 'text-[#1E4E82]' : 'text-gray-400'}`}>
                         {tab}
                         {bookingTab === tab && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E4E82] rounded-full" />}
                     </button>
                 ))}
             </div>
-            <div className="space-y-2.5 max-w-4xl flex-1 pb-32">
+            <div className="space-y-2.5 max-w-full flex-1 pb-32">
                 {filteredBookings.map(booking => (
                     <div key={booking.id} onClick={() => setSelectedBooking(booking)} className="bg-white border border-gray-50 rounded-[14px] p-3 lg:p-3.5 relative hover:border-[#1E4E82]/20 transition-all cursor-pointer group shadow-sm active:scale-[0.99] overflow-hidden">
                         <div className="flex items-center justify-between mb-1">
-                            <span className="text-[7px] text-gray-300 font-black uppercase tracking-[0.15em]">{booking.id}</span>
+                            <span className="text-[10px] text-gray-300 font-black uppercase tracking-[0.15em]">{booking.id}</span>
                             <div className="p-0.5 bg-gray-50 rounded-full text-[#1E4E82] group-hover:bg-blue-50 transition-colors"><ChevronRight size={12} /></div>
                         </div>
-                        <h4 className="text-sm font-black text-[#0f172a] mb-0.5 tracking-tight">{booking.title}</h4>
-                        <div className="space-y-0.5 mb-2 text-gray-400 font-bold text-[8px] uppercase tracking-wide">
+                        <h4 className="text-base font-black text-[#0f172a] mb-0.5 tracking-tight">{booking.title}</h4>
+                        <div className="space-y-0.5 mb-2 text-gray-400 font-bold text-[10px] uppercase tracking-wide">
                             <div className="flex items-center gap-1.5 opacity-80"><Calendar size={9} className="text-[#1E4E82]/60" /> {booking.date}</div>
                             <div className="flex items-center gap-1.5 opacity-80"><Clock size={9} className="text-[#1E4E82]/60" /> {booking.time}</div>
                             <div className="flex items-center gap-1.5 opacity-80"><MapPin size={9} className="text-[#1E4E82]/60" /> {booking.address}</div>
@@ -216,7 +327,7 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                         <div className="flex items-center justify-between pt-2.5 border-t border-gray-50">
                             <div className="flex items-center gap-2">
                                 <div className="w-6 h-6 rounded-full overflow-hidden shadow-inner ring-1 ring-slate-100"><img src={booking.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"} alt="" className="w-full h-full object-cover" /></div>
-                                <div><h5 className="font-bold text-gray-900 text-[9px] leading-none mb-0.5">{booking.artisan}</h5><p className="text-[6px] text-gray-400 uppercase font-black tracking-tighter">{booking.artisanRole}</p></div>
+                                <div><h5 className="font-bold text-gray-900 text-xs leading-none mb-0.5">{booking.artisan}</h5><p className="text-[9px] text-gray-400 uppercase font-black tracking-tighter">{booking.artisanRole}</p></div>
                             </div>
                             <div className="flex gap-1">
                                 <button className="p-1.5 bg-slate-50 rounded-lg text-[#1E4E82] active:scale-95 transition-all hover:bg-blue-50"><Phone size={10} /></button>
@@ -228,6 +339,457 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                 {filteredBookings.length === 0 && <div className="text-center py-8 bg-slate-50/20 rounded-[20px] border border-dashed border-slate-100 flex flex-col items-center justify-center"><p className="text-gray-300 font-extrabold uppercase tracking-widest text-[7px]">No {bookingTab} bookings</p></div>}
             </div>
             <button className="fixed bottom-28 right-5 lg:right-10 w-10 h-10 bg-[#1E4E82] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50 border border-white"><Plus size={18} strokeWidth={3} /></button>
+        </div>
+    );
+};
+const LogoutModal = ({ showLogoutModal, setShowLogoutModal, onLogout }) => (
+    <AnimatePresence>
+        {showLogoutModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowLogoutModal(false)} className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl text-center">
+                    <h3 className="text-xl font-bold text-[#0f172a] mb-8">Are you sure you want to logout?</h3>
+                    <div className="space-y-3">
+                        <button onClick={onLogout} className="w-full py-4 bg-[#DDE6F5] text-[#1E4E82] font-bold rounded-2xl transition-all hover:bg-[#1E4E82] hover:text-white">Yes, Logout</button>
+                        <button onClick={() => setShowLogoutModal(false)} className="w-full py-4 bg-[#1E4E82] text-white font-bold rounded-2xl transition-all shadow-lg">No, go back</button>
+                    </div>
+                </motion.div>
+            </div>
+        )}
+    </AnimatePresence>
+);
+
+const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, setVisibleFaq, toggleFaq, setCurrentView }) => {
+    const handleLogout = () => {
+        localStorage.clear();
+        window.location.href = '/';
+    };
+
+    const renderMain = () => (
+        <div className="px-4 pt-4 lg:pt-4">
+            <h2 className="text-2xl font-black text-[#0f172a] hidden lg:block">Settings</h2>
+            <div className="space-y-0">
+                {[
+                    {
+                        section: 'Profile', items: [
+                            { id: 'profile', icon: User, label: 'Profile' },
+                            { id: 'kyc', icon: ShieldCheck, label: 'KYC Verification' },
+                            { id: 'artisan_switch', icon: RefreshCw, label: 'Switch to Artisan Account' },
+                            { id: 'addresses', icon: MapPin, label: 'My Addresses' },
+                        ]
+                    },
+                    {
+                        section: 'Help & Support', items: [
+                            { id: 'about', icon: Info, label: 'About' },
+                            { id: 'contact', icon: Phone, label: 'Contact Us' },
+                            { id: 'faq', icon: HelpCircle, label: 'FAQs' },
+                        ]
+                    },
+                    {
+                        section: 'Security', items: [
+                            { id: 'password', icon: Lock, label: 'Change Password' },
+                            { id: 'pin', icon: Shield, label: 'Change Login PIN' },
+                        ]
+                    },
+                ].map(group => (
+                    <div key={group.section}>
+                        <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.18em] pt-6 pb-3">{group.section}</p>
+                        {group.items.map((item, i) => (
+                            <button key={item.id} onClick={() => setSettingsStep(item.id)}
+                                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-slate-50 transition-colors -mx-1 px-1 rounded-lg active:scale-[0.99]">
+                                <div className="flex items-center gap-3">
+                                    <item.icon size={18} className="text-[#1E4E82] shrink-0" />
+                                    <span className="font-bold text-[#0f172a] text-sm">{item.label}</span>
+                                </div>
+                                <ChevronRight size={18} className="text-gray-300 shrink-0 ml-auto" />
+                            </button>
+                        ))}
+                    </div>
+                ))}
+                <div className="pt-8">
+                    <button onClick={() => setShowLogoutModal(true)}
+                        className="flex items-center gap-3 py-4 text-red-500 font-bold text-sm active:scale-[0.99] transition-transform">
+                        <LogOut size={18} />
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+            <LogoutModal showLogoutModal={showLogoutModal} setShowLogoutModal={setShowLogoutModal} onLogout={handleLogout} />
+        </div>
+    );
+
+    const [profilePic, setProfilePic] = React.useState(null);
+    const handleProfilePicChange = (e) => {
+        const file = e.target.files[0];
+        if (file) setProfilePic(URL.createObjectURL(file));
+    };
+
+    const renderProfile = () => (
+        <div className="pt-24 lg:pt-4 pb-10 flex flex-col items-center">
+            {/* Avatar upload */}
+            <div className="flex justify-center mb-10">
+                <label className="relative cursor-pointer group">
+                    <div className="w-28 h-28 rounded-full bg-slate-200 shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
+                        {profilePic
+                            ? <img src={profilePic} alt="Profile" className="w-full h-full object-cover" />
+                            : <Camera size={32} className="text-gray-400" />
+                        }
+                    </div>
+                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#1E4E82] rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                        <Camera size={14} className="text-white" />
+                    </div>
+                    <input type="file" accept="image/*" onChange={handleProfilePicChange} className="hidden" />
+                </label>
+            </div>
+            {/* Fields */}
+            <div className="w-full max-w-4xl space-y-5 pb-8">
+                {[
+                    { label: 'Phone Number', type: 'tel', key: 'phone' },
+                    { label: 'First Name', type: 'text', key: 'firstName' },
+                    { label: 'Last Name', type: 'text', key: 'lastName' },
+                    { label: 'Gender', type: 'text', key: 'gender' },
+                    { label: 'Date of Birth', type: 'text', key: 'dob' },
+                    { label: 'Email', type: 'email', key: 'email' },
+                    { label: 'Address', type: 'text', key: 'address' },
+                ].map((field, idx) => (
+                    <div key={idx}>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block">{field.label}</label>
+                        <input
+                            type={field.type}
+                            value={field.key === 'address' ? (userProfile.addresses[0]?.address || '') : (userProfile[field.key] || '')}
+                            placeholder={field.label}
+                            onChange={(e) => {
+                                if (field.key === 'address') {
+                                    const newAddresses = [...userProfile.addresses];
+                                    if (newAddresses[0]) newAddresses[0].address = e.target.value;
+                                    setUserProfile({ ...userProfile, addresses: newAddresses });
+                                } else {
+                                    setUserProfile({ ...userProfile, [field.key]: e.target.value });
+                                }
+                            }}
+                            className="w-full px-5 py-3 rounded-[10px] border border-[#15191E] bg-[#F8FAFC] font-bold text-[#0f172a] outline-none transition-colors"
+                        />
+                    </div>
+                ))}
+            </div>
+            {/* Logout */}
+            <div className="w-full max-w-md">
+                <button onClick={() => setShowLogoutModal(true)} className="w-full py-3 bg-[#DC2626] text-white font-black rounded-[10px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
+                    <LogOut size={20} strokeWidth={2.5} /> Logout
+                </button>
+            </div>
+        </div>
+    );
+
+    const renderSuccess = (title, message, nextStep = 'main') => (
+        <div className="p-6 h-[calc(100vh-80px)] lg:h-screen flex flex-col items-center justify-center text-center max-w-md mx-auto bg-white">
+            <div className="w-full aspect-square bg-slate-50 rounded-[40px] mb-10 flex items-center justify-center relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-100 to-white opacity-50" />
+                <div className="relative z-10 scale-125">
+                    <img src="https://cdni.iconscout.com/illustration/premium/thumb/man-changing-password-illustration-download-in-svg-png-gif-formats--security-account-pack-cyber-security-illustrations-5205565.png" alt="Success" className="w-64 h-64 object-contain" />
+                </div>
+            </div>
+            <h2 className="text-2xl font-black text-[#0f172a] mb-2">{title}</h2>
+            <p className="text-gray-500 font-bold mb-12 px-4 text-sm leading-relaxed">{message}</p>
+            <button onClick={() => setSettingsStep(nextStep)} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl transition-transform active:scale-95">Continue</button>
+        </div>
+    );
+
+    const renderPasswordFlow = () => {
+        if (settingsStep === 'password_success') return renderSuccess("You're all Set!", "Your password has been changed successfully");
+        if (settingsStep === 'password_otp') return (
+            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Verify your phone number</h2>
+                <p className="text-gray-500 font-bold text-sm mb-12">We've sent a 4-digit verification code to your phone number. Please enter it below to continue.</p>
+                <div className="flex justify-center gap-4 mb-8">
+                    {[1, 2, 3, 4].map(i => <div key={i} className="w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}
+                </div>
+                <div className="text-center mb-12">
+                    <p className="text-xs font-bold text-gray-400">Didn't get code? <span className="text-[#1E4E82]">Resend 2:59</span></p>
+                </div>
+                <button onClick={() => setSettingsStep('password_reset')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Verify</button>
+            </div>
+        );
+        if (settingsStep === 'password_reset') return (
+            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Reset your Password</h2>
+                <p className="text-gray-500 font-bold text-sm mb-12">Enter your new password below. Make sure it's strong and secure</p>
+                <div className="space-y-6 flex-1">
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block">Old Password</label>
+                        <div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block">New Password</label>
+                        <div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div>
+                    </div>
+                </div>
+                <button onClick={() => setSettingsStep('password_success')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl mb-6">Reset</button>
+            </div>
+        );
+        return (
+            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl flex flex-col">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-8 mt-4 lg:mt-0">Change Password</h2>
+                <div className="space-y-6 flex-1">
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block">Email</label>
+                        <input type="email" defaultValue="artifinda@gmail.com" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block">Old Password</label>
+                        <div className="relative">
+                            <input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" />
+                            <EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        </div>
+                    </div>
+                </div>
+                <button onClick={() => setSettingsStep('password_otp')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] mb-6">Generate OTP</button>
+            </div>
+        );
+    };
+
+    const renderPinFlow = () => {
+        if (settingsStep === 'pin_success') return renderSuccess("You're all Set!", "Your login pin has been changed successfully");
+        if (settingsStep === 'pin_new') return (
+            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Set a new 6-Digit PIN</h2>
+                <p className="text-gray-500 font-bold text-sm mb-12">Enter new pin below</p>
+                <div className="flex justify-center gap-2 mb-12">
+                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-11 lg:w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}
+                </div>
+                <button onClick={() => setSettingsStep('pin_success')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Continue</button>
+            </div>
+        );
+        return (
+            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Change Login PIN</h2>
+                <p className="text-gray-500 font-bold text-sm mb-12">Enter current pin below</p>
+                <div className="flex justify-center gap-2 mb-12">
+                    {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-11 lg:w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}
+                </div>
+                <button onClick={() => setSettingsStep('pin_new')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Continue</button>
+            </div>
+        );
+    };
+
+    const renderAddresses = () => {
+        if (settingsSubStep === 'add') return (
+            <div className="pt-24 lg:pt-4 pb-10 max-w-2xl text-left">
+                <div className="mb-8 mt-4 lg:mt-0">
+                    <h2 className="text-2xl font-black text-[#0f172a] mb-2">Help us locate you better</h2>
+                    <p className="text-gray-500 font-bold text-sm">Please provide your address and a document for verification.</p>
+                </div>
+                <div className="space-y-6 flex-1">
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Location</label>
+                        <div className="relative"><input type="text" placeholder="Garki Area 1, Abuja" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><MapPin size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Current coordinates</label>
+                        <div className="w-full p-4.5 rounded-[20px] bg-slate-50 border border-gray-100 font-bold text-gray-400 text-sm flex items-center gap-3"><MapPin size={18} /> 4.5678° N, 12.3456° E</div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Upload a Document (Verification)</label>
+                        <div className="w-full border-2 border-dashed border-gray-200 rounded-[28px] p-10 flex flex-col items-center justify-center text-center bg-slate-50/50">
+                            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-gray-400 mb-4"><Image size={32} /></div>
+                            <p className="text-sm font-bold text-gray-400">Add documents like utility bills, rent receipts etc.</p>
+                        </div>
+                    </div>
+                </div>
+                <button onClick={() => { setSettingsStep('addresses'); setSettingsSubStep('list'); }} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl mt-8 transition-all active:scale-95">Submit</button>
+            </div>
+        );
+        return (
+            <div className="pt-24 lg:pt-4 pb-10 max-w-2xl text-left">
+                <div className="space-y-4">
+                    {userProfile.addresses.map((addr) => (
+                        <div key={addr.id} className="p-6 bg-[#EEF4FB] border border-[#D1E1F4] rounded-[16px] shadow-sm relative transition-all overflow-hidden group">
+                            <div className="flex items-center justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#24639C] shrink-0 shadow-sm border border-slate-50"><Home size={20} /></div>
+                                    <h4 className="font-black text-[#24639C] text-sm tracking-tight">{addr.type === 'Home' ? 'Default Address' : addr.type}</h4>
+                                </div>
+                                {addr.status === 'verified' && (
+                                    <span className="text-[10px] font-black text-[#0F9E7B] bg-[#E3F9F1] px-3 py-1.5 rounded-lg uppercase tracking-wider">Verified</span>
+                                )}
+                            </div>
+                            <div className="pl-13">
+                                <p className="text-gray-500 font-bold text-xs mt-1 mb-4 leading-relaxed max-w-xs">{addr.address}</p>
+                                <div className="flex items-center gap-2 text-[#0F9E7B] font-black text-[10px] items-center">
+                                    <MapPin size={14} className="fill-[#0F9E7B]/10" />
+                                    <span>Location verified</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                    <button onClick={() => setSettingsSubStep('add')} className="w-full h-24 mt-4 bg-white border border-[#D1E1F4] rounded-[16px] flex items-center justify-center gap-2 group transition-all active:scale-[0.98] hover:bg-slate-50 shadow-sm">
+                        <PlusCircle size={24} className="text-[#24639C] stroke-[2.5]" />
+                        <span className="font-bold text-[#24639C] text-sm">Add New Address</span>
+                    </button>
+                    {userProfile.addresses.length === 0 && (
+                        <div className="text-center py-12 bg-white rounded-[28px] border border-dashed border-gray-200 text-gray-400 font-bold uppercase tracking-widest text-[9px]">
+                            No addresses saved yet
+                        </div>
+                    )}
+                </div>
+            </div>
+        );
+    };
+
+    const renderFaq = () => {
+        const filteredFaqs = FAQ_DATA.filter(item => item.category === faqCategory);
+
+        return (
+            <div className="pt-24 lg:pt-4 pb-12 text-left">
+
+                {/* FAQ Tabs */}
+                <div className="flex border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar">
+                    {['General', 'Account & Profile', 'Bookings', 'Payments'].map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => { setFaqCategory(cat); setVisibleFaq(null); }}
+                            className={`px-6 py-4 font-bold text-sm whitespace-nowrap transition-all border-b-2 ${faqCategory === cat ? 'border-[#1E4E82] text-[#1E4E82]' : 'border-transparent text-gray-400'}`}
+                        >
+                            {cat}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="space-y-4">
+                    {filteredFaqs.map(item => (
+                        <div key={item.id} className="bg-white border border-slate-200 rounded-[16px] overflow-hidden shadow-sm transition-all hover:border-[#1E4E82]/20">
+                            <button
+                                onClick={() => toggleFaq(item.id)}
+                                className="w-full flex items-center justify-between p-6 text-left transition-colors"
+                            >
+                                <span className={`font-bold text-sm ${visibleFaq === item.id ? 'text-[#1E4E82]' : 'text-[#0f172a]'}`}>{item.q}</span>
+                                <div className={`transition-transform duration-300 ${visibleFaq === item.id ? 'rotate-180 text-[#1E4E82]' : 'text-gray-300'}`}>
+                                    <ChevronDown size={20} />
+                                </div>
+                            </button>
+                            <AnimatePresence>
+                                {visibleFaq === item.id && (
+                                    <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        className="overflow-hidden bg-slate-50/50"
+                                    >
+                                        <div className="px-6 pb-6 pt-2">
+                                            <div className="w-full h-[1px] bg-slate-200 mb-4 opacity-50" />
+                                            <p className="text-sm text-gray-500 font-bold leading-relaxed">{item.a}</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    ))}
+                    {filteredFaqs.length === 0 && (
+                        <div className="text-center py-12 text-gray-400 font-bold text-sm bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                            No questions in this category yet.
+                        </div>
+                    )}
+                </div>
+
+                <div className="mt-12 p-8 bg-[#1e293b] rounded-[32px] text-center text-white shadow-xl">
+                    <h4 className="text-xl font-black mb-2">Still need help?</h4>
+                    <p className="text-gray-400 font-bold text-xs mb-8">Our support team is here for you 24/7</p>
+                    <div className="flex flex-wrap justify-center gap-6">
+                        {[
+                            { icon: Mail, label: 'Email' },
+                            { icon: Phone, label: 'Phone' },
+                            { icon: MessageCircle, label: 'WhatsApp' },
+                            { icon: Instagram, label: 'Instagram' },
+                            { icon: Twitter, label: 'Twitter' },
+                        ].map((s, i) => (
+                            <button key={i} onClick={() => setSettingsStep('contact')} className="flex items-center gap-2 hover:text-blue-400 transition-colors text-xs font-bold">
+                                <s.icon size={16} /> {s.label === 'Twitter' ? '𝕏' : ''} {s.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    const renderContact = () => (
+        <div className="pt-24 lg:pt-4 pb-10">
+
+            <div className="space-y-4">
+                {[
+                    { icon: Mail, label: 'Email', value: 'support@artifinda.com', color: 'bg-blue-50 text-blue-500' },
+                    { icon: Phone, label: 'Phone', value: '+234 812 345 6789', color: 'bg-green-50 text-green-500' },
+                    { icon: MessageCircle, label: 'WhatsApp', value: 'Chat with us', color: 'bg-emerald-50 text-emerald-500' },
+                    { icon: Twitter, label: 'Twitter', value: '@artifinda', color: 'bg-sky-50 text-sky-500' },
+                    { icon: Facebook, label: 'Facebook', value: 'Artifinda Africa', color: 'bg-indigo-50 text-indigo-500' },
+                    { icon: Instagram, label: 'Instagram', value: '@artifinda_global', color: 'bg-pink-50 text-pink-500' },
+                ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-5 bg-white border border-gray-100 rounded-[28px] shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center`}><item.icon size={24} /></div>
+                            <div>
+                                <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.label}</h4>
+                                <p className="font-black text-[#0f172a] text-sm">{item.value}</p>
+                            </div>
+                        </div>
+                        <ChevronRight size={18} className="text-gray-300" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    const renderAbout = () => (
+        <div className="pt-24 lg:pt-4 pb-10">
+            <div className="flex flex-col items-center mb-12">
+                <div className="w-24 h-24 bg-[#1E4E82] rounded-[32px] flex items-center justify-center text-white text-3xl font-black mb-4 shadow-xl rotate-12">A</div>
+                <h3 className="text-xl font-black text-[#0f172a]">Version 2.0.4</h3>
+            </div>
+            <div className="space-y-6 text-center px-4">
+                <p className="text-gray-500 font-bold leading-relaxed">Artifinda is Africa's leading platform for connecting homeowners with verified, high-quality artisans.</p>
+                <p className="text-gray-500 font-bold leading-relaxed">Our mission is to simplify the process of finding and hiring skilled workers while ensuring safety, quality, and transparency for both parties.</p>
+                <div className="pt-12 border-t border-gray-100 flex justify-center gap-8">
+                    <span className="text-xs font-black text-[#1E4E82] uppercase tracking-widest cursor-pointer">Terms</span>
+                    <span className="text-xs font-black text-[#1E4E82] uppercase tracking-widest cursor-pointer">Privacy</span>
+                    <span className="text-xs font-black text-[#1E4E82] uppercase tracking-widest cursor-pointer">Policy</span>
+                </div>
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="flex-1 lg:ml-[240px] bg-[#F8FAFC] min-h-screen transition-all duration-300">
+            <div className="max-w-6xl mx-auto w-full px-5 lg:px-4 flex flex-col pt-20 lg:pt-6 bg-[#F8FAFC] min-h-screen overflow-y-auto no-scrollbar">
+                {/* Desktop header - only on sub-steps */}
+                {settingsStep !== 'main' && (
+                    <div className="hidden lg:flex items-center gap-3 mb-4">
+                        <button onClick={() => {
+                            if (settingsStep === 'addresses' && settingsSubStep === 'add') setSettingsSubStep('list');
+                            else setSettingsStep('main');
+                        }} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform">
+                            <ChevronLeft size={24} strokeWidth={2.5} />
+                        </button>
+                        <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">
+                            {settingsStep === 'profile' ? 'Profile' :
+                                settingsStep === 'addresses' ? 'My Addresses' :
+                                    (settingsStep === 'password' || settingsStep === 'password_otp' || settingsStep === 'password_reset') ? 'Change Password' :
+                                        (settingsStep === 'pin' || settingsStep === 'pin_new') ? 'Change Login PIN' :
+                                            settingsStep === 'faq' ? 'FAQs' :
+                                                settingsStep === 'contact' ? 'Contact Us' :
+                                                    settingsStep === 'about' ? 'About Artifinda' : 'Settings'}
+                        </h1>
+                    </div>
+                )}
+                {settingsStep === 'main' && renderMain()}
+                {settingsStep === 'profile' && renderProfile()}
+                {(settingsStep === 'password' || settingsStep === 'password_otp' || settingsStep === 'password_reset' || settingsStep === 'password_success') && renderPasswordFlow()}
+                {(settingsStep === 'pin' || settingsStep === 'pin_new' || settingsStep === 'pin_success') && renderPinFlow()}
+                {settingsStep === 'addresses' && renderAddresses()}
+                {settingsStep === 'faq' && renderFaq()}
+                {settingsStep === 'contact' && renderContact()}
+                {settingsStep === 'about' && renderAbout()}
+                {settingsStep === 'success' && renderSuccess("You're all set!", "Your changes have been saved successfully.")}
+            </div>
         </div>
     );
 };
@@ -259,9 +821,154 @@ const UserDashboard = () => {
     const [showMenuModal, setShowMenuModal] = useState(false);
     const [selectedReportOption, setSelectedReportOption] = useState(null);
 
+    // Dynamic Search & Category State
+    const [popularServices, setPopularServices] = useState([]);
+    const [categorySkills, setCategorySkills] = useState([]);
+    const [searchResults, setSearchResults] = useState([]);
+    const [loadingPopular, setLoadingPopular] = useState(false);
+    const [loadingSkills, setLoadingSkills] = useState(false);
+    const [loadingSearch, setLoadingSearch] = useState(false);
+    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedSkill, setSelectedSkill] = useState(null);
+    const [topArtisans, setTopArtisans] = useState([]);
+    const [loadingTopRated, setLoadingTopRated] = useState(false);
+
+    // Settings State
+    const [settingsStep, setSettingsStep] = useState('main'); // 'main', 'profile', 'addresses', 'password', 'pin', 'faq', 'contact', 'about', 'password_success', 'pin_success'
+    const [settingsSubStep, setSettingsSubStep] = useState('list'); // 'list', 'add'
+    const [showLogoutModal, setShowLogoutModal] = useState(false);
+    // User Profile State
+    const [userProfile, setUserProfile] = useState(USER_PROFILE);
+    const [faqCategory, setFaqCategory] = useState('General');
+    const [visibleFaq, setVisibleFaq] = useState(null);
+
+    const toggleFaq = (id) => setVisibleFaq(visibleFaq === id ? null : id);
+
+    useEffect(() => {
+        const fetchPopular = async () => {
+            if (popularServices.length > 0) return;
+            setLoadingPopular(true);
+            try {
+                const data = await categoryService.getPopularServices();
+                setPopularServices(data);
+            } catch (err) {
+                console.error("Failed to load popular services:", err);
+            } finally {
+                setLoadingPopular(false);
+            }
+        };
+
+        const fetchTopRated = async () => {
+            setLoadingTopRated(true);
+            try {
+                // Step 1: Get real GPS coordinates
+                const getUserCoords = () => new Promise((resolve) => {
+                    if (!navigator.geolocation) return resolve({ lat: 0, lng: 0 });
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                        () => resolve({ lat: 0, lng: 0 }),
+                        { timeout: 5000 }
+                    );
+                });
+
+                const { lat, lng } = await getUserCoords();
+
+                // Step 2: Reverse geocode to get address string
+                let resolvedAddress = "";
+                if (lat !== 0 && lng !== 0) {
+                    try {
+                        const geoRes = await fromLatLng(lat, lng);
+                        resolvedAddress = geoRes.results[0]?.formatted_address || "";
+                    } catch (geoErr) {
+                        console.warn("Reverse geocode failed:", geoErr);
+                    }
+                }
+
+                const searchPayload = {
+                    page: 1,
+                    size: 20,
+                    address: resolvedAddress,
+                    longitude: lng,
+                    latitude: lat,
+                    topArtisans: true,
+                    serviceMode: "HOME_SERVICE"
+                };
+                const data = await customerService.searchArtisans(searchPayload);
+                setTopArtisans(data);
+            } catch (err) {
+                console.error("Failed to load top rated artisans:", err);
+            } finally {
+                setLoadingTopRated(false);
+            }
+        };
+
+        fetchPopular();
+        fetchTopRated();
+    }, [userProfile.addresses]);
+
     const handleCancelBooking = (bookingId) => {
         setBookingsData(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'canceled', type: 'canceled' } : b));
         setSelectedBooking(null);
+    };
+
+    const handleCategoryClick = async (category) => {
+        setSelectedCategory(category);
+        setSelectedSkill(null);
+        setCategorySkills([]);
+        setLoadingSkills(true);
+        try {
+            const data = await categoryService.getSkills(category.id);
+            setCategorySkills(data);
+        } catch (err) {
+            console.error("Failed to load skills:", err);
+        } finally {
+            setLoadingSkills(false);
+        }
+    };
+
+    const handleSkillClick = async (skill) => {
+        setSelectedSkill(skill);
+        setLoadingSearch(true);
+        try {
+            // Get real coordinates from the browser
+            const getUserCoords = () => new Promise((resolve) => {
+                if (!navigator.geolocation) return resolve({ lat: 0, lng: 0 });
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                    () => resolve({ lat: 0, lng: 0 }),
+                    { timeout: 5000 }
+                );
+            });
+            const { lat, lng } = await getUserCoords();
+
+            // Reverse geocode to get address string
+            let resolvedAddress = "";
+            if (lat !== 0 && lng !== 0) {
+                try {
+                    const geoRes = await fromLatLng(lat, lng);
+                    resolvedAddress = geoRes.results[0]?.formatted_address || "";
+                } catch (geoErr) {
+                    console.warn("Reverse geocode failed:", geoErr);
+                }
+            }
+
+            const searchPayload = {
+                categorySkillId: skill.id,
+                categoryId: selectedCategory?.id,
+                address: resolvedAddress,
+                latitude: lat,
+                longitude: lng,
+                serviceMode: "HOME_SERVICE",
+                topArtisans: true
+            };
+            const data = await customerService.searchArtisans(searchPayload);
+            setSearchResults(data);
+            setSearchQuery(skill.name);
+        } catch (err) {
+            console.error("Search failed:", err);
+        } finally {
+            setLoadingSearch(false);
+        }
     };
 
 
@@ -282,6 +989,10 @@ const UserDashboard = () => {
                 setCurrentView={setCurrentView}
                 selectedArtisan={selectedArtisan}
                 setSelectedArtisan={setSelectedArtisan}
+                settingsStep={settingsStep}
+                setSettingsStep={setSettingsStep}
+                settingsSubStep={settingsSubStep}
+                setSettingsSubStep={setSettingsSubStep}
             />
             <MobileMenu
                 isMenuOpen={isMenuOpen}
@@ -296,7 +1007,19 @@ const UserDashboard = () => {
                 <motion.div key={selectedBooking ? `details-${selectedBooking.id}` : currentView} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="flex-1 w-full">
                     {selectedBooking ? <OrderDetailsView booking={selectedBooking} setSelectedBooking={setSelectedBooking} handleCancelBooking={handleCancelBooking} setCurrentChat={setCurrentChat} setCurrentView={setCurrentView} setMessagesViewStep={setMessagesViewStep} /> : (
                         <>
-                            {currentView === 'home' && <HomeView setCurrentView={setCurrentView} setNotificationsViewStep={setNotificationsViewStep} TOP_ARTISANS={TOP_ARTISANS} setIsMenuOpen={setIsMenuOpen} isMenuOpen={isMenuOpen} />}
+                             {currentView === 'home' && <HomeView 
+                                userProfile={userProfile} 
+                                setCurrentView={setCurrentView} 
+                                setNotificationsViewStep={setNotificationsViewStep} 
+                                topArtisans={topArtisans} 
+                                loadingTopRated={loadingTopRated}
+                                setIsMenuOpen={setIsMenuOpen} 
+                                isMenuOpen={isMenuOpen} 
+                                handleCategoryClick={handleCategoryClick} 
+                                popularServices={popularServices} 
+                                setSearchQuery={setSearchQuery} 
+                                loadingPopular={loadingPopular} 
+                             />}
                             {currentView === 'bookings' && <BookingsView bookingsData={bookingsData} bookingTab={bookingTab} setBookingTab={setBookingTab} setSelectedBooking={setSelectedBooking} setCurrentChat={setCurrentChat} setMessagesViewStep={setMessagesViewStep} setCurrentView={setCurrentView} />}
                             {currentView === 'messages' && <MessagesView
                                 messagesViewStep={messagesViewStep}
@@ -316,7 +1039,7 @@ const UserDashboard = () => {
                                 setCurrentView={setCurrentView}
                             />}
                             {currentView === 'notifications' && <NotificationsView notificationsViewStep={notificationsViewStep} setNotificationsViewStep={setNotificationsViewStep} selectedNotification={selectedNotification} setSelectedNotification={setSelectedNotification} setCurrentView={setCurrentView} />}
-                            {currentView === 'settings' && <div className="flex-1 p-6 lg:ml-[240px] pt-24 lg:pt-10 h-screen flex flex-col items-center justify-center text-gray-300 font-bold uppercase tracking-widest"><Settings size={48} className="mb-4 opacity-10" /> Settings Coming Soon</div>}
+                            {currentView === 'settings' && <SettingsView settingsStep={settingsStep} setSettingsStep={setSettingsStep} settingsSubStep={settingsSubStep} setSettingsSubStep={setSettingsSubStep} showLogoutModal={showLogoutModal} setShowLogoutModal={setShowLogoutModal} userProfile={userProfile} setUserProfile={setUserProfile} faqCategory={faqCategory} setFaqCategory={setFaqCategory} visibleFaq={visibleFaq} setVisibleFaq={setVisibleFaq} toggleFaq={toggleFaq} setCurrentView={setCurrentView} />}
                             {currentView === 'search' && <SearchView
                                 searchQuery={searchQuery}
                                 setSearchQuery={setSearchQuery}
@@ -326,12 +1049,31 @@ const UserDashboard = () => {
                                 setSelectedArtisan={setSelectedArtisan}
                                 isMenuOpen={isMenuOpen}
                                 setIsMenuOpen={setIsMenuOpen}
+                                isFilterModalOpen={isFilterModalOpen}
                                 setIsFilterModalOpen={setIsFilterModalOpen}
                                 setCurrentView={setCurrentView}
                                 isBookingFormOpen={isBookingFormOpen}
                                 setIsBookingFormOpen={setIsBookingFormOpen}
                                 filtersEnabled={filtersEnabled}
                                 setFiltersEnabled={setFiltersEnabled}
+                                popularServices={popularServices}
+                                setPopularServices={setPopularServices}
+                                categorySkills={categorySkills}
+                                setCategorySkills={setCategorySkills}
+                                searchResults={searchResults}
+                                setSearchResults={setSearchResults}
+                                loadingPopular={loadingPopular}
+                                setLoadingPopular={setLoadingPopular}
+                                loadingSkills={loadingSkills}
+                                setLoadingSkills={setLoadingSkills}
+                                loadingSearch={loadingSearch}
+                                setLoadingSearch={setLoadingSearch}
+                                selectedCategory={selectedCategory}
+                                setSelectedCategory={setSelectedCategory}
+                                 selectedSkill={selectedSkill}
+                                setSelectedSkill={setSelectedSkill}
+                                handleCategoryClick={handleCategoryClick}
+                                handleSkillClick={handleSkillClick}
                             />}
                         </>
                     )}
@@ -375,7 +1117,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                         placeholder="Search"
                         value={searchMessages}
                         onChange={(e) => setSearchMessages(e.target.value)}
-                        className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-100 bg-white focus:outline-none focus:border-[#1E4E82]/30 text-gray-700 font-bold text-xs shadow-sm"
+                        className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-100 bg-white focus:outline-none focus:border-[#1E4E82]/30 text-gray-700 font-bold text-sm shadow-sm"
                     />
                 </div>
                 <div className="space-y-1">
@@ -392,13 +1134,13 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                             <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden shrink-0 shadow-inner"><img src={msg.avatar} alt="" className="w-full h-full object-cover" /></div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-0.5">
-                                    <h4 className="font-bold text-[#0f172a] truncate text-xs">{msg.artisan}</h4>
-                                    <span className="text-[8px] text-gray-400 font-black uppercase tracking-widest">{msg.time}</span>
+                                    <h4 className="font-bold text-[#0f172a] truncate text-sm">{msg.artisan}</h4>
+                                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{msg.time}</span>
                                 </div>
                                 <div className="flex items-center justify-between gap-2">
                                     <div className="flex items-center gap-2 overflow-hidden">
                                         {msg.hasInvoice && <span className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-50 border border-gray-100 rounded text-[7px] font-black text-gray-500 uppercase shrink-0"><CreditCard size={8} /> invoice</span>}
-                                        <p className="text-[10px] text-gray-400 truncate font-bold">{msg.lastMessage}</p>
+                                        <p className="text-xs text-gray-400 truncate font-bold">{msg.lastMessage}</p>
                                     </div>
                                     {msg.unread > 0 && <span className="w-4 h-4 bg-[#1E4E82] text-white text-[8px] font-black rounded-full flex items-center justify-center shrink-0">{msg.unread}</span>}
                                 </div>
@@ -481,7 +1223,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                 <div className="flex items-center gap-3">
                     <button onClick={() => setMessagesViewStep('list')} className="p-2 -ml-2 text-[#0f172a]"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm"><img src={currentChat?.avatar} alt="" className="w-full h-full object-cover" /></div>
-                    <div className="min-w-0"><h4 className="font-bold text-[#0f172a] -mb-1 truncate text-sm">{currentChat?.artisan}</h4><div className="flex items-center gap-1 text-[9px] font-bold text-gray-400 uppercase tracking-widest truncate"><MapPin size={8} /> {currentChat?.location}</div></div>
+                    <div className="min-w-0"><h4 className="font-bold text-[#0f172a] -mb-1 truncate text-base">{currentChat?.artisan}</h4><div className="flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-widest truncate"><MapPin size={8} /> {currentChat?.location}</div></div>
                 </div>
                 <div className="flex items-center gap-1.5">
                     {currentChat?.hasInvoice && <button onClick={() => setMessagesViewStep('invoice_detail')} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors animate-pulse"><CreditCard size={20} strokeWidth={2.5} /></button>}
@@ -504,7 +1246,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                 {chatMessages.map((msg, idx) => (
                     <div key={idx} className={`flex flex-col ${msg.sender === 'user' ? 'items-end ml-auto' : 'items-start'} gap-1 max-w-[85%]`}>
                         {msg.type === 'text' && (
-                            <div className={`${msg.sender === 'user' ? 'bg-[#1E4E82] text-white rounded-tr-none' : 'bg-[#F1F5F9] text-[#0f172a] rounded-tl-none'} p-4 font-medium text-sm rounded-[24px] leading-relaxed shadow-sm`}>
+                            <div className={`${msg.sender === 'user' ? 'bg-[#1E4E82] text-white rounded-tr-none' : 'bg-[#F1F5F9] text-[#0f172a] rounded-tl-none'} p-4 font-medium text-base rounded-[24px] leading-relaxed shadow-sm`}>
                                 {msg.content}
                             </div>
                         )}
@@ -950,19 +1692,37 @@ const NotificationsView = ({ notificationsViewStep, setNotificationsViewStep, se
 };
 
 
-const SearchView = ({ searchQuery, setSearchQuery, recentSearches, setRecentSearches, selectedArtisan, setSelectedArtisan, isMenuOpen, setIsMenuOpen, setIsFilterModalOpen, setCurrentView, isBookingFormOpen, setIsBookingFormOpen, filtersEnabled, setFiltersEnabled }) => {
-    const filteredArtisans = TOP_ARTISANS.filter(a =>
-        a.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        a.role.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+// SearchSkeleton moved to separate component
 
+const SearchView = ({
+    searchQuery, setSearchQuery, isFilterModalOpen, setIsFilterModalOpen,
+    popularServices, loadingPopular, categorySkills, loadingSkills, searchResults,
+    loadingSearch, setLoadingSearch, selectedCategory, setSelectedCategory, selectedSkill, setSelectedSkill,
+    handleCategoryClick, handleSkillClick, selectedArtisan, setSelectedArtisan,
+    setIsBookingFormOpen, isBookingFormOpen, currentView, setCurrentView,
+    setCategorySkills, setSearchResults
+}) => {
     return (
         <div className="flex-1 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen lg:p-6 transition-all duration-300">
             <div className="w-full pb-32 flex flex-col pt-16 lg:pt-6 bg-white min-h-screen border border-transparent lg:border-slate-100 lg:rounded-[24px] lg:shadow-sm px-5 lg:px-8">
                 <div className="hidden lg:flex items-center justify-between gap-4 mb-6 border-b border-slate-50 pb-4">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => { if (selectedArtisan) setSelectedArtisan(null); else setCurrentView('home'); }} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
-                        <h1 className="text-xl font-black text-[#0f172a] tracking-tight">{selectedArtisan ? 'View Profile' : 'Search'}</h1>
+                        <button onClick={() => { 
+                            if (selectedSkill) {
+                                setSelectedSkill(null);
+                                setSearchResults([]);
+                            } else if (selectedCategory) {
+                                setSelectedCategory(null);
+                                setCategorySkills([]);
+                            } else if (selectedArtisan) {
+                                setSelectedArtisan(null);
+                            } else {
+                                setCurrentView('home');
+                            }
+                        }} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                        <h1 className="text-xl font-black text-[#0f172a] tracking-tight">
+                            {selectedArtisan ? 'View Profile' : selectedSkill ? selectedSkill.name : selectedCategory ? selectedCategory.name : 'Search'}
+                        </h1>
                     </div>
                 </div>
 
@@ -984,73 +1744,107 @@ const SearchView = ({ searchQuery, setSearchQuery, recentSearches, setRecentSear
                             </button>
                         </div>
 
-                        {!searchQuery && recentSearches.length > 0 && (
-                            <div className="mb-8 animate-in fade-in duration-500">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-[10px] font-medium text-gray-400 uppercase tracking-widest">Recents</h3>
-                                    <button onClick={() => setRecentSearches([])} className="text-[9px] font-black text-[#1E4E82]/60 hover:text-[#1E4E82] transition-colors uppercase tracking-tight">Clear All</button>
-                                </div>
-                                <div className="space-y-1">
-                                    {recentSearches.map((s, idx) => (
-                                        <button
-                                            key={idx}
-                                            onClick={() => setSearchQuery(s)}
-                                            className="w-full p-4 text-left text-gray-600 font-bold hover:bg-slate-50 transition-colors border-b border-slate-50 last:border-0 active:scale-[0.99] text-xs px-2"
-                                        >
-                                            {s}
-                                        </button>
-                                    ))}
-                                </div>
+                        {!searchQuery && !selectedCategory && (
+                            <div className="animate-in fade-in duration-500">
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Popular Services</h3>
+                                {loadingPopular ? (
+                                    <SearchSkeleton type="category" />
+                                ) : (
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                                        {popularServices.map((item) => (
+                                            <button 
+                                                key={item.id} 
+                                                onClick={() => handleCategoryClick(item.category)} 
+                                                className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-gray-100 hover:border-blue-200 transition-all active:scale-95"
+                                            >
+                                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-900 shadow-sm overflow-hidden">
+                                                    {item.category?.image ? <img src={item.category.image} alt="" className="w-full h-full object-cover" /> : <Info size={24} />}
+                                                </div>
+                                                <span className="text-[11px] font-black text-[#0f172a] uppercase tracking-tighter">{item.name}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         )}
 
-                        {searchQuery && (
-                            <div className="animate-in fade-in duration-500">
-                                {filtersEnabled && (
-                                    <div className="w-full bg-[#E8F0FE] border border-blue-100 text-[#1E4E82] py-3.5 px-5 rounded-[14px] mb-6 flex justify-between items-center shadow-sm">
-                                        <span className="text-xs font-bold tracking-wide flex items-center gap-2">
-                                            <Filter size={14} className="fill-[#1E4E82]" />
-                                            Filters enabled
-                                        </span>
-                                        <button onClick={() => setFiltersEnabled(false)} className="text-[9px] font-bold uppercase tracking-widest hover:text-blue-900 active:scale-95 transition-all">
-                                            Clear
-                                        </button>
+                        {selectedCategory && !selectedSkill && (
+                            <div className="animate-in slide-in-from-right duration-300">
+                                <div className="flex items-center gap-2 mb-6">
+                                    <button onClick={() => setSelectedCategory(null)} className="text-blue-900 text-xs font-black uppercase tracking-widest">Back to Categories</button>
+                                </div>
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Skills for {selectedCategory.name}</h3>
+                                {loadingSkills ? (
+                                    <SearchSkeleton type="skill" />
+                                ) : (
+                                    <div className="flex flex-wrap gap-2 mb-8">
+                                        {categorySkills.map((skill) => (
+                                            <button 
+                                                key={skill.id} 
+                                                onClick={() => handleSkillClick(skill)} 
+                                                className="px-5 py-2.5 bg-white border border-gray-200 rounded-full text-xs font-bold text-[#0f172a] hover:border-blue-900 hover:text-blue-900 transition-all active:scale-95"
+                                            >
+                                                {skill.name}
+                                            </button>
+                                        ))}
                                     </div>
                                 )}
-                                <h3 className="text-[12px] font-medium text-gray-500 mb-6">Results for <span className="text-[#1E4E82]">"{searchQuery}" ({filteredArtisans.length})</span></h3>
-                                <div className="space-y-4 pb-20">
-                                    {filteredArtisans.map((artisan) => (
-                                        <div
-                                            key={artisan.id}
-                                            onClick={() => setSelectedArtisan(artisan)}
-                                            className="bg-white border border-gray-100 rounded-[20px] p-4 flex flex-col lg:flex-row gap-4 lg:items-center justify-between shadow-sm hover:border-[#1E4E82]/20 transition-all cursor-pointer group active:scale-[0.99] relative overflow-hidden"
-                                        >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-500 relative">
-                                                    <img src={artisan.image} alt="" className="w-full h-full object-cover" />
-                                                    {artisan.isVerified && <div className="absolute top-0.5 right-0.5 bg-[#1E4E82] text-white p-0.5 rounded-full border border-white"><CheckCircle2 size={8} strokeWidth={3} /></div>}
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                                                        <h5 className="font-medium text-[14px] text-[#0f172a] tracking-tight">{artisan.name}</h5>
-                                                        <span className={`text-[7px] font-medium px-1.5 py-0.5 rounded-sm uppercase tracking-tighter border ${artisan.isVerified ? 'bg-[#1E4E82] text-white border-blue-900' : 'bg-orange-500 text-white border-orange-600'}`}>
-                                                            {artisan.isVerified ? 'Verified' : 'Pending'}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] font-bold uppercase tracking-tight text-gray-400">
-                                                        <span className="text-[#1E4E82]">{artisan.role}</span>
-                                                        <span className="flex items-center gap-1 text-gray-500"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating}</span>
-                                                        <span className="flex items-center gap-1"><MapPin size={10} /> {artisan.distance}</span>
-                                                    </div>
-                                                </div>
-                                            </div>
+                            </div>
+                        )}
 
-                                            <div className="flex lg:flex-col lg:items-end justify-between items-center shrink-0">
-                                                <div className="text-lg font-medium text-[#0f172a]">₦{artisan.price}<span className="text-[8px] text-gray-400 uppercase tracking-[0.2em] block lg:text-right">/hr</span></div>
-                                            </div>
-                                        </div>
-                                    ))}
+                        {(searchQuery || selectedSkill) && (
+                            <div className="animate-in fade-in duration-500">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-[12px] font-medium text-gray-500">
+                                        Results for <span className="text-[#1E4E82]">"{searchQuery || selectedSkill?.name}" ({searchResults.length || 0})</span>
+                                    </h3>
+                                    {selectedSkill && (
+                                        <button onClick={() => { setSelectedSkill(null); setSearchResults([]); }} className="text-[9px] font-black text-blue-900 uppercase">Clear</button>
+                                    )}
                                 </div>
+                                {loadingSearch ? (
+                                    <SearchSkeleton type="results" />
+                                ) : searchResults.length > 0 ? (
+                                    <div className="space-y-4 pb-20">
+                                        {searchResults.map((artisan) => (
+                                            <div
+                                                key={artisan.id}
+                                                onClick={() => setSelectedArtisan(artisan)}
+                                                className="bg-white border border-gray-100 rounded-[20px] p-4 flex flex-col lg:flex-row gap-4 lg:items-center justify-between shadow-sm hover:border-[#1E4E82]/20 transition-all cursor-pointer group active:scale-[0.99] relative overflow-hidden"
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-500 relative">
+                                                        <img src={artisan.image || artisan.profilePicture} alt="" className="w-full h-full object-cover" />
+                                                        {artisan.isVerified && <div className="absolute top-0.5 right-0.5 bg-[#1E4E82] text-white p-0.5 rounded-full border border-white"><CheckCircle2 size={8} strokeWidth={3} /></div>}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                                            <h5 className="font-medium text-[14px] text-[#0f172a] tracking-tight">{artisan.firstName} {artisan.lastName}</h5>
+                                                            <span className={`text-[7px] font-medium px-1.5 py-0.5 rounded-sm uppercase tracking-tighter border ${artisan.status === 'ACTIVE' ? 'bg-[#1E4E82] text-white border-blue-900' : 'bg-orange-500 text-white border-orange-600'}`}>
+                                                                {artisan.status === 'ACTIVE' ? 'Verified' : 'Pending'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] font-bold uppercase tracking-tight text-gray-400">
+                                                            <span className="text-[#1E4E82]">{artisan.skillName || selectedSkill?.name}</span>
+                                                            <span className="flex items-center gap-1 text-gray-500"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || '4.5'}</span>
+                                                            <span className="flex items-center gap-1"><MapPin size={10} /> {artisan.distance || '2.4km away'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="flex lg:flex-col lg:items-end justify-between items-center shrink-0">
+                                                    <div className="text-lg font-medium text-[#0f172a]">₦{artisan.rate || '4,500'}<span className="text-[8px] text-gray-400 uppercase tracking-[0.2em] block lg:text-right">/hr</span></div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="py-20 text-center">
+                                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <Search className="text-slate-200" size={32} />
+                                        </div>
+                                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No artisans found for this skill</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
@@ -1290,7 +2084,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
 
                     <div className="absolute -bottom-6 lg:-bottom-8 left-5 lg:left-8 flex items-end gap-3 px-1">
                         <div className="w-20 h-20 lg:w-28 lg:h-28 rounded-full border-4 border-white overflow-hidden shadow-sm relative bg-white">
-                            <img src={artisan.image} alt="" className="w-full h-full object-cover" />
+                            <img src={artisan.profilePicture || artisan.image} alt="" className="w-full h-full object-cover" />
                             <div className="absolute top-1 right-1 lg:top-2 lg:right-2 w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-white shadow-sm" />
                         </div>
                     </div>
@@ -1299,11 +2093,13 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                 <div className="px-5 lg:px-8 space-y-6 lg:space-y-8 w-full">
                     <div className="pt-2">
                         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                            <h1 className="text-xl lg:text-3xl font-black text-[#0f172a] tracking-tight leading-none">{artisan.name}</h1>
-                            {artisan.isVerified && <span className="bg-[#1E4E82] text-white px-2 py-0.5 rounded-md text-[9px] lg:text-[10px] font-bold uppercase tracking-widest shadow-sm">Verified</span>}
+                            <h1 className="text-xl lg:text-3xl font-black text-[#0f172a] tracking-tight leading-none">
+                                {artisan.firstName ? `${artisan.firstName} ${artisan.lastName}` : artisan.name}
+                            </h1>
+                            {(artisan.isVerified || artisan.status === 'ACTIVE') && <span className="bg-[#1E4E82] text-white px-2 py-0.5 rounded-md text-[9px] lg:text-[10px] font-bold uppercase tracking-widest shadow-sm">Verified</span>}
                         </div>
                         <p className="text-xs lg:text-sm font-semibold text-slate-500 tracking-tight flex items-center gap-1.5 uppercase">
-                            {artisan.role} <span className="text-slate-300">•</span> <span className="flex items-center gap-1"><MapPin size={12} className="text-slate-400" /> 2.1km</span>
+                            {artisan.skillName || artisan.role} <span className="text-slate-300">•</span> <span className="flex items-center gap-1"><MapPin size={12} className="text-slate-400" /> {artisan.distance || '2.1km'}</span>
                         </p>
                         <div className="flex items-center gap-1.5 mt-2.5 text-slate-500 font-bold text-[10px] lg:text-[11px] uppercase tracking-wider">
                             <div className="flex gap-0.5">
@@ -1495,16 +2291,18 @@ const BookingForm = ({ artisan, setIsBookingFormOpen, setSelectedArtisan }) => {
                         <div className="bg-slate-50 border border-slate-100 rounded-[20px] p-5 lg:p-6 mb-8 flex items-center justify-between shadow-sm">
                             <div className="flex items-center gap-4">
                                 <div className="relative">
-                                    <img src={artisan.image} alt="" className="w-13 h-13 lg:w-16 lg:h-16 rounded-full object-cover border-2 border-white shadow-sm" />
+                                    <img src={artisan.profilePicture || artisan.image} alt="" className="w-13 h-13 lg:w-16 lg:h-16 rounded-full object-cover border-2 border-white shadow-sm" />
                                     <div className="absolute top-0 right-0 w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full border-2 border-white shadow-sm" />
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2 mb-1.5">
-                                        <h5 className="font-bold text-[14px] lg:text-base text-[#0f172a] leading-none tracking-tight">{artisan.name}</h5>
-                                        {artisan.isVerified && <span className="bg-[#1E4E82] text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">Verified</span>}
+                                        <h5 className="font-bold text-[14px] lg:text-base text-[#0f172a] leading-none tracking-tight">
+                                            {artisan.firstName ? `${artisan.firstName} ${artisan.lastName}` : artisan.name}
+                                        </h5>
+                                        {(artisan.isVerified || artisan.status === 'ACTIVE') && <span className="bg-[#1E4E82] text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest">Verified</span>}
                                     </div>
                                     <p className="text-[11px] lg:text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                        {artisan.role} • <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" /> 4.8</span>
+                                        {artisan.skillName || artisan.role} • <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || '4.8'}</span>
                                     </p>
                                 </div>
                             </div>
@@ -1562,6 +2360,7 @@ const BookingForm = ({ artisan, setIsBookingFormOpen, setSelectedArtisan }) => {
                             <div className="relative group">
                                 <input
                                     type="text"
+                                    defaultValue={userProfile.addresses[0]?.address || "17 Ajao Rd, Ikeja, Lagos, Nigeria"}
                                     placeholder="17 Ajao Rd, Ikeja, Lagos, Nigeria"
                                     className="w-full px-6 py-4 rounded-[20px] border border-slate-200 focus:border-[#1E4E82] focus:ring-4 focus:ring-blue-50 focus:outline-none font-bold text-slate-700 bg-white text-sm shadow-sm transition-all placeholder:text-slate-300 pr-12"
                                 />
@@ -1641,16 +2440,16 @@ const BookingForm = ({ artisan, setIsBookingFormOpen, setSelectedArtisan }) => {
 const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, setCurrentChat, setCurrentView, setMessagesViewStep }) => {
     if (!booking) return null;
     return (
-        <div className="flex-1 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen lg:p-6 transition-all duration-300">
-            <div className="w-full pb-24 animate-in slide-in-from-right-4 duration-500 lg:px-8 lg:py-6 flex flex-col pt-20 lg:pt-4 bg-white min-h-screen border border-transparent lg:border-slate-100 lg:rounded-[24px] lg:shadow-sm">
-                <div className="fixed lg:hidden top-0 left-0 right-0 bg-white z-40 px-5 h-16 flex items-center gap-4 border-b border-gray-100">
+        <div className="flex-1 lg:ml-[240px] bg-[#F8FAFC] min-h-screen transition-all duration-300">
+            <div className="max-w-6xl mx-auto w-full pb-6 animate-in slide-in-from-right-4 duration-500 px-5 lg:px-4 flex flex-col pt-20 lg:pt-6 bg-[#F8FAFC] min-h-screen">
+                <div className="fixed lg:hidden top-0 left-0 right-0 bg-[#F8FAFC] z-40 px-5 h-16 flex items-center gap-4 border-b border-gray-100">
                     <button onClick={() => setSelectedBooking(null)} className="p-2 bg-slate-50 rounded-full text-[#0f172a] active:scale-90 transition-all"><ChevronLeft size={20} strokeWidth={2.5} /></button>
                     <h1 className="text-lg font-black text-[#0f172a] tracking-tight">Order Details</h1>
                 </div>
 
-                <div className="hidden lg:flex items-center gap-4 mb-8 pb-4 border-b border-slate-100 mt-2">
+                <div className="hidden lg:flex items-center gap-4 mb-2 pb-4 border-b border-slate-100 mt-2">
                     <button onClick={() => setSelectedBooking(null)} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
-                    <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Order Details</h1>
+                    <h1 className="text-2xl font-black text-[#0f172a] tracking-tight mb-1">Order Details</h1>
                 </div>
 
                 <div className="w-full space-y-4 px-4 lg:px-0">

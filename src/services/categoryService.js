@@ -18,6 +18,15 @@ const categoryService = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
+    },
+
+    getPopularServices: async () => {
+        try {
+            const response = await api.get(API_CONFIG.ENDPOINTS.CATEGORIES.POPULAR_SERVICES);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
     }
 };
 

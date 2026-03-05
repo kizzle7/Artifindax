@@ -9,7 +9,8 @@ export const API_CONFIG = {
             INITIATE_OTP: '/auth/initiate-otp',
             FORGOT_PASSWORD_OTP: '/auth/initiate-forgot-password-otp',
             CHANGE_PASSWORD: '/auth/change-password',
-            LOGIN: '/login', // User specified /login
+            REGISTER_DEVICE: '/auth/register-device',
+            LOGIN: '/login',
         },
         CATEGORIES: {
             LIST: '/api/v1/categories',
@@ -19,6 +20,9 @@ export const API_CONFIG = {
         KYC: {
             CUSTOMER: '/api/v1/kyc/customer',
             ARTISAN: '/api/v1/kyc/artisan',
+        },
+        CUSTOMERS: {
+            SEARCH_ARTISANS: '/api/v1/customers/search-artisans',
         }
     }
 };

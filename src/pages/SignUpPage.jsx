@@ -11,6 +11,8 @@ import signupBg from '../assets/SIGNUP.png';
 import successIllustration from '../assets/Frame 1000004078.png';
 import authService from '../services/authService';
 import categoryService from '../services/categoryService';
+import { useForm } from 'react-hook-form';
+import Location from '../components/form/Location';
 
 // Fallback icons if API returns names we don't have
 const ICON_MAP = {
@@ -779,6 +781,12 @@ const OnboardingStep = ({ title, subtitle, children, onNext, onPrev, disabled, n
 const SignUpPage = () => {
     const navigate = useNavigate();
     const { role: urlRole } = useParams();
+    const { control, watch, setValue, register, formState: { errors } } = useForm({
+        defaultValues: {
+            addressContact: null
+        }
+    });
+
     const initialRole = urlRole || 'user';
     const [userType, setUserType] = useState(initialRole);
     const [step, setStep] = useState(1);
@@ -794,8 +802,6 @@ const SignUpPage = () => {
     const [isExperienceOpen, setIsExperienceOpen] = useState(false);
     const dropdownRef = useRef(null);
     const expDropdownRef = useRef(null);
-    const addressInputRef = useRef(null);
-    const autocompleteRef = useRef(null);
 
     const [apiCategories, setApiCategories] = useState([]);
     const [apiSkills, setApiSkills] = useState([]);
@@ -883,57 +889,7 @@ const SignUpPage = () => {
         }
     }, [step, apiCategories.length]);
 
-    // Initialize Google Places Autocomplete when step is 9
-    useEffect(() => {
-        if (step === 9 && isGoogleLoaded) {
-            const initAutocomplete = () => {
-                if (!addressInputRef.current) {
-                    console.warn("Address input ref not ready yet");
-                    return;
-                }
-
-                try {
-                    console.log("Initializing Google Autocomplete on input...");
-                    autocompleteRef.current = new window.google.maps.places.Autocomplete(addressInputRef.current, {
-                        componentRestrictions: { country: "ng" },
-                        fields: ["formatted_address", "geometry", "name"]
-                    });
-
-                    autocompleteRef.current.addListener("place_changed", () => {
-                        const place = autocompleteRef.current.getPlace();
-                        console.log("Place selected:", place);
-                        if (place.geometry) {
-                            setFormData(prev => ({
-                                ...prev,
-                                address: place.formatted_address || place.name,
-                                latitude: place.geometry.location.lat(),
-                                longitude: place.geometry.location.lng()
-                            }));
-                        }
-                    });
-
-                    // Prevent form submission/next step when selecting from dropdown with Enter
-                    const inputElement = addressInputRef.current;
-                    const handleKeyDown = (e) => {
-                        if (e.key === 'Enter') {
-                            const pacContainer = document.querySelector('.pac-container');
-                            if (pacContainer && pacContainer.style.display !== 'none') {
-                                e.preventDefault();
-                                e.stopPropagation();
-                            }
-                        }
-                    };
-                    inputElement.addEventListener('keydown', handleKeyDown);
-                    return () => inputElement.removeEventListener('keydown', handleKeyDown);
-                } catch (err) {
-                    console.error("Autocomplete init error:", err);
-                }
-            };
-
-            const timer = setTimeout(initAutocomplete, 300);
-            return () => clearTimeout(timer);
-        }
-    }, [step, isGoogleLoaded]);
+    // Geocomplete logic moved to Location component
 
     // Fetch skills when a category is selected and we move to step 15
     useEffect(() => {
@@ -1066,6 +1022,15 @@ const SignUpPage = () => {
         }
     };
 
+    const formatTimeTo24h = (timeStr) => {
+        if (!timeStr) return "08:00";
+        const [time, modifier] = timeStr.split(' ');
+        let [hours, minutes] = time.split(':');
+        if (hours === '12') hours = '00';
+        if (modifier?.toLowerCase() === 'pm') hours = parseInt(hours, 10) + 12;
+        return `${String(hours).padStart(2, '0')}:${minutes}`;
+    };
+
     const handleSubmitOnboarding = async () => {
         setLoading(true);
         setError('');
@@ -1109,12 +1074,13 @@ const SignUpPage = () => {
                 await authService.submitCustomerOnboarding(basePayload);
                 setStep(13);
             } else {
-                // Transform availability to array format
-                const availabilityArray = Object.entries(artisanData.availability).map(([day, schedule]) => ({
-                    dayOfWeek: day.toUpperCase(),
-                    startTime: schedule.from.split(' ')[0] || "08:00",
-                    endTime: schedule.to.split(' ')[0] || "17:00"
-                }));
+                // Transform availability to array format - Send all 7 days
+                const availabilityArray = Object.entries(artisanData.availability)
+                    .map(([day, schedule]) => ({
+                        dayOfWeek: day.toUpperCase(),
+                        startTime: formatTimeTo24h(schedule.from),
+                        endTime: formatTimeTo24h(schedule.to)
+                    }));
 
                 // Split next of kin name
                 const nokNameParts = (artisanData.nextOfKin.name || "").trim().split(' ');
@@ -1125,11 +1091,11 @@ const SignUpPage = () => {
                     countryCode: "234",
                     phoneNumber: regData.phone,
                     ...basePayload,
-                    categoryId: artisanData.category,
-                    skillIds: artisanData.skills,
+                    categoryId: parseInt(artisanData.category, 10),
+                    skillIds: artisanData.skills.map(id => parseInt(id, 10)),
                     bio: artisanData.bio,
                     proof: formData.idFile ? formData.idFile.name : "string",
-                    yearsOfExperience: experienceMap[artisanData.experience] || 0,
+                    yearsOfExperience: parseInt(experienceMap[artisanData.experience] || 0, 10),
                     serviceModes: serviceModeMap[artisanData.serviceMode] || ["HOME_SERVICE"],
                     availability: availabilityArray,
                     nextOfKin: {
@@ -1139,6 +1105,8 @@ const SignUpPage = () => {
                         emailAddress: artisanData.nextOfKin.email
                     }
                 };
+                
+                console.log("Submitting Artisan KYC Payload:", JSON.stringify(artisanPayload, null, 2));
                 await authService.submitArtisanOnboarding(artisanPayload);
                 setStep(21);
             }
@@ -1217,20 +1185,26 @@ const SignUpPage = () => {
             );
             case 9: return (
                 <OnboardingStep title="Set up your account" subtitle="Please enter your current residential address" onNext={nextStep} onPrev={prevStep} disabled={formData.address.length < 5}>
-                    <div className="relative">
-                        <input
-                            ref={addressInputRef}
-                            type="text"
-                            value={formData.address}
-                            onChange={e => setFormData({ ...formData, address: e.target.value })}
-                            className="w-full px-4 py-3 border border-gray-600 rounded-xl focus:outline-none text-sm"
-                            placeholder={isGoogleLoaded ? "Start typing your address..." : "Enter your address details..."}
+                    <div className="space-y-4 pt-4">
+                        <Location
+                            setLocationInfo={(info) => {
+                                setFormData(prev => ({ 
+                                    ...prev, 
+                                    latitude: info.latitude, 
+                                    longitude: info.longitude, 
+                                    address: info.clearAddress 
+                                }));
+                            }}
+                            setCity={() => {}} 
+                            setState={() => {}} 
+                            setPostal={() => {}}
+                            register={register}
+                            control={control}
+                            errors={errors}
+                            watch={watch}
+                            setValue={setValue}
                         />
-                        {formData.address.length > 5 && <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 text-green-600" size={20} />}
                     </div>
-                    {!isGoogleLoaded && (
-                        <p className="text-[10px] text-gray-400 mt-2">Note: Location suggestions are currently loading...</p>
-                    )}
                 </OnboardingStep>
             );
             case 10: return (
