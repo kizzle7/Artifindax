@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronDown, Eye, EyeOff, ArrowRight, Check, X } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Eye, EyeOff, ArrowRight, Check, X, Smartphone as MobilePhone } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import loginBg from '../assets/RP.png';
@@ -15,6 +15,7 @@ const LoginPage = () => {
     const [loginData, setLoginData] = useState({ phone: '', password: '' });
     const [recoverData, setRecoverData] = useState({ phone: '' });
     const [resetData, setResetData] = useState({ password: '', confirmPassword: '', otp: '' });
+    const [deviceOtp, setDeviceOtp] = useState('');
     const [timer, setTimer] = useState(179);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -33,7 +34,7 @@ const LoginPage = () => {
 
     useEffect(() => {
         let interval;
-        if (step === 3 && timer > 0) interval = setInterval(() => setTimer(prev => prev - 1), 1000);
+        if ((step === 3 || step === 5) && timer > 0) interval = setInterval(() => setTimer(prev => prev - 1), 1000);
         return () => clearInterval(interval);
     }, [step, timer]);
 
@@ -55,11 +56,58 @@ const LoginPage = () => {
                 loginMode: 'USERNAMEPASSWORD',
                 deviceIdentifier: authService.getDeviceIdentifier(),
                 countryCode: "234",
-                deviceType: 'MOBILE'
+                deviceType: 'WEB'
             });
             navigate('/dashboard');
         } catch (err) {
-            setError(err.message || 'Login failed. Please check your credentials.');
+            const errorMsg = err.message || '';
+            // If the backend says the device is not registered, trigger the OTP flow
+            if (errorMsg.toLowerCase().includes('device') || errorMsg.toLowerCase().includes('register')) {
+                try {
+                    await authService.initiateOtp({
+                        countryCode: "234",
+                        phoneNumber: loginData.phone,
+                        otpType: "DEVICE_REGISTRATION"
+                    });
+                    setStep(5);
+                    setTimer(179);
+                } catch (otpErr) {
+                    setError('Device not recognized, and failed to send verification code.');
+                }
+            } else {
+                setError(errorMsg || 'Login failed. Please check your credentials.');
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeviceRegistration = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setError('');
+        try {
+            // 1. Register the device
+            await authService.registerDevice({
+                deviceType: 'WEB',
+                deviceIdentifier: authService.getDeviceIdentifier(),
+                countryCode: '234',
+                phoneNumber: loginData.phone,
+                otp: deviceOtp
+            });
+
+            // 2. Automatically log in after successful registration
+            await authService.login({
+                username: loginData.phone,
+                secret: loginData.password,
+                loginMode: 'USERNAMEPASSWORD',
+                deviceIdentifier: authService.getDeviceIdentifier(),
+                countryCode: "234",
+                deviceType: 'WEB'
+            });
+            navigate('/dashboard');
+        } catch (err) {
+            setError(err.message || 'Failed to verify device. Please check your OTP.');
         } finally {
             setLoading(false);
         }
@@ -346,6 +394,78 @@ const LoginPage = () => {
                             <span>Go to Home page</span>
                             <ArrowRight size={22} className="absolute right-8 transition-transform group-hover:translate-x-1.5" />
                         </Button>
+                    </div>
+                );
+
+            case 5: // Device Registration OTP
+                return (
+                    <div className="relative z-10 w-full max-w-sm p-6 lg:p-10 lg:bg-white/70 lg:backdrop-blur-md lg:rounded-[40px] lg:shadow-2xl mx-4">
+                        <div className="mb-8 text-center text-[#1E4E82]">
+                            <div className="w-16 h-16 bg-[#D6E5F5] rounded-full flex items-center justify-center mx-auto mb-4 relative">
+                                <MobilePhone size={32} />
+                                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
+                                    <Check size={14} className="text-white" />
+                                </div>
+                            </div>
+                            <h1 className="text-xl font-bold text-[#0f172a] mb-2">New Device Detected</h1>
+                            <p className="text-gray-500 text-xs leading-relaxed px-4">
+                                For your security, please enter the 4-digit verification code sent to <span className="font-bold text-gray-800">+234{loginData.phone}</span>
+                            </p>
+                        </div>
+                        <form className="space-y-6" onSubmit={handleDeviceRegistration}>
+                            <div className="flex justify-center gap-4 mb-6">
+                                {[0, 1, 2, 3].map((index) => (
+                                    <input
+                                        key={index}
+                                        id={`device-otp-${index}`}
+                                        type="text"
+                                        maxLength="1"
+                                        value={deviceOtp[index] || ''}
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/[^0-9]/g, '');
+                                            let newOtp = deviceOtp.split('');
+                                            newOtp[index] = val;
+                                            setDeviceOtp(newOtp.join(''));
+                                            if (val && index < 3) {
+                                                document.getElementById(`device-otp-${index + 1}`)?.focus();
+                                            }
+                                        }}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Backspace' && !deviceOtp[index] && index > 0) {
+                                                document.getElementById(`device-otp-${index - 1}`)?.focus();
+                                            }
+                                        }}
+                                        className="w-14 h-14 text-center text-2xl font-bold border-2 rounded-2xl focus:outline-none transition-all border-gray-200 focus:border-[#1E4E82] bg-gray-50"
+                                    />
+                                ))}
+                            </div>
+
+                            <div className="text-[14px] text-gray-600 text-center mb-6">
+                                Didn't receive code? <button
+                                    type="button"
+                                    onClick={async () => {
+                                        if (timer > 0) return;
+                                        await authService.initiateOtp({ countryCode: "234", phoneNumber: loginData.phone, otpType: "PHONE_VERIFICATION" });
+                                        setTimer(179);
+                                    }}
+                                    className={`font-semibold ml-1 ${timer > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-[#1E4E82] hover:underline'}`}
+                                >
+                                    Resend {timer > 0 && formatTime(timer)}
+                                </button>
+                            </div>
+
+                            {error && step === 5 && <p className="text-red-500 text-xs text-center">{error}</p>}
+
+                            <Button
+                                variant="primary"
+                                type="submit"
+                                disabled={deviceOtp.length !== 4 || loading}
+                                style={{ backgroundColor: (deviceOtp.length !== 4 || loading) ? '#D6E5F5' : '#1E4E82' }}
+                                className={`w-full py-4 rounded-xl text-lg font-bold transition-all ${deviceOtp.length !== 4 || loading ? 'cursor-not-allowed' : 'hover:scale-[1.02] active:scale-95 shadow-lg'}`}
+                            >
+                                {loading ? <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div> : <span>Verify Device & Login</span>}
+                            </Button>
+                        </form>
                     </div>
                 );
 

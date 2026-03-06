@@ -14,9 +14,11 @@ api.interceptors.request.use(
         // Public endpoints that don't need a token
         const publicEndpoints = [
             '/api/v1/categories',
+            '/api/v1/customers/search-artisans',
             '/auth/sign-up',
             '/auth/verify-phone-number',
             '/auth/initiate-otp',
+            '/auth/register-device',
             '/login'
         ];
 

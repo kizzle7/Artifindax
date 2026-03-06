@@ -955,7 +955,7 @@ const SignUpPage = () => {
                 countryCode: "234",
                 phoneNumber: regData.phone,
                 password: regData.password,
-                deviceType: "MOBILE",
+                deviceType: "WEB",
                 deviceIdentifier: authService.getDeviceIdentifier(),
                 accountType: userType === 'artisan' ? 'ARTISAN' : 'CUSTOMER',
                 loginPin: pin.join('')
@@ -978,7 +978,7 @@ const SignUpPage = () => {
                 loginMode: 'LOGINPIN',
                 deviceIdentifier: authService.getDeviceIdentifier(),
                 countryCode: "234",
-                deviceType: 'MOBILE'
+                deviceType: 'WEB'
             };
             await authService.login(loginPayload);
         } catch (err) {
@@ -1072,6 +1072,8 @@ const SignUpPage = () => {
 
             if (userType === 'customer' || userType === 'user') {
                 await authService.submitCustomerOnboarding(basePayload);
+                authService.setRole('CUSTOMER');
+                authService.setLocation(basePayload.address, basePayload.latitude, basePayload.longitude);
                 setStep(13);
             } else {
                 // Transform availability to array format - Send all 7 days
@@ -1105,9 +1107,11 @@ const SignUpPage = () => {
                         emailAddress: artisanData.nextOfKin.email
                     }
                 };
-                
+
                 console.log("Submitting Artisan KYC Payload:", JSON.stringify(artisanPayload, null, 2));
                 await authService.submitArtisanOnboarding(artisanPayload);
+                authService.setRole('ARTISAN');
+                authService.setLocation(basePayload.address, basePayload.latitude, basePayload.longitude);
                 setStep(21);
             }
         } catch (err) {
@@ -1188,16 +1192,16 @@ const SignUpPage = () => {
                     <div className="space-y-4 pt-4">
                         <Location
                             setLocationInfo={(info) => {
-                                setFormData(prev => ({ 
-                                    ...prev, 
-                                    latitude: info.latitude, 
-                                    longitude: info.longitude, 
-                                    address: info.clearAddress 
+                                setFormData(prev => ({
+                                    ...prev,
+                                    latitude: info.latitude,
+                                    longitude: info.longitude,
+                                    address: info.clearAddress
                                 }));
                             }}
-                            setCity={() => {}} 
-                            setState={() => {}} 
-                            setPostal={() => {}}
+                            setCity={() => { }}
+                            setState={() => { }}
+                            setPostal={() => { }}
                             register={register}
                             control={control}
                             errors={errors}

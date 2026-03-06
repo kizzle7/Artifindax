@@ -11,6 +11,7 @@ import Button from '../components/ui/Button';
 import logo from '../assets/Artifinda logo 3.png';
 import categoryService from '../services/categoryService';
 import customerService from '../services/customerService';
+import authService from '../services/authService';
 import SearchSkeleton from '../components/ui/SearchSkeleton';
 import { setKey, fromLatLng } from 'react-geocode';
 
@@ -211,7 +212,7 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
             </div>
             <div className="relative mb-6" onClick={() => setCurrentView('search')}>
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
-                <input type="text" readOnly placeholder="Search task or category" className="w-full bg-white pl-11 pr-4 py-3 rounded-2xl cursor-pointer border border-gray-100 focus:border-[#1E4E82]/20 transition-all text-gray-700 text-xs shadow-sm" />
+                <input type="text" readOnly placeholder="Search for artisan or service" className="w-full bg-white pl-11 pr-4 py-3 rounded-2xl cursor-pointer border border-gray-100 focus:border-[#1E4E82]/20 transition-all text-gray-700 text-xs shadow-sm" />
             </div>
             <div className="relative overflow-hidden mb-8 h-[145px]">
                 <motion.div className="flex gap-4 w-max" animate={{ x: [0, -BANNERS.length * 276] }} transition={{ x: { repeat: Infinity, repeatType: "loop", duration: 30, ease: "linear" } }}>
@@ -256,8 +257,8 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
                     <>
                         {topArtisans.length > 0 ? (
                             topArtisans.map(artisan => (
-                                <div 
-                                    key={artisan.id} 
+                                <div
+                                    key={artisan.id}
                                     onClick={() => {
                                         const role = artisan.artisanRole || artisan.role || 'Professional';
                                         const service = popularServices.find(s => s.name.toLowerCase().includes(role.toLowerCase()));
@@ -281,7 +282,7 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
                                         <div className="flex items-center gap-2 text-[9px] text-gray-400 font-bold uppercase tracking-tight">
                                             <span>{artisan.artisanRole || artisan.role || 'Service Partner'}</span>
                                             <span className="flex items-center gap-1">
-                                                <Star size={10} className="text-yellow-400 fill-yellow-400" /> 
+                                                <Star size={10} className="text-yellow-400 fill-yellow-400" />
                                                 {artisan.rating || artisan.artisanRating || 5.0}
                                             </span>
                                         </div>
@@ -361,7 +362,7 @@ const LogoutModal = ({ showLogoutModal, setShowLogoutModal, onLogout }) => (
 
 const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, setVisibleFaq, toggleFaq, setCurrentView }) => {
     const handleLogout = () => {
-        localStorage.clear();
+        authService.clearToken();
         window.location.href = '/';
     };
 
@@ -861,26 +862,37 @@ const UserDashboard = () => {
         const fetchTopRated = async () => {
             setLoadingTopRated(true);
             try {
-                // Step 1: Get real GPS coordinates
-                const getUserCoords = () => new Promise((resolve) => {
-                    if (!navigator.geolocation) return resolve({ lat: 0, lng: 0 });
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                        () => resolve({ lat: 0, lng: 0 }),
-                        { timeout: 5000 }
-                    );
-                });
+                // Step 1: Use the address the user registered with (onboarding location),
+                // falling back to the device's current GPS only if nothing was saved.
+                let lat = 0, lng = 0, resolvedAddress = "";
 
-                const { lat, lng } = await getUserCoords();
+                const savedLocation = authService.getLocation();
+                if (savedLocation && savedLocation.latitude && savedLocation.longitude) {
+                    // Use the location from onboarding — this matches what the backend has
+                    lat = savedLocation.latitude;
+                    lng = savedLocation.longitude;
+                    resolvedAddress = savedLocation.address || "";
+                } else {
+                    // Fallback: ask the browser for the current GPS position
+                    const getUserCoords = () => new Promise((resolve) => {
+                        if (!navigator.geolocation) return resolve({ lat: 0, lng: 0 });
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                            () => resolve({ lat: 0, lng: 0 }),
+                            { timeout: 5000 }
+                        );
+                    });
+                    const coords = await getUserCoords();
+                    lat = coords.lat;
+                    lng = coords.lng;
 
-                // Step 2: Reverse geocode to get address string
-                let resolvedAddress = "";
-                if (lat !== 0 && lng !== 0) {
-                    try {
-                        const geoRes = await fromLatLng(lat, lng);
-                        resolvedAddress = geoRes.results[0]?.formatted_address || "";
-                    } catch (geoErr) {
-                        console.warn("Reverse geocode failed:", geoErr);
+                    if (lat !== 0 && lng !== 0) {
+                        try {
+                            const geoRes = await fromLatLng(lat, lng);
+                            resolvedAddress = geoRes.results[0]?.formatted_address || "";
+                        } catch (geoErr) {
+                            console.warn("Reverse geocode failed:", geoErr);
+                        }
                     }
                 }
 
@@ -930,25 +942,34 @@ const UserDashboard = () => {
         setSelectedSkill(skill);
         setLoadingSearch(true);
         try {
-            // Get real coordinates from the browser
-            const getUserCoords = () => new Promise((resolve) => {
-                if (!navigator.geolocation) return resolve({ lat: 0, lng: 0 });
-                navigator.geolocation.getCurrentPosition(
-                    (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                    () => resolve({ lat: 0, lng: 0 }),
-                    { timeout: 5000 }
-                );
-            });
-            const { lat, lng } = await getUserCoords();
+            // Use the registered onboarding location first, fall back to GPS
+            let lat = 0, lng = 0, resolvedAddress = "";
 
-            // Reverse geocode to get address string
-            let resolvedAddress = "";
-            if (lat !== 0 && lng !== 0) {
-                try {
-                    const geoRes = await fromLatLng(lat, lng);
-                    resolvedAddress = geoRes.results[0]?.formatted_address || "";
-                } catch (geoErr) {
-                    console.warn("Reverse geocode failed:", geoErr);
+            const savedLocation = authService.getLocation();
+            if (savedLocation && savedLocation.latitude && savedLocation.longitude) {
+                lat = savedLocation.latitude;
+                lng = savedLocation.longitude;
+                resolvedAddress = savedLocation.address || "";
+            } else {
+                const getUserCoords = () => new Promise((resolve) => {
+                    if (!navigator.geolocation) return resolve({ lat: 0, lng: 0 });
+                    navigator.geolocation.getCurrentPosition(
+                        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                        () => resolve({ lat: 0, lng: 0 }),
+                        { timeout: 5000 }
+                    );
+                });
+                const coords = await getUserCoords();
+                lat = coords.lat;
+                lng = coords.lng;
+
+                if (lat !== 0 && lng !== 0) {
+                    try {
+                        const geoRes = await fromLatLng(lat, lng);
+                        resolvedAddress = geoRes.results[0]?.formatted_address || "";
+                    } catch (geoErr) {
+                        console.warn("Reverse geocode failed:", geoErr);
+                    }
                 }
             }
 
@@ -1007,19 +1028,19 @@ const UserDashboard = () => {
                 <motion.div key={selectedBooking ? `details-${selectedBooking.id}` : currentView} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} className="flex-1 w-full">
                     {selectedBooking ? <OrderDetailsView booking={selectedBooking} setSelectedBooking={setSelectedBooking} handleCancelBooking={handleCancelBooking} setCurrentChat={setCurrentChat} setCurrentView={setCurrentView} setMessagesViewStep={setMessagesViewStep} /> : (
                         <>
-                             {currentView === 'home' && <HomeView 
-                                userProfile={userProfile} 
-                                setCurrentView={setCurrentView} 
-                                setNotificationsViewStep={setNotificationsViewStep} 
-                                topArtisans={topArtisans} 
+                            {currentView === 'home' && <HomeView
+                                userProfile={userProfile}
+                                setCurrentView={setCurrentView}
+                                setNotificationsViewStep={setNotificationsViewStep}
+                                topArtisans={topArtisans}
                                 loadingTopRated={loadingTopRated}
-                                setIsMenuOpen={setIsMenuOpen} 
-                                isMenuOpen={isMenuOpen} 
-                                handleCategoryClick={handleCategoryClick} 
-                                popularServices={popularServices} 
-                                setSearchQuery={setSearchQuery} 
-                                loadingPopular={loadingPopular} 
-                             />}
+                                setIsMenuOpen={setIsMenuOpen}
+                                isMenuOpen={isMenuOpen}
+                                handleCategoryClick={handleCategoryClick}
+                                popularServices={popularServices}
+                                setSearchQuery={setSearchQuery}
+                                loadingPopular={loadingPopular}
+                            />}
                             {currentView === 'bookings' && <BookingsView bookingsData={bookingsData} bookingTab={bookingTab} setBookingTab={setBookingTab} setSelectedBooking={setSelectedBooking} setCurrentChat={setCurrentChat} setMessagesViewStep={setMessagesViewStep} setCurrentView={setCurrentView} />}
                             {currentView === 'messages' && <MessagesView
                                 messagesViewStep={messagesViewStep}
@@ -1070,7 +1091,7 @@ const UserDashboard = () => {
                                 setLoadingSearch={setLoadingSearch}
                                 selectedCategory={selectedCategory}
                                 setSelectedCategory={setSelectedCategory}
-                                 selectedSkill={selectedSkill}
+                                selectedSkill={selectedSkill}
                                 setSelectedSkill={setSelectedSkill}
                                 handleCategoryClick={handleCategoryClick}
                                 handleSkillClick={handleSkillClick}
@@ -1550,9 +1571,9 @@ const NotificationsView = ({ notificationsViewStep, setNotificationsViewStep, se
                     <h1 className="text-xl font-black text-[#0f172a] tracking-tight">Notifications</h1>
                 </div>
 
-                {notificationsData.length > 0 ? (
+                {NOTIFICATIONS.length > 0 ? (
                     <div className="w-full px-2 lg:px-8">
-                        {notificationsData.map((notif) => (
+                        {NOTIFICATIONS.map((notif) => (
                             <div
                                 key={notif.id}
                                 onClick={() => {
@@ -1707,7 +1728,7 @@ const SearchView = ({
             <div className="w-full pb-32 flex flex-col pt-16 lg:pt-6 bg-white min-h-screen border border-transparent lg:border-slate-100 lg:rounded-[24px] lg:shadow-sm px-5 lg:px-8">
                 <div className="hidden lg:flex items-center justify-between gap-4 mb-6 border-b border-slate-50 pb-4">
                     <div className="flex items-center gap-3">
-                        <button onClick={() => { 
+                        <button onClick={() => {
                             if (selectedSkill) {
                                 setSelectedSkill(null);
                                 setSearchResults([]);
@@ -1731,7 +1752,7 @@ const SearchView = ({
                         <div className="relative mb-6 group">
                             <input
                                 type="text"
-                                placeholder="Search task or category"
+                                placeholder="Search for artisan or service..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-5 pr-14 py-3.5 rounded-2xl border border-gray-100 bg-white focus:outline-none focus:border-[#1E4E82]/30 text-[#0f172a] font-bold text-sm transition-all shadow-sm placeholder:text-slate-300"
@@ -1752,9 +1773,9 @@ const SearchView = ({
                                 ) : (
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                                         {popularServices.map((item) => (
-                                            <button 
-                                                key={item.id} 
-                                                onClick={() => handleCategoryClick(item.category)} 
+                                            <button
+                                                key={item.id}
+                                                onClick={() => handleCategoryClick(item.category)}
                                                 className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-gray-100 hover:border-blue-200 transition-all active:scale-95"
                                             >
                                                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-900 shadow-sm overflow-hidden">
@@ -1779,9 +1800,9 @@ const SearchView = ({
                                 ) : (
                                     <div className="flex flex-wrap gap-2 mb-8">
                                         {categorySkills.map((skill) => (
-                                            <button 
-                                                key={skill.id} 
-                                                onClick={() => handleSkillClick(skill)} 
+                                            <button
+                                                key={skill.id}
+                                                onClick={() => handleSkillClick(skill)}
                                                 className="px-5 py-2.5 bg-white border border-gray-200 rounded-full text-xs font-bold text-[#0f172a] hover:border-blue-900 hover:text-blue-900 transition-all active:scale-95"
                                             >
                                                 {skill.name}
@@ -1842,7 +1863,7 @@ const SearchView = ({
                                         <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                                             <Search className="text-slate-200" size={32} />
                                         </div>
-                                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No artisans found for this skill</p>
+                                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No Service Found</p>
                                     </div>
                                 )}
                             </div>

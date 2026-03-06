@@ -21,6 +21,28 @@ const authService = {
 
     clearToken: () => {
         localStorage.removeItem('artifinda_token');
+        localStorage.removeItem('artifinda_role');
+        localStorage.removeItem('artifinda_location');
+    },
+
+    setLocation: (address, latitude, longitude) => {
+        localStorage.setItem('artifinda_location', JSON.stringify({ address, latitude, longitude }));
+    },
+
+    getLocation: () => {
+        try {
+            return JSON.parse(localStorage.getItem('artifinda_location')) || null;
+        } catch {
+            return null;
+        }
+    },
+
+    setRole: (role) => {
+        localStorage.setItem('artifinda_role', role);
+    },
+
+    getRole: () => {
+        return localStorage.getItem('artifinda_role');
     },
 
     signUp: async (payload) => {
@@ -72,13 +94,23 @@ const authService = {
         }
     },
 
+    registerDevice: async (payload) => {
+        // payload: { deviceIdentifier, deviceType, countryCode, phoneNumber, otp }
+        try {
+            await api.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER_DEVICE, payload);
+        } catch (err) {
+            throw err.response?.data || err.message;
+        }
+    },
+
     login: async (payload) => {
         try {
-            // New login payload format:
-            // { username, secret, loginMode, deviceIdentifier, countryCode, deviceType: 'MOBILE' }
             const response = await api.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, payload);
             if (response.data?.token) {
                 authService.setToken(response.data.token);
+            }
+            if (response.data?.role) {
+                authService.setRole(response.data.role);
             }
             return response.data;
         } catch (error) {

@@ -4,8 +4,11 @@ import AboutPage from './pages/AboutPage';
 import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
 import UserDashboard from './pages/UserDashboard';
+import ArtisanDashboard from './pages/ArtisanDashboard';
+import authService from './services/authService';
 
 function App() {
+
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
@@ -14,6 +17,7 @@ function App() {
       <Route path="/signup" element={<SignUpPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/dashboard" element={<UserDashboard />} />
+      <Route path="/artisan/dashboard" element={<ArtisanDashboard />} />
       {/* Redirect any unknown routes to landing page */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
