@@ -339,7 +339,12 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                 ))}
                 {filteredBookings.length === 0 && <div className="text-center py-8 bg-slate-50/20 rounded-[20px] border border-dashed border-slate-100 flex flex-col items-center justify-center"><p className="text-gray-300 font-extrabold uppercase tracking-widest text-[7px]">No {bookingTab} bookings</p></div>}
             </div>
-            <button className="fixed bottom-28 right-5 lg:right-10 w-10 h-10 bg-[#1E4E82] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50 border border-white"><Plus size={18} strokeWidth={3} /></button>
+            <button
+                onClick={() => setCurrentView('search')}
+                className="fixed bottom-28 right-5 lg:right-10 w-10 h-10 bg-[#1E4E82] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50 border border-white"
+            >
+                <Plus size={18} strokeWidth={3} />
+            </button>
         </div>
     );
 };
@@ -838,7 +843,14 @@ const UserDashboard = () => {
     const [settingsStep, setSettingsStep] = useState('main'); // 'main', 'profile', 'addresses', 'password', 'pin', 'faq', 'contact', 'about', 'password_success', 'pin_success'
     const [settingsSubStep, setSettingsSubStep] = useState('list'); // 'list', 'add'
     const [showLogoutModal, setShowLogoutModal] = useState(false);
-    // User Profile State
+
+    // Filtered services for the search view
+    const filteredPopularServices = (popularServices || []).filter(service =>
+        service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (service.category?.name && service.category.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
+    // Data mapped for simple charts
     const [userProfile, setUserProfile] = useState(USER_PROFILE);
     const [faqCategory, setFaqCategory] = useState('General');
     const [visibleFaq, setVisibleFaq] = useState(null);
@@ -1273,7 +1285,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                         )}
                         {msg.type === 'image' && (
                             <div onClick={() => setZoomedImage(msg.content)} className="rounded-[24px] overflow-hidden border-4 border-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform max-w-[240px]">
-                                <img src={msg.content} alt="Sent attachment" className="w-full h-auto object-cover max-h-64" />
+                                <img src={msg.content} alt="Sent attachment" className="w-full h-full object-cover max-h-64" />
                             </div>
                         )}
                         {msg.type === 'invoice' && (
@@ -1723,6 +1735,12 @@ const SearchView = ({
     setIsBookingFormOpen, isBookingFormOpen, currentView, setCurrentView,
     setCategorySkills, setSearchResults
 }) => {
+    // Local filtering for popular services based on search query
+    const filteredPopularServices = (popularServices || []).filter(service =>
+        service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (service.category?.name && service.category.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+
     return (
         <div className="flex-1 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen lg:p-6 transition-all duration-300">
             <div className="w-full pb-32 flex flex-col pt-16 lg:pt-6 bg-white min-h-screen border border-transparent lg:border-slate-100 lg:rounded-[24px] lg:shadow-sm px-5 lg:px-8">
@@ -1765,25 +1783,37 @@ const SearchView = ({
                             </button>
                         </div>
 
-                        {!searchQuery && !selectedCategory && (
+                        {!selectedSkill && !selectedCategory && (
                             <div className="animate-in fade-in duration-500">
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Popular Services</h3>
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">
+                                    {searchQuery ? `Services for "${searchQuery}"` : 'Popular Services'}
+                                </h3>
                                 {loadingPopular ? (
                                     <SearchSkeleton type="category" />
                                 ) : (
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                                        {popularServices.map((item) => (
-                                            <button
-                                                key={item.id}
-                                                onClick={() => handleCategoryClick(item.category)}
-                                                className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-gray-100 hover:border-blue-200 transition-all active:scale-95"
-                                            >
-                                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-900 shadow-sm overflow-hidden">
-                                                    {item.category?.image ? <img src={item.category.image} alt="" className="w-full h-full object-cover" /> : <Info size={24} />}
-                                                </div>
-                                                <span className="text-[11px] font-black text-[#0f172a] uppercase tracking-tighter">{item.name}</span>
-                                            </button>
-                                        ))}
+                                        {filteredPopularServices.length > 0 ? (
+                                            filteredPopularServices.map((item) => (
+                                                <button
+                                                    key={item.id}
+                                                    onClick={() => {
+                                                        if (searchQuery) setSearchQuery('');
+                                                        handleCategoryClick(item.category);
+                                                    }}
+                                                    className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-gray-100 hover:border-blue-200 transition-all active:scale-95"
+                                                >
+                                                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-900 shadow-sm overflow-hidden">
+                                                        {item.category?.image ? <img src={item.category.image} alt="" className="w-full h-full object-cover" /> : <Info size={24} />}
+                                                    </div>
+                                                    <span className="text-[11px] font-black text-[#0f172a] uppercase tracking-tighter">{item.name}</span>
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <div className="col-span-2 md:col-span-4 text-center py-12 bg-slate-50/50 rounded-[28px] border border-dashed border-gray-200">
+                                                <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-2">No Matching Services Found</p>
+                                                <p className="text-gray-400 text-xs">Try searching for a different skill or category.</p>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -1803,7 +1833,7 @@ const SearchView = ({
                                             <button
                                                 key={skill.id}
                                                 onClick={() => handleSkillClick(skill)}
-                                                className="px-5 py-2.5 bg-white border border-gray-200 rounded-full text-xs font-bold text-[#0f172a] hover:border-blue-900 hover:text-blue-900 transition-all active:scale-95"
+                                                className="px-5 py-2.5 bg-white border border-gray-100 rounded-full text-xs font-bold text-[#0f172a] hover:border-blue-900 hover:text-blue-900 transition-all active:scale-95"
                                             >
                                                 {skill.name}
                                             </button>
@@ -1813,11 +1843,12 @@ const SearchView = ({
                             </div>
                         )}
 
-                        {(searchQuery || selectedSkill) && (
+                        {/* Show Artist Search Results ONLY AFTER selecting a skill */}
+                        {selectedSkill && (
                             <div className="animate-in fade-in duration-500">
                                 <div className="flex items-center justify-between mb-6">
                                     <h3 className="text-[12px] font-medium text-gray-500">
-                                        Results for <span className="text-[#1E4E82]">"{searchQuery || selectedSkill?.name}" ({searchResults.length || 0})</span>
+                                        Artisans for <span className="text-[#1E4E82]">"{selectedSkill?.name}" ({searchResults.length || 0})</span>
                                     </h3>
                                     {selectedSkill && (
                                         <button onClick={() => { setSelectedSkill(null); setSearchResults([]); }} className="text-[9px] font-black text-blue-900 uppercase">Clear</button>
