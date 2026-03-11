@@ -19,13 +19,13 @@ const Location = ({
     registerVal,
 }) => {
     const value = watch("addressContact");
-    
+
     // Set API Key from environment or hardcoded as provided by user
-    const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyBbubeKt-xGh-XJ4XDkbjsunTha2hPhEYM";
-    
+    const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
     setKey(API_KEY);
     setLanguage("en");
-    setRegion("en"); 
+    setRegion("en");
     setLocationType("ROOFTOP");
 
     useEffect(() => {
@@ -44,7 +44,7 @@ const Location = ({
                         let city, state, postalcode, country, lga;
 
                         const components = response.results[0].address_components;
-                        
+
                         // More robust mapping of address components
                         components.forEach(component => {
                             if (component.types.includes("locality")) city = component.long_name;
@@ -52,7 +52,7 @@ const Location = ({
                             if (component.types.includes("administrative_area_level_2")) lga = component.long_name;
                             if (component.types.includes("country")) country = component.long_name;
                             if (component.types.includes("postal_code")) postalcode = component.long_name;
-                            
+
                             // Fallback for city if locality is not found
                             if (!city && component.types.includes("administrative_area_level_2")) city = component.long_name;
                         });

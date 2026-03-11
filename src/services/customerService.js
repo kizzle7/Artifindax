@@ -2,12 +2,18 @@ import api from './api';
 import API_CONFIG from '../config/apiConfig';
 
 const customerService = {
-    searchArtisans: async (searchData) => {
+    searchArtisans: async (searchData, params = { page: 1, size: 20 }) => {
         try {
-            const response = await api.post(API_CONFIG.ENDPOINTS.CUSTOMERS.SEARCH_ARTISANS, searchData);
+            console.log(`[Service] Fetching artisans (GET with Body). Params:`, params, "Body:", searchData);
+
+            const response = await api.get(API_CONFIG.ENDPOINTS.CUSTOMERS.SEARCH_ARTISANS, {
+                params: params,
+                data: searchData // Axios allows data in GET requests
+            });
             return response.data;
         } catch (error) {
-            throw error.response?.data || error.message;
+            console.error("Search API Error:", error.response?.data || error.message);
+            throw error;
         }
     }
 };
