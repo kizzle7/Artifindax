@@ -33,6 +33,15 @@ const LoginPage = () => {
         resetValidation.hasSpecial && resetValidation.isLongEnough && passwordsMatch && resetData.otp.length === 4;
 
     useEffect(() => {
+        const token = authService.getToken();
+        const role = authService.getRole();
+        if (token) {
+            if (role === 'ARTISAN') navigate('/artisan/dashboard');
+            else navigate('/dashboard');
+        }
+    }, [navigate]);
+
+    useEffect(() => {
         let interval;
         if ((step === 3 || step === 5) && timer > 0) interval = setInterval(() => setTimer(prev => prev - 1), 1000);
         return () => clearInterval(interval);
@@ -58,7 +67,12 @@ const LoginPage = () => {
                 countryCode: "234",
                 deviceType: 'WEB'
             });
-            navigate('/dashboard');
+            const role = authService.getRole();
+            if (role === 'ARTISAN') {
+                navigate('/artisan/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err) {
             const errorMsg = err.message || '';
             // If the backend says the device is not registered, trigger the OTP flow
@@ -105,7 +119,12 @@ const LoginPage = () => {
                 countryCode: "234",
                 deviceType: 'WEB'
             });
-            navigate('/dashboard');
+            const role = authService.getRole();
+            if (role === 'ARTISAN') {
+                navigate('/artisan/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err) {
             setError(err.message || 'Failed to verify device. Please check your OTP.');
         } finally {

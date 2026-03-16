@@ -106,12 +106,47 @@ const authService = {
     login: async (payload) => {
         try {
             const response = await api.post(API_CONFIG.ENDPOINTS.AUTH.LOGIN, payload);
+            console.log('[AuthService] Login Response:', response.data);
+            
             if (response.data?.token) {
                 authService.setToken(response.data.token);
             }
-            if (response.data?.role) {
-                authService.setRole(response.data.role);
+            
+            // Flexible role detection
+            let role = response.data?.role;
+            
+            // Fallback 1: Check accounts array (common in this app)
+            if (!role && response.data?.accounts && response.data.accounts.length > 0) {
+                role = response.data.accounts[0].accountType;
             }
+            
+            // Fallback 2: Check nested user object
+            if (!role && response.data?.user?.role) {
+                role = response.data.user.role;
+            }
+
+            // Fallback 3: If still no role but we have a token, fetch the profile
+            if (!role && response.data?.token) {
+                try {
+                    const profileRes = await api.get(API_CONFIG.ENDPOINTS.USER.PROFILE);
+                    const accounts = profileRes.data?.accounts || [];
+                    const artisanAccount = accounts.find(a => a.accountType === 'ARTISAN');
+                    if (artisanAccount) {
+                        role = 'ARTISAN';
+                    } else if (accounts.length > 0) {
+                        role = accounts[0].accountType;
+                    }
+                } catch (e) {
+                    console.warn('[AuthService] Failed to fetch profile to resolve role', e);
+                }
+            }
+
+            if (role) {
+                authService.setRole(role);
+            } else {
+                authService.setRole('CUSTOMER'); // Default to customer if totally unknown
+            }
+            
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

@@ -4,14 +4,109 @@ import { ChevronRight, ChevronLeft, ChevronDown, User, MapPin, Lock, Shield, Shi
 import { FAQ_DATA } from '../../constants/userData';
 import LogoutModal from './LogoutModal';
 import authService from '../../services/authService';
+import userService from '../../services/userService';
+import fileService from '../../services/fileService';
 
 const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, setVisibleFaq, toggleFaq, setCurrentView }) => {
     const handleLogout = () => { authService.clearToken(); window.location.href = '/'; };
 
-    const [profilePic, setProfilePic] = React.useState(null);
-    const handleProfilePicChange = (e) => {
+    const [profilePic, setProfilePic] = React.useState(userProfile.profilePicture || null);
+    const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
-        if (file) setProfilePic(URL.createObjectURL(file));
+        if (!file) return;
+        setUpdateMessage('Uploading profile picture...');
+        try {
+            const response = await fileService.upload(file);
+            console.log('[SettingsView] Profile Pic Response:', response);
+            
+            let imageUrl = '';
+            if (Array.isArray(response)) {
+                imageUrl = response[0];
+            } else if (typeof response === 'string') {
+                imageUrl = response;
+            } else {
+                imageUrl = response.data?.url || response.url || response.secure_url;
+            }
+
+            if (imageUrl) {
+                setProfilePic(imageUrl);
+                setUserProfile(prev => ({ ...prev, profilePicture: imageUrl }));
+                setUpdateMessage('Profile picture uploaded!');
+            }
+        } catch (err) {
+            setUpdateMessage('Failed to upload profile picture.');
+        }
+    };
+
+    // Address Addition State
+    const [newAddress, setNewAddress] = React.useState({
+        address: '',
+        latitude: 0,
+        longitude: 0,
+        addressVerificationFile: ''
+    });
+    const [isAddingAddress, setIsAddingAddress] = React.useState(false);
+
+    const [isUpdating, setIsUpdating] = React.useState(false);
+    const [updateMessage, setUpdateMessage] = React.useState('');
+
+    const handleUpdateProfile = async () => {
+        setIsUpdating(true);
+        setUpdateMessage('');
+        try {
+            // Prepare payload based on the endpoint structure provided by the user
+            // Note: The UI separates account-specific fields (gender, dob) but the endpoint expects them in 'accounts'
+            // For now, we'll try to update the main fields.
+            const payload = {
+                firstName: userProfile.firstName,
+                lastName: userProfile.lastName,
+                phoneNumber: userProfile.phone,
+                // The backend structure is complex (nested accounts), for MVP we'll send the top-level fields
+                // and assume the backend handles it or we'll need to adjust based on exact backend requirements.
+            };
+            const updatedData = await userService.updateProfile(payload);
+
+            // Map the returned data back to local state
+            const account = updatedData.accounts?.find(acc => acc.accountType === 'CUSTOMER') || updatedData.accounts?.[0];
+            setUserProfile({
+                ...userProfile,
+                firstName: updatedData.firstName || userProfile.firstName,
+                lastName: updatedData.lastName || userProfile.lastName,
+                phone: updatedData.phoneNumber || userProfile.phone,
+                status: updatedData.status || userProfile.status,
+                identityVerificationStatus: updatedData.identityVerificationStatus || userProfile.identityVerificationStatus,
+            });
+
+            setUpdateMessage('Profile updated successfully!');
+            setTimeout(() => setUpdateMessage(''), 3000);
+        } catch (err) {
+            console.error("Failed to update profile:", err);
+            setUpdateMessage('Failed to update profile. Please try again.');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const handleAddAddress = async () => {
+        if (!newAddress.address) {
+            setUpdateMessage('Please provide an address.');
+            return;
+        }
+        setIsAddingAddress(true);
+        setUpdateMessage('');
+        try {
+            await userService.addAddress(newAddress);
+            setUpdateMessage('Address added successfully!');
+            // Refresh profile to get the new address or update local state
+            // For now, let's just go back to the list
+            setSettingsSubStep('list');
+            setTimeout(() => setUpdateMessage(''), 3000);
+        } catch (err) {
+            console.error("Failed to add address:", err);
+            setUpdateMessage('Failed to add address. Please try again.');
+        } finally {
+            setIsAddingAddress(false);
+        }
     };
 
     const renderMain = () => (
@@ -69,8 +164,16 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                             }} className="w-full px-5 py-3 rounded-[10px] border border-[#15191E] bg-[#F8FAFC] font-bold text-[#0f172a] outline-none transition-colors" />
                     </div>
                 ))}
+                {updateMessage && (
+                    <div className={`text-center py-2 text-xs font-bold ${updateMessage.includes('success') ? 'text-green-500' : 'text-red-500'}`}>
+                        {updateMessage}
+                    </div>
+                )}
+                <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-4 bg-[#1E4E82] text-white font-black rounded-[10px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50">
+                    {isUpdating ? 'Saving...' : 'Save Changes'}
+                </button>
             </div>
-            <div className="w-full max-w-md">
+            <div className="w-full max-w-md mt-6">
                 <button onClick={() => setShowLogoutModal(true)} className="w-full py-3 bg-[#DC2626] text-white font-black rounded-[10px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
                     <LogOut size={20} strokeWidth={2.5} /> Logout
                 </button>
@@ -152,11 +255,76 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                     <p className="text-gray-500 font-bold text-sm">Please provide your address and a document for verification.</p>
                 </div>
                 <div className="space-y-6">
-                    <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Location</label><div className="relative"><input type="text" placeholder="Garki Area 1, Abuja" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12" /><MapPin size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
-                    <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Current coordinates</label><div className="w-full p-4.5 rounded-[20px] bg-slate-50 border border-gray-100 font-bold text-gray-400 text-sm flex items-center gap-3"><MapPin size={18} /> 4.5678° N, 12.3456° E</div></div>
-                    <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Upload a Document</label><div className="w-full border-2 border-dashed border-gray-200 rounded-[28px] p-10 flex flex-col items-center justify-center text-center bg-slate-50/50"><div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-gray-400 mb-4"><Image size={32} /></div><p className="text-sm font-bold text-gray-400">Add documents like utility bills, rent receipts etc.</p></div></div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Location</label>
+                        <div className="relative">
+                            <input
+                                type="text"
+                                placeholder="Garki Area 1, Abuja"
+                                value={newAddress.address}
+                                onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
+                                className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12"
+                            />
+                            <MapPin size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Current coordinates</label>
+                        <div className="w-full p-4.5 rounded-[20px] bg-slate-50 border border-gray-100 font-bold text-gray-400 text-sm flex items-center gap-3">
+                            <MapPin size={18} /> {newAddress.latitude}° N, {newAddress.longitude}° E
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Upload a Document</label>
+                        <div className="w-full border-2 border-dashed border-gray-200 rounded-[28px] p-10 flex flex-col items-center justify-center text-center bg-slate-50/50 cursor-pointer hover:bg-slate-100 transition-colors">
+                            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-gray-400 mb-4">
+                                <Image size={32} />
+                            </div>
+                            <p className="text-sm font-bold text-gray-400">Add documents like utility bills, rent receipts etc.</p>
+                            <input
+                                type="file"
+                                className="hidden"
+                                onChange={async (e) => {
+                                    const file = e.target.files[0];
+                                    if (!file) return;
+                                    setUpdateMessage('Uploading verification document...');
+                                    try {
+                                        const response = await fileService.upload(file);
+                                        console.log('[SettingsView] Address Doc Response:', response);
+
+                                        let imageUrl = '';
+                                        if (Array.isArray(response)) {
+                                            imageUrl = response[0];
+                                        } else if (typeof response === 'string') {
+                                            imageUrl = response;
+                                        } else {
+                                            imageUrl = response.data?.url || response.url || response.secure_url;
+                                        }
+
+                                        if (imageUrl) {
+                                            setNewAddress({ ...newAddress, addressVerificationFile: imageUrl });
+                                            setUpdateMessage('Document uploaded!');
+                                        }
+                                    } catch (err) {
+                                        setUpdateMessage('Failed to upload document.');
+                                    }
+                                }}
+                            />
+                        </div>
+                    </div>
                 </div>
-                <button onClick={() => { setSettingsStep('addresses'); setSettingsSubStep('list'); }} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl mt-8 transition-all active:scale-95">Submit</button>
+                {updateMessage && (
+                    <div className={`text-center py-2 text-xs font-bold ${updateMessage.includes('success') ? 'text-green-500' : 'text-red-500'}`}>
+                        {updateMessage}
+                    </div>
+                )}
+                <button
+                    onClick={handleAddAddress}
+                    disabled={isAddingAddress}
+                    className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl mt-8 transition-all active:scale-95 disabled:opacity-50"
+                >
+                    {isAddingAddress ? 'Submitting...' : 'Submit'}
+                </button>
             </div>
         );
         return (

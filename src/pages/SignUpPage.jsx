@@ -13,6 +13,7 @@ import authService from '../services/authService';
 import categoryService from '../services/categoryService';
 import { useForm } from 'react-hook-form';
 import Location from '../components/form/Location';
+import fileService from '../services/fileService';
 
 // Fallback icons if API returns names we don't have
 const ICON_MAP = {
@@ -438,7 +439,10 @@ const ArtisanSuccess = ({ successIllustration, navigate }) => (
 
         <Button
             variant="primary"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => {
+                const role = authService.getRole();
+                navigate(role === 'ARTISAN' ? '/artisan/dashboard' : '/dashboard');
+            }}
             className="w-full py-3 rounded-2xl text-lg font-bold transition-all relative group bg-[#1E4E82] shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95 animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300"
         >
             <span>Go to Home page</span>
@@ -738,7 +742,14 @@ const FinalSuccess = ({ successIllustration, prevStep, navigate }) => (
         <div className="w-full mb-8"><img src={successIllustration} alt="All Set" className="w-[80%] mx-auto" /></div>
         <h1 className="text-2xl font-extrabold text-[#0f172a] mb-4 text-center">You're all Set!</h1>
         <p className="text-gray-600 text-center text-sm mb-10">Start browsing trusted artisans near you and request help anytime.</p>
-        <Button variant="primary" onClick={() => navigate('/dashboard')} className="w-full py-3 rounded-xl text-lg font-bold transition-all relative group bg-[#1E4E82]">
+        <Button 
+            variant="primary" 
+            onClick={() => {
+                const role = authService.getRole();
+                navigate(role === 'ARTISAN' ? '/artisan/dashboard' : '/dashboard');
+            }} 
+            className="w-full py-3 rounded-xl text-lg font-bold transition-all relative group bg-[#1E4E82]"
+        >
             <span>Go to Home page</span>
             <ArrowRight size={20} className="absolute right-8 transition-transform group-hover:translate-x-1" />
         </Button>
@@ -915,6 +926,37 @@ const SignUpPage = () => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
+    const handleFileUploadGeneric = async (file, field) => {
+        if (!file) return;
+        setLoading(true);
+        setError('');
+        try {
+            const response = await fileService.upload(file);
+            console.log(`[SignUpPage] ${field} Upload Response:`, response);
+            
+            // Handle both object {url: '...'} and array ['...'] formats
+            let imageUrl = '';
+            if (Array.isArray(response)) {
+                imageUrl = response[0];
+            } else if (typeof response === 'string') {
+                imageUrl = response;
+            } else {
+                imageUrl = response.data?.url || response.url || response.secure_url;
+            }
+
+            if (imageUrl) {
+                setFormData(prev => ({ ...prev, [field]: imageUrl }));
+            } else {
+                setError('Could not get upload URL. Please try again.');
+            }
+        } catch (err) {
+            setError('File upload failed. Please try again.');
+            console.error('Upload error:', err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleOtpChange = (index, value) => {
         if (value.length > 1) return;
         const newOtp = [...otp];
@@ -1023,12 +1065,12 @@ const SignUpPage = () => {
     };
 
     const formatTimeTo24h = (timeStr) => {
-        if (!timeStr) return "08:00";
+        if (!timeStr) return "08:00:00";
         const [time, modifier] = timeStr.split(' ');
         let [hours, minutes] = time.split(':');
         if (hours === '12') hours = '00';
         if (modifier?.toLowerCase() === 'pm') hours = parseInt(hours, 10) + 12;
-        return `${String(hours).padStart(2, '0')}:${minutes}`;
+        return `${String(hours).padStart(2, '0')}:${minutes}:00`;
     };
 
     const handleSubmitOnboarding = async () => {
@@ -1053,8 +1095,8 @@ const SignUpPage = () => {
             };
             const serviceModeMap = {
                 'Home Service': ['HOME_SERVICE'],
-                'Work Station': ['WORK_STATION'],
-                'Both': ['HOME_SERVICE', 'WORK_STATION']
+                'Work Station': ['HOME_SERVICE'], // Temporarily matching Postman exactly to isolate error
+                'Both': ['HOME_SERVICE']
             };
 
             const basePayload = {
@@ -1063,8 +1105,8 @@ const SignUpPage = () => {
                 identificationType: idTypeMap[formData.idType] || 'NIN',
                 identification: formData.idNumber || "string",
                 address: formData.address,
-                addressVerificationFile: formData.idFile ? formData.idFile.name : "string",
-                profilePicture: formData.profilePic ? formData.profilePic.name : "string",
+                addressVerificationFile: formData.idFile || "string",
+                profilePicture: formData.profilePic || "string",
                 latitude: formData.latitude || 0,
                 longitude: formData.longitude || 0,
                 dateOfBirth: formData.dob || "2000-01-01"
@@ -1089,6 +1131,14 @@ const SignUpPage = () => {
                 const nokFirstName = nokNameParts[0] || "string";
                 const nokLastName = nokNameParts.slice(1).join(' ') || "string";
 
+                // Mapping service modes
+                let resolvedServiceMode = "HOME_SERVICE";
+                if (artisanData.serviceMode === 'Both') {
+                    resolvedServiceMode = "BOTH";
+                } else if (artisanData.serviceMode === 'Work Station') {
+                    resolvedServiceMode = "WORK_STATION";
+                }
+
                 const artisanPayload = {
                     countryCode: "234",
                     phoneNumber: regData.phone,
@@ -1096,15 +1146,15 @@ const SignUpPage = () => {
                     categoryId: parseInt(artisanData.category, 10),
                     skillIds: artisanData.skills.map(id => parseInt(id, 10)),
                     bio: artisanData.bio,
-                    proof: formData.idFile ? formData.idFile.name : "string",
+                    proof: formData.idFile || "string",
                     yearsOfExperience: parseInt(experienceMap[artisanData.experience] || 0, 10),
                     serviceModes: serviceModeMap[artisanData.serviceMode] || ["HOME_SERVICE"],
                     availability: availabilityArray,
                     nextOfKin: {
-                        firstName: nokFirstName,
-                        lastName: nokLastName,
-                        phoneNumber: artisanData.nextOfKin.phone,
-                        emailAddress: artisanData.nextOfKin.email
+                        firstName: nokFirstName || "string",
+                        lastName: nokLastName || "string",
+                        phoneNumber: artisanData.nextOfKin.phone || "string",
+                        emailAddress: artisanData.nextOfKin.email || "string"
                     }
                 };
 
@@ -1217,13 +1267,14 @@ const SignUpPage = () => {
                 </OnboardingStep>
             );
             case 11: return (
-                <OnboardingStep title="Set up your account" subtitle={`Please upload an image of your ${formData.idType || 'ID'} for verification`} onNext={nextStep} onPrev={prevStep} disabled={!formData.idFile}>
+                <OnboardingStep title="Set up your account" subtitle={`Please upload an image of your ${formData.idType || 'ID'} for verification`} onNext={nextStep} onPrev={prevStep} disabled={!formData.idFile} loading={loading}>
                     <label className="w-full cursor-pointer">
-                        <input type="file" className="hidden" onChange={(e) => setFormData({ ...formData, idFile: e.target.files[0] })} />
+                        <input type="file" className="hidden" onChange={(e) => handleFileUploadGeneric(e.target.files[0], 'idFile')} />
                         <div className="w-full py-3 border border-gray-400 rounded-xl flex items-center justify-center gap-2 text-[#1e4e82] text-sm">
-                            {formData.idFile ? <div className="flex items-center gap-3 w-full px-4"><Camera size={20} className="text-[#0f172a]" /><span className="text-[#0f172a] font-medium">{formData.idFile.name}</span></div> : <><span>Upload</span><Upload size={18} /></>}
+                            {formData.idFile ? <div className="flex items-center gap-3 w-full px-4"><CheckCircle2 size={20} className="text-green-600" /><span className="text-[#0f172a] font-medium truncate">{formData.idFile}</span></div> : <><span>Upload</span><Upload size={18} /></>}
                         </div>
                     </label>
+                    {error && <p className="text-red-500 text-[10px] mt-1 text-center">{error}</p>}
                 </OnboardingStep>
             );
             case 12: return (
@@ -1238,9 +1289,9 @@ const SignUpPage = () => {
                 >
                     <div className="flex flex-col items-center justify-center pt-8">
                         <label className="relative cursor-pointer">
-                            <input type="file" className="hidden" onChange={(e) => setFormData({ ...formData, profilePic: e.target.files[0] })} />
+                            <input type="file" className="hidden" onChange={(e) => handleFileUploadGeneric(e.target.files[0], 'profilePic')} />
                             <div className="w-40 h-40 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-white shadow-md">
-                                {formData.profilePic ? <img src={URL.createObjectURL(formData.profilePic)} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-[#cbd5e1] flex items-center justify-center"><Camera size={48} className="text-[#64748b]" /></div>}
+                                {formData.profilePic ? <img src={formData.profilePic} alt="Profile" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-[#cbd5e1] flex items-center justify-center"><Camera size={48} className="text-[#64748b]" /></div>}
                             </div>
                             <div className="absolute bottom-2 right-2 p-3 bg-[#1e4e82] text-white rounded-full shadow-lg border-2 border-white"><Camera size={20} /></div>
                         </label>

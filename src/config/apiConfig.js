@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://artifinda-test-aaf09bed12f5.herokuapp.com';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
 export const API_CONFIG = {
     BASE_URL,
@@ -23,6 +23,16 @@ export const API_CONFIG = {
         },
         CUSTOMERS: {
             SEARCH_ARTISANS: '/api/v1/customers/search-artisans',
+        },
+        USER: {
+            PROFILE: '/api/v1/profile',
+            ADD_ADDRESS: '/api/v1/profile/add-customer-addresses',
+        },
+        FILE_UPLOAD: {
+            UPLOAD: '/api/v1/file-uploads/upload',
+        },
+        ABUSE_REPORT: {
+            REPORT: '/api/v1/abuse-reports/report',
         }
     }
 };

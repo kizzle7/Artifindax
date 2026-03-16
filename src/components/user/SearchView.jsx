@@ -5,35 +5,36 @@ import SearchSkeleton from '../ui/SearchSkeleton';
 
 const SearchView = ({
     searchQuery, setSearchQuery, isFilterModalOpen, setIsFilterModalOpen,
-    popularServices, loadingPopular, categorySkills, loadingSkills, searchResults,
+    popularServices, loadingPopular, categories, loadingCategories,
+    categorySkills, loadingSkills, searchResults,
     loadingSearch, selectedCategory, setSelectedCategory, selectedSkill, setSelectedSkill,
     handleCategoryClick, handleSkillClick, selectedArtisan, setSelectedArtisan,
     setIsBookingFormOpen, isBookingFormOpen, setCurrentView,
     setCategorySkills, setSearchResults, userProfile
 }) => {
-    const filteredPopularServices = (popularServices || []).filter(service =>
-        service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (service.category?.name && service.category.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    const filteredCategories = (categories || []).filter(cat =>
+        cat.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     return (
-        <div className="flex-1 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen lg:p-6 transition-all duration-300">
-            <div className="w-full pb-32 flex flex-col pt-16 lg:pt-6 bg-white min-h-screen border border-transparent lg:border-slate-100 lg:rounded-[24px] lg:shadow-sm px-5 lg:px-8">
-                <div className="hidden lg:flex items-center justify-between gap-4 mb-6 border-b border-slate-50 pb-4">
-                    <div className="flex items-center gap-3">
-                        <button onClick={() => {
-                            if (selectedSkill) { setSelectedSkill(null); setSearchResults([]); }
-                            else if (selectedCategory) { setSelectedCategory(null); setCategorySkills([]); }
-                            else if (selectedArtisan) { setSelectedArtisan(null); }
-                            else { setCurrentView('home'); }
-                        }} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
-                        <h1 className="text-xl font-black text-[#0f172a] tracking-tight">
-                            {selectedArtisan ? 'View Profile' : selectedSkill ? selectedSkill.name : selectedCategory ? selectedCategory.name : 'Search'}
-                        </h1>
+        <div className="flex-1 lg:ml-[240px] bg-white min-h-screen transition-all duration-300">
+            <div className="w-full pb-32 flex flex-col pt-16 lg:pt-0 bg-white min-h-screen border border-transparent">
+                {!selectedArtisan && (
+                    <div className="hidden lg:flex items-center justify-between gap-4 mb-6 pt-8 pb-4 border-b border-slate-50 px-8">
+                        <div className="flex items-center gap-3">
+                            <button onClick={() => {
+                                if (selectedSkill) { setSelectedSkill(null); setSearchResults([]); }
+                                else if (selectedCategory) { setSelectedCategory(null); setCategorySkills([]); }
+                                else { setCurrentView('home'); }
+                            }} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                            <h1 className="text-xl font-black text-[#0f172a] tracking-tight">
+                                {selectedSkill ? selectedSkill.name : selectedCategory ? selectedCategory.name : 'Search'}
+                            </h1>
+                        </div>
                     </div>
-                </div>
+                )}
                 {!selectedArtisan ? (
-                    <div className="w-full">
+                    <div className="w-full px-5 lg:px-8">
                         <div className="relative mb-6 group">
                             <input type="text" placeholder="Search for artisan or service..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-5 pr-14 py-3.5 rounded-2xl border border-gray-100 bg-white focus:outline-none focus:border-[#1E4E82]/30 text-[#0f172a] font-bold text-sm transition-all shadow-sm placeholder:text-slate-300" />
@@ -43,23 +44,23 @@ const SearchView = ({
                         </div>
                         {!selectedSkill && !selectedCategory && (
                             <div className="animate-in fade-in duration-500">
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">{searchQuery ? `Services for "${searchQuery}"` : 'Popular Services'}</h3>
-                                {loadingPopular ? <SearchSkeleton type="category" /> : (
+                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">{searchQuery ? `Categories for "${searchQuery}"` : 'Browse Categories'}</h3>
+                                {loadingCategories ? <SearchSkeleton type="category" /> : (
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                                        {filteredPopularServices.length > 0 ? (
-                                            filteredPopularServices.map((item) => (
-                                                <button key={item.id} onClick={() => { if (searchQuery) setSearchQuery(''); handleCategoryClick(item.category); }}
+                                        {filteredCategories.length > 0 ? (
+                                            filteredCategories.map((category) => (
+                                                <button key={category.id} onClick={() => { if (searchQuery) setSearchQuery(''); handleCategoryClick(category); }}
                                                     className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-gray-100 hover:border-blue-200 transition-all active:scale-95">
                                                     <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-900 shadow-sm overflow-hidden">
-                                                        {item.category?.image ? <img src={item.category.image} alt="" className="w-full h-full object-cover" /> : <Info size={24} />}
+                                                        {category.image ? <img src={category.image} alt="" className="w-full h-full object-cover" /> : <Info size={24} />}
                                                     </div>
-                                                    <span className="text-[11px] font-black text-[#0f172a] uppercase tracking-tighter">{item.name}</span>
+                                                    <span className="text-[11px] font-black text-[#0f172a] uppercase tracking-tighter">{category.name}</span>
                                                 </button>
                                             ))
                                         ) : (
                                             <div className="col-span-2 md:col-span-4 text-center py-12 bg-slate-50/50 rounded-[28px] border border-dashed border-gray-200">
-                                                <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-2">No Matching Services Found</p>
-                                                <p className="text-gray-400 text-xs">Try searching for a different skill or category.</p>
+                                                <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-2">No Categories Found</p>
+                                                <p className="text-gray-400 text-xs">Try a different search term.</p>
                                             </div>
                                         )}
                                     </div>
@@ -92,8 +93,8 @@ const SearchView = ({
                                 </div>
                                 {loadingSearch ? <SearchSkeleton type="results" /> : searchResults.length > 0 ? (
                                     <div className="space-y-4 pb-20">
-                                        {searchResults.map((artisan) => (
-                                            <div key={artisan.id} onClick={() => setSelectedArtisan(artisan)}
+                                        {searchResults.map((artisan, index) => (
+                                            <div key={artisan.id || artisan.email || `artisan-${index}`} onClick={() => setSelectedArtisan(artisan)}
                                                 className="bg-white border border-gray-100 rounded-[20px] p-4 flex flex-col lg:flex-row gap-4 lg:items-center justify-between shadow-sm hover:border-[#1E4E82]/20 transition-all cursor-pointer group active:scale-[0.99]">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-500 relative">
@@ -106,7 +107,9 @@ const SearchView = ({
                                                             <span className={`text-[7px] font-medium px-1.5 py-0.5 rounded-sm uppercase tracking-tighter border ${artisan.status === 'ACTIVE' ? 'bg-[#1E4E82] text-white border-blue-900' : 'bg-orange-500 text-white border-orange-600'}`}>{artisan.status === 'ACTIVE' ? 'Verified' : 'Pending'}</span>
                                                         </div>
                                                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] font-bold uppercase tracking-tight text-gray-400">
-                                                            <span className="text-[#1E4E82]">{artisan.skillName || selectedSkill?.name}</span>
+                                                            <span className="text-[#1E4E82]">
+                                                                {typeof (artisan.skillName) === 'object' ? artisan.skillName.name : (artisan.skillName || selectedSkill?.name)}
+                                                            </span>
                                                             <span className="flex items-center gap-1 text-gray-500"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || '4.5'}</span>
                                                             <span className="flex items-center gap-1"><MapPin size={10} /> {artisan.distance || '2.4km away'}</span>
                                                         </div>

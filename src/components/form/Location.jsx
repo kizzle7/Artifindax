@@ -68,22 +68,21 @@ const Location = ({
                             postalcode: postalcode || "",
                         };
 
-                        setLocationInfo(data);
-                        setCity(data?.city);
-                        setPersonalAddress(data?.accuracy);
-                        // setValue('addressContact', '') // User snippet had this, might clear the input too soon?
-                        setState(data?.state);
-                        if (registerVal === undefined) {
+                        if (setLocationInfo) setLocationInfo(data);
+                        if (setCity) setCity(data?.city);
+                        if (setPersonalAddress) setPersonalAddress(data?.accuracy);
+                        if (setState) setState(data?.state);
+                        if (registerVal === undefined && setPostal) {
                             setPostal(data.postalcode);
                         }
                     },
                     (error) => {
                         console.error("Geocode error:", error);
-                        setCity("");
-                        setPersonalAddress("");
-                        setState("");
-                        setLocationInfo({});
-                        if (registerVal === undefined) {
+                        if (setCity) setCity("");
+                        if (setPersonalAddress) setPersonalAddress("");
+                        if (setState) setState("");
+                        if (setLocationInfo) setLocationInfo({});
+                        if (registerVal === undefined && setPostal) {
                             setPostal("");
                         }
                     }

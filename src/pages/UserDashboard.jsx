@@ -7,6 +7,7 @@ import { setKey, fromLatLng } from 'react-geocode';
 import categoryService from '../services/categoryService';
 import customerService from '../services/customerService';
 import authService from '../services/authService';
+import userService from '../services/userService';
 
 // Constants
 import {
@@ -66,6 +67,8 @@ const UserDashboard = () => {
 
     // Dynamic Search & Category State
     const [popularServices, setPopularServices] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [loadingCategories, setLoadingCategories] = useState(false);
     const [categorySkills, setCategorySkills] = useState([]);
     const [searchResults, setSearchResults] = useState([]);
     const [loadingPopular, setLoadingPopular] = useState(false);
@@ -105,6 +108,19 @@ const UserDashboard = () => {
                 console.error("Failed to load popular services:", err);
             } finally {
                 setLoadingPopular(false);
+            }
+        };
+
+        const fetchCategories = async () => {
+            if (categories.length > 0) return;
+            setLoadingCategories(true);
+            try {
+                const data = await categoryService.getCategories();
+                setCategories(Array.isArray(data) ? data : (data.content || []));
+            } catch (err) {
+                console.error("Failed to load categories:", err);
+            } finally {
+                setLoadingCategories(false);
             }
         };
 
@@ -157,7 +173,7 @@ const UserDashboard = () => {
                     size: 10
                 };
 
-                console.log("[Dashboard] Fetching Top Rated Artisans (GET with Body)...");
+                console.log("[Dashboard] Fetching Top Rated Artisans (POST)...");
                 const data = await customerService.searchArtisans(searchPayload, queryParams);
 
                 const artisans = Array.isArray(data) ? data : (data.content || []);
@@ -169,9 +185,35 @@ const UserDashboard = () => {
             }
         };
 
+        const fetchProfile = async () => {
+            try {
+                const data = await userService.getProfile();
+                // Map API data to UI state
+                const account = data.accounts?.find(acc => acc.accountType === 'CUSTOMER') || data.accounts?.[0];
+
+                setUserProfile({
+                    firstName: data.firstName || '',
+                    lastName: data.lastName || '',
+                    phone: data.phoneNumber || '',
+                    gender: account?.gender || '',
+                    dob: account?.dateOfBirth || '',
+                    email: account?.email || '',
+                    addresses: userProfile.addresses,
+                    profilePicture: account?.profilePicture || '',
+                    status: data.status || 'ACTIVE',
+                    identityVerificationStatus: data.identityVerificationStatus || 'PENDING',
+                    kycApprovalStatus: account?.kycApprovalStatus || 'NOT_STARTED'
+                });
+            } catch (err) {
+                console.error("Failed to load user profile:", err);
+            }
+        };
+
         fetchPopular();
+        fetchCategories();
         fetchTopRated();
-    }, [userProfile.addresses]);
+        fetchProfile();
+    }, []);
 
     const handleLogout = () => {
         authService.clearToken();
@@ -247,7 +289,7 @@ const UserDashboard = () => {
                 page: 1,
                 size: 10
             };
-            console.log("[Dashboard] Triggering skill search (GET with Body)...");
+            console.log("[Dashboard] Triggering skill search (POST)...");
             const data = await customerService.searchArtisans(searchPayload, queryParams);
             const content = Array.isArray(data) ? data : (data.content || []);
             setSearchResults(content);
@@ -421,6 +463,8 @@ const UserDashboard = () => {
                                     setFiltersEnabled={setFiltersEnabled}
                                     popularServices={popularServices}
                                     setPopularServices={setPopularServices}
+                                    categories={categories}
+                                    loadingCategories={loadingCategories}
                                     categorySkills={categorySkills}
                                     setCategorySkills={setCategorySkills}
                                     searchResults={searchResults}

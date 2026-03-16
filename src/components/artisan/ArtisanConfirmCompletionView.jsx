@@ -1,6 +1,7 @@
 import React from 'react';
 import { ChevronLeft, Plus } from 'lucide-react';
 import { getDetailStatusBadge } from './ArtisanOrderDetailsView';
+import fileService from '../../services/fileService';
 
 const ArtisanConfirmCompletionView = ({ booking, onSubmit, notes, setNotes, images, setImages, onBack }) => (
     <div className="animate-in slide-in-from-right-4 duration-500 pb-10">
@@ -17,10 +18,17 @@ const ArtisanConfirmCompletionView = ({ booking, onSubmit, notes, setNotes, imag
         <div className="mb-10">
             <h6 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Add Images(Optional)</h6>
             <div className="grid grid-cols-1 gap-4">
-                <input type="file" id="completion-upload" className="hidden" accept="image/*" multiple onChange={(e) => {
+                <input type="file" id="completion-upload" className="hidden" accept="image/*" multiple onChange={async (e) => {
                     if (e.target.files) {
                         const newFiles = Array.from(e.target.files).slice(0, 3 - images.length);
-                        setImages([...images, ...newFiles.map(f => URL.createObjectURL(f))]);
+                        try {
+                            const uploadPromises = newFiles.map(file => fileService.upload(file));
+                            const results = await Promise.all(uploadPromises);
+                            const urls = results.map(res => res.data?.url || res.url || res.secure_url).filter(Boolean);
+                            setImages([...images, ...urls]);
+                        } catch (err) {
+                            console.error("Upload failed", err);
+                        }
                     }
                 }} />
                 <div onClick={() => document.getElementById('completion-upload').click()}

@@ -10,12 +10,18 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
         <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 transition-all duration-300">
             <div className="hidden lg:flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0">
-                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150" alt="Profile" className="w-full h-full object-cover" />
+                    <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center">
+                        {userProfile.profilePicture ? (
+                            <img src={userProfile.profilePicture} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="bg-[#1E4E82] text-white w-full h-full flex items-center justify-center font-black text-xs">
+                                {userProfile.firstName?.charAt(0)}{userProfile.lastName?.charAt(0)}
+                            </div>
+                        )}
                     </div>
                     <div>
-                        <h2 className="text-base font-black text-[#0f172a] leading-tight">Welcome</h2>
-                        <p className="text-gray-400 text-[8px] flex items-center gap-1 font-black uppercase tracking-widest opacity-70"><MapPin size={8} /> {userProfile.addresses[0]?.address || '17 Ajao Rd, Ikeja, Lagos'}</p>
+                        <h2 className="text-base font-black text-[#0f172a] leading-tight">Hi, {userProfile.firstName}</h2>
+                        <p className="text-gray-400 text-[8px] flex items-center gap-1 font-black uppercase tracking-widest opacity-70"><MapPin size={8} /> {userProfile.addresses[0]?.address || 'Your Location'}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1.5">

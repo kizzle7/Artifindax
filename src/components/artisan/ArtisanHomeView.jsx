@@ -8,21 +8,27 @@ import {
 import { earningsData, workStatsData } from '../../constants/artisanData';
 import UserIcon from './UserIcon';
 
-const ArtisanHomeView = ({ setCurrentView }) => {
-    const [isAvailable, setIsAvailable] = useState(true);
+const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
+    const isAvailable = userProfile.status === 'ACTIVE';
 
     return (
         <div className="space-y-6">
             {/* Header / Welcome Area */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-300 rounded-full overflow-hidden">
-                        <UserIcon className="w-full h-full text-gray-400" />
+                    <div className="w-12 h-12 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
+                        {userProfile.profilePicture ? (
+                            <img src={userProfile.profilePicture} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="bg-[#1E4E82] text-white w-full h-full flex items-center justify-center font-black text-sm">
+                                {userProfile.firstName?.charAt(0)}{userProfile.lastName?.charAt(0)}
+                            </div>
+                        )}
                     </div>
                     <div>
-                        <h1 className="hidden lg:block text-lg font-bold text-[#0f172a]">Welcome</h1>
-                        <h1 className="lg:hidden text-lg font-bold text-[#0f172a]">Hi there!</h1>
-                        <p className="text-xs text-gray-500">17 Ajao Rd, Ikeja, Lagos, Nigeria</p>
+                        <h1 className="hidden lg:block text-lg font-bold text-[#0f172a]">Hi, {userProfile.firstName}</h1>
+                        <h1 className="lg:hidden text-lg font-bold text-[#0f172a]">Hi, {userProfile.firstName}!</h1>
+                        <p className="text-xs text-gray-500">{userProfile.addresses[0]?.address || 'Your Location'}</p>
                     </div>
                 </div>
                 <div className="hidden lg:flex items-center gap-4">
@@ -37,7 +43,6 @@ const ArtisanHomeView = ({ setCurrentView }) => {
             <div className="flex items-center justify-between py-2">
                 <span className="text-sm font-medium text-gray-600 font-bold uppercase tracking-wider text-[11px]">Availability</span>
                 <button
-                    onClick={() => setIsAvailable(!isAvailable)}
                     className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 flex items-center ${isAvailable ? 'bg-[#1E4E82]' : 'bg-gray-300'}`}
                 >
                     <motion.div

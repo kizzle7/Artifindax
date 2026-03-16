@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { USER_PROFILE } from '../constants/artisanData';
+import userService from '../services/userService';
+import authService from '../services/authService';
 
 // Layout components
 import Sidebar from '../components/artisan/Sidebar';
@@ -58,6 +60,32 @@ const ArtisanDashboard = () => {
 
     const toggleFaq = (id) => setVisibleFaq(visibleFaq === id ? null : id);
 
+    React.useEffect(() => {
+        const fetchProfile = async () => {
+            try {
+                const data = await userService.getProfile();
+                const account = data.accounts?.find(acc => acc.accountType === 'ARTISAN') || data.accounts?.[0];
+
+                setUserProfile({
+                    firstName: data.firstName || '',
+                    lastName: data.lastName || '',
+                    phone: data.phoneNumber || '',
+                    gender: account?.gender || '',
+                    dob: account?.dateOfBirth || '',
+                    email: account?.email || '',
+                    addresses: userProfile.addresses,
+                    profilePicture: account?.profilePicture || '',
+                    status: data.status || 'ACTIVE',
+                    identityVerificationStatus: data.identityVerificationStatus || 'PENDING',
+                    kycApprovalStatus: account?.kycApprovalStatus || 'NOT_STARTED'
+                });
+            } catch (err) {
+                console.error("Failed to load artisan profile:", err);
+            }
+        };
+        fetchProfile();
+    }, []);
+
     const handleLogout = () => {
         authService.clearToken();
         window.location.href = '/login';
@@ -107,7 +135,7 @@ const ArtisanDashboard = () => {
 
     const renderView = () => {
         switch (currentView) {
-            case 'dashboard': return <ArtisanHomeView setCurrentView={setCurrentView} />;
+            case 'dashboard': return <ArtisanHomeView setCurrentView={setCurrentView} userProfile={userProfile} />;
             case 'bookings':
                 return bookingsViewStep === 'list' ? (
                     <ArtisanBookingsView

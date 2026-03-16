@@ -4,13 +4,61 @@ import { ChevronRight, ChevronLeft, ChevronDown, User, MapPin, Lock, ShieldCheck
 import { FAQ_DATA, USER_PROFILE } from '../../constants/artisanData';
 import LogoutModal from './LogoutModal';
 import logo from '../../assets/Artifinda logo 3.png';
+import userService from '../../services/userService';
+import fileService from '../../services/fileService';
 
 const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, toggleFaq, handleLogout }) => {
 
-    const [profilePic, setProfilePic] = React.useState(null);
-    const handleProfilePicChange = (e) => {
+    const [profilePic, setProfilePic] = React.useState(userProfile.profilePicture || null);
+    const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
-        if (file) setProfilePic(URL.createObjectURL(file));
+        if (!file) return;
+        setUpdateMessage('Uploading profile picture...');
+        try {
+            const response = await fileService.upload(file);
+            const imageUrl = response.data?.url || response.url || response.secure_url;
+            if (imageUrl) {
+                setProfilePic(imageUrl);
+                setUserProfile(prev => ({ ...prev, profilePicture: imageUrl }));
+                setUpdateMessage('Profile picture uploaded!');
+            }
+        } catch (err) {
+            setUpdateMessage('Failed to upload profile picture.');
+        }
+    };
+
+    const [isUpdating, setIsUpdating] = React.useState(false);
+    const [updateMessage, setUpdateMessage] = React.useState('');
+
+    const handleUpdateProfile = async () => {
+        setIsUpdating(true);
+        setUpdateMessage('');
+        try {
+            const payload = {
+                firstName: userProfile.firstName,
+                lastName: userProfile.lastName,
+                phoneNumber: userProfile.phone,
+            };
+            const updatedData = await userService.updateProfile(payload);
+
+            const account = updatedData.accounts?.find(acc => acc.accountType === 'ARTISAN') || updatedData.accounts?.[0];
+            setUserProfile({
+                ...userProfile,
+                firstName: updatedData.firstName || userProfile.firstName,
+                lastName: updatedData.lastName || userProfile.lastName,
+                phone: updatedData.phoneNumber || userProfile.phone,
+                status: updatedData.status || userProfile.status,
+                identityVerificationStatus: updatedData.identityVerificationStatus || userProfile.identityVerificationStatus,
+            });
+
+            setUpdateMessage('Profile updated successfully!');
+            setTimeout(() => setUpdateMessage(''), 3000);
+        } catch (err) {
+            console.error("Failed to update artisan profile:", err);
+            setUpdateMessage('Failed to update profile. Please try again.');
+        } finally {
+            setIsUpdating(false);
+        }
     };
 
     const renderMain = () => (
@@ -101,8 +149,16 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                             }} className="w-full px-5 py-3 rounded-[20px] border border-gray-200 focus:border-[#1E4E82]/30 outline-none transition-colors font-bold" />
                     </div>
                 ))}
+                {updateMessage && (
+                    <div className={`text-center py-2 text-xs font-bold ${updateMessage.includes('success') ? 'text-green-500' : 'text-red-500'}`}>
+                        {updateMessage}
+                    </div>
+                )}
+                <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50">
+                    {isUpdating ? 'Saving...' : 'Save Changes'}
+                </button>
             </div>
-            <div className="w-full max-w-md px-5 lg:px-0">
+            <div className="w-full max-w-md px-5 lg:px-0 mt-6">
                 <button onClick={() => setShowLogoutModal(true)} className="w-full py-5 bg-[#DC2626] text-white font-black rounded-[24px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
                     <LogOut size={20} strokeWidth={2.5} /> Logout
                 </button>
