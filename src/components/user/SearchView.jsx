@@ -116,7 +116,7 @@ const SearchView = ({
                                                     </div>
                                                 </div>
                                                 <div className="flex lg:flex-col lg:items-end justify-between items-center shrink-0">
-                                                    <div className="text-lg font-medium text-[#0f172a]">₦{artisan.rate || '4,500'}<span className="text-[8px] text-gray-400 uppercase tracking-[0.2em] block lg:text-right">/hr</span></div>
+                                                    {/* <div className="text-lg font-medium text-[#0f172a]">₦{artisan.rate || '4,500'}<span className="text-[8px] text-gray-400 uppercase tracking-[0.2em] block lg:text-right">/hr</span></div> */}
                                                 </div>
                                             </div>
                                         ))}
@@ -131,7 +131,7 @@ const SearchView = ({
                         )}
                     </div>
                 ) : (
-                    <ArtisanProfileView artisan={selectedArtisan} setSelectedArtisan={setSelectedArtisan} setIsBookingFormOpen={setIsBookingFormOpen} isBookingFormOpen={isBookingFormOpen} userProfile={userProfile} selectedSkill={selectedSkill} />
+                    <ArtisanProfileView artisan={selectedArtisan} setSelectedArtisan={setSelectedArtisan} setIsBookingFormOpen={setIsBookingFormOpen} isBookingFormOpen={isBookingFormOpen} userProfile={userProfile} selectedSkill={selectedSkill} setCurrentView={setCurrentView} />
                 )}
             </div>
         </div>

@@ -25,6 +25,7 @@ export const API_CONFIG = {
             SEARCH_ARTISANS: '/api/v1/customers/search-artisans',
             BOOK_ARTISAN: '/api/v1/customers/book-artisan',
             GET_BOOKINGS: '/api/v1/customers/bookings',
+            CANCEL_BOOKING: (bookingId) => `/api/v1/customers/cancel-booking/${bookingId}`,
         },
         USER: {
             PROFILE: '/api/v1/profile',
@@ -32,6 +33,10 @@ export const API_CONFIG = {
         },
         FILE_UPLOAD: {
             UPLOAD: '/api/v1/file-uploads/upload',
+        },
+        ARTISANS: {
+            GET_BOOKINGS: '/api/v1/artisans/bookings',
+            RESPOND_TO_BOOKING: '/api/v1/artisans/respond-to-booking',
         },
         ABUSE_REPORT: {
             REPORT: '/api/v1/abuse-reports/report',

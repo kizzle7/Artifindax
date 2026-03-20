@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { USER_PROFILE } from '../constants/artisanData';
 import userService from '../services/userService';
 import authService from '../services/authService';
+import artisanService from '../services/artisanService';
+import toast from 'react-hot-toast';
 
 // Layout components
 import Sidebar from '../components/artisan/Sidebar';
@@ -27,11 +30,13 @@ import CancellationModal from '../components/artisan/CancellationModal';
 import ServiceCompletionModal from '../components/artisan/ServiceCompletionModal';
 
 const ArtisanDashboard = () => {
+    const navigate = useNavigate();
     const [currentView, setCurrentView] = useState('dashboard');
     const [bookingsViewStep, setBookingsViewStep] = useState('list');
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showCompletionModal, setShowCompletionModal] = useState(false);
+    const [showAcceptModal, setShowAcceptModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [otherReason, setOtherReason] = useState('');
     const [completionNotes, setCompletionNotes] = useState('');
@@ -40,6 +45,11 @@ const ArtisanDashboard = () => {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [notificationsViewStep, setNotificationsViewStep] = useState('list');
     const [selectedNotification, setSelectedNotification] = useState(null);
+
+    // Bookings Data State
+    const [bookingsData, setBookingsData] = useState([]);
+    const [loadingBookings, setLoadingBookings] = useState(false);
+    const [isSubmittingAction, setIsSubmittingAction] = useState(false);
 
     // Messages State
     const [messagesViewStep, setMessagesViewStep] = useState('list');
@@ -59,6 +69,24 @@ const ArtisanDashboard = () => {
     const [visibleFaq, setVisibleFaq] = useState(null);
 
     const toggleFaq = (id) => setVisibleFaq(visibleFaq === id ? null : id);
+
+    React.useEffect(() => {
+        if (currentView === 'bookings') {
+            fetchBookings();
+        }
+    }, [currentView]);
+
+    const fetchBookings = async () => {
+        setLoadingBookings(true);
+        try {
+            const data = await artisanService.getBookings({ pageNumber: 1, pageSize: 10 });
+            setBookingsData(data.records || []);
+        } catch (err) {
+            console.error("Failed to load artisan bookings:", err);
+        } finally {
+            setLoadingBookings(false);
+        }
+    };
 
     React.useEffect(() => {
         const fetchProfile = async () => {
@@ -88,7 +116,7 @@ const ArtisanDashboard = () => {
 
     const handleLogout = () => {
         authService.clearToken();
-        window.location.href = '/login';
+        navigate('/login');
     };
 
     const handleBack = () => {
@@ -127,11 +155,37 @@ const ArtisanDashboard = () => {
     const handleCompleteClick = (booking) => { setSelectedBooking(booking); setShowCompletionModal(true); };
     const handleAcceptClick = (booking) => {
         setSelectedBooking(booking);
-        setInvoiceItems([{ description: booking.title, amount: '' }]);
-        setCurrentView('generate-invoice');
+        // Commented out generation of invoice for now
+        // setInvoiceItems([{ description: booking.title, amount: '' }]);
+        // setCurrentView('generate-invoice');
+        setShowAcceptModal(true);
     };
     const confirmCompletion = () => { setShowCompletionModal(false); setCurrentView('confirm-completion'); };
     const confirmCancellation = () => { setShowCancelModal(false); setCurrentView('cancel-reason'); };
+    const confirmAccept = async () => {
+        if (!selectedBooking) return;
+        setIsSubmittingAction(true);
+        const loadingToast = toast.loading('Accepting booking request...');
+        try {
+            await artisanService.respondToBooking({
+                bookingId: selectedBooking.id,
+                bookingResponseStatus: 'ACCEPTED',
+                comment: 'Booking accepted'
+            });
+            toast.success('Booking accepted successfully!', { id: loadingToast });
+            setShowAcceptModal(false);
+            setCurrentView('bookings');
+            setBookingsViewStep('list');
+            setSelectedBooking(null);
+            fetchBookings(); // Refresh list
+        } catch (err) {
+            console.error("Failed to accept booking:", err);
+            const backendMessage = err.response?.data?.message || 'Failed to accept booking. Please try again.';
+            toast.error(backendMessage, { id: loadingToast });
+        } finally {
+            setIsSubmittingAction(false);
+        }
+    };
 
     const renderView = () => {
         switch (currentView) {
@@ -139,6 +193,8 @@ const ArtisanDashboard = () => {
             case 'bookings':
                 return bookingsViewStep === 'list' ? (
                     <ArtisanBookingsView
+                        bookingsData={bookingsData}
+                        loadingBookings={loadingBookings}
                         onSelectBooking={(booking) => { setSelectedBooking(booking); setBookingsViewStep('detail'); }}
                         onCancel={handleCancelClick}
                         onComplete={handleCompleteClick}
@@ -163,7 +219,22 @@ const ArtisanDashboard = () => {
                         setReason={setCancelReason}
                         otherReason={otherReason}
                         setOtherReason={setOtherReason}
-                        onSubmit={() => setCurrentView('cancel-success')}
+                        onSubmit={async () => {
+                            setIsSubmittingAction(true);
+                            try {
+                                await artisanService.respondToBooking({
+                                    bookingId: selectedBooking.id,
+                                    bookingResponseStatus: 'REJECTED',
+                                    comment: cancelReason + (otherReason ? `: ${otherReason}` : '')
+                                });
+                                setCurrentView('cancel-success');
+                                fetchBookings(); // Refresh list
+                            } catch (err) {
+                                console.error("Failed to reject booking:", err);
+                            } finally {
+                                setIsSubmittingAction(false);
+                            }
+                        }}
                     />
                 );
             case 'cancel-success':
@@ -202,7 +273,7 @@ const ArtisanDashboard = () => {
                         }}
                     />
                 );
-            case 'generate-invoice':
+            /* case 'generate-invoice':
                 return (
                     <ArtisanGenerateInvoiceView
                         booking={selectedBooking}
@@ -218,10 +289,27 @@ const ArtisanDashboard = () => {
                         booking={selectedBooking}
                         items={invoiceItems}
                         onEdit={() => setCurrentView('generate-invoice')}
-                        onSend={() => { setCurrentView('bookings'); setBookingsViewStep('list'); setSelectedBooking(null); }}
+                        onSend={async () => {
+                            setIsSubmittingAction(true);
+                            try {
+                                await artisanService.respondToBooking({
+                                    bookingId: selectedBooking.id,
+                                    bookingResponseStatus: 'ACCEPTED',
+                                    comment: 'Booking accepted with invoice'
+                                });
+                                setCurrentView('bookings');
+                                setBookingsViewStep('list');
+                                setSelectedBooking(null);
+                                fetchBookings(); // Refresh list
+                            } catch (err) {
+                                console.error("Failed to accept booking:", err);
+                            } finally {
+                                setIsSubmittingAction(false);
+                            }
+                        }}
                         onBack={handleBack}
                     />
-                );
+                ); */
             case 'messages':
                 return (
                     <ArtisanMessagesView
@@ -331,6 +419,34 @@ const ArtisanDashboard = () => {
                     onConfirm={confirmCompletion}
                     onCancel={() => setShowCompletionModal(false)}
                 />
+            )}
+
+            {showAcceptModal && (
+                <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[24px] max-w-sm w-full p-6 text-center animate-in zoom-in-95 duration-200">
+                        <div className="w-16 h-16 bg-[#1E4E82]/10 text-[#1E4E82] rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span className="text-2xl">🤝</span>
+                        </div>
+                        <h3 className="text-xl font-black text-[#0f172a] mb-2 tracking-tight">Accept Booking?</h3>
+                        <p className="text-sm font-bold text-slate-500 mb-6">Are you sure you want to accept this booking request?</p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setShowAcceptModal(false)}
+                                disabled={isSubmittingAction}
+                                className="flex-1 py-3 border-2 border-slate-200 text-slate-500 rounded-[12px] font-black uppercase tracking-wider text-xs hover:border-slate-300 transition-colors"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={confirmAccept}
+                                disabled={isSubmittingAction}
+                                className={`flex-1 py-3 bg-[#1E4E82] text-white rounded-[12px] font-black uppercase tracking-wider text-xs shadow-lg hover:bg-[#153a61] transition-colors ${isSubmittingAction ? 'opacity-50' : ''}`}
+                            >
+                                {isSubmittingAction ? 'Accepting...' : 'Yes'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

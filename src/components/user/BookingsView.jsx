@@ -4,11 +4,11 @@ import { Phone, MessageSquare, ChevronRight, MapPin, Clock, Calendar, Plus } fro
 
 const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBooking, setCurrentChat, setMessagesViewStep, setCurrentView, loadingBookings }) => {
     const getStatusGroup = (status) => {
-        const s = (status || '').toUpperCase();
-        if (['NEW', 'PENDING', 'ACCEPTED', 'ON_WAY', 'IN_PROGRESS', 'SCHEDULED'].includes(s)) return 'active';
-        if (['FINISHED', 'COMPLETED'].includes(s)) return 'completed';
-        if (['REJECTED', 'CANCELED', 'CANCELLED'].includes(s)) return 'canceled';
-        return 'active'; // Default
+        const s = (status || '').toString().trim().toUpperCase();
+        if (['NEW', 'ACCEPTED', 'PENDING'].includes(s)) return 'active';
+        if (['COMPLETED', 'FINISHED'].includes(s)) return 'completed';
+        if (['REJECTED', 'CANCELLED', 'CANCELED', 'DECLINED', 'EXPIRED'].includes(s)) return 'canceled';
+        return 'active'; // Default for unknown/active-like states
     };
 
     const filteredBookings = bookingsData.filter(b => getStatusGroup(b.bookingStatus || b.status) === bookingTab);
@@ -37,23 +37,23 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                             const displayTitle = booking.bookingNote || 'Service Booking';
 
                             const artisan = booking.artisan;
-                            const artisanName = artisan?.appUser 
+                            const artisanName = artisan?.appUser
                                 ? `${artisan.appUser.firstName || ''} ${artisan.appUser.lastName || ''}`.trim()
                                 : (booking.artisanName || 'Artisan');
 
                             const artisanRole = booking.artisanCategorySkill?.artisanCategory?.category?.name || booking.artisanRole || 'Professional';
                             const artisanAvatar = artisan?.appUser?.profilePicture || booking.avatar;
-                            
+
                             const dateObj = booking.bookingDate ? new Date(booking.bookingDate.replace(' ', 'T')) : null;
                             const displayDate = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : (booking.date || 'To be decided');
                             const displayTime = dateObj && !isNaN(dateObj) ? dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : (booking.time || '--:--');
 
                             return (
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, y: 10 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    key={booking.id} 
-                                    onClick={() => setSelectedBooking(booking)} 
+                                    key={booking.id}
+                                    onClick={() => setSelectedBooking(booking)}
                                     className="bg-white border border-gray-50 rounded-[14px] p-3 lg:p-3.5 relative hover:border-[#1E4E82]/20 transition-all cursor-pointer group shadow-sm active:scale-[0.99] overflow-hidden"
                                 >
                                     <div className="flex items-center justify-between mb-1">
@@ -77,11 +77,10 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
-                                            <div className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider ${
-                                                bookingTab === 'active' ? 'bg-blue-50 text-[#1E4E82]' :
-                                                bookingTab === 'completed' ? 'bg-green-50 text-green-600' :
-                                                'bg-red-50 text-red-600'
-                                            }`}>
+                                            <div className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider ${bookingTab === 'active' ? 'bg-blue-50 text-[#1E4E82]' :
+                                                    bookingTab === 'completed' ? 'bg-green-50 text-green-600' :
+                                                        'bg-red-50 text-red-600'
+                                                }`}>
                                                 {booking.bookingStatus || booking.status}
                                             </div>
                                         </div>

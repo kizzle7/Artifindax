@@ -20,15 +20,16 @@ const ArtisanInvoicePreviewView = ({ booking, items, onSend, onEdit, onBack }) =
             <div className="bg-white border border-slate-100 rounded-[32px] p-8 shadow-sm mb-12">
                 <div className="flex justify-between items-start mb-6 pb-6 border-b border-slate-50">
                     <div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">{booking.id}</span>
-                        <h4 className="font-black text-[#0f172a] text-lg">{booking.title}</h4>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">#{booking.id || '---'}</span>
+                        <h4 className="font-black text-[#0f172a] text-lg">{booking.bookingNote ? (booking.bookingNote.split('\n\n')[0]) : 'Service Booking'}</h4>
                     </div>
-                    <span className="font-black text-[#0f172a]">{booking.title}</span>
                 </div>
 
                 <div className="flex items-center gap-3 mb-8">
-                    <img src={booking.customer.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
-                    <span className="font-bold text-slate-700">{booking.customer.name}</span>
+                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
+                        <img src={booking.customer?.appUser?.profilePicture || booking.customer?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100"} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="font-bold text-slate-700">{booking.customer?.appUser ? `${booking.customer.appUser.firstName} ${booking.customer.appUser.lastName}` : (booking.customer?.name || 'Customer')}</span>
                     <div className="flex gap-2 ml-auto">
                         <button className="w-8 h-8 bg-slate-50 rounded-lg text-slate-400 flex items-center justify-center"><Phone size={14} /></button>
                         <button className="w-8 h-8 bg-slate-50 rounded-lg text-slate-400 flex items-center justify-center"><MessageSquare size={14} /></button>

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-    X, Camera, Calendar, Clock, MapPin, 
+import {
+    X, Camera, Calendar, Clock, MapPin,
     ChevronRight, ChevronLeft, Info, AlertCircle, CheckCircle2,
     Loader2, Plus, Trash2, Star, Phone, MessageSquare
 } from 'lucide-react';
@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 import fileService from '../../services/fileService';
 import customerService from '../../services/customerService';
 
-const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill, setSelectedArtisan }) => {
+const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill, setSelectedArtisan, setCurrentView }) => {
     const [images, setImages] = useState([]);
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef(null);
@@ -31,8 +31,8 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
         setSubmitting(true);
         const loadingToast = toast.loading('Sending booking request...');
         try {
-            // Simply send the note as the user typed it, as requested
-            const finalNote = bookingNote || "No note provided.";
+            // Combine title and description for a complete note
+            const finalNote = bookingTitle ? `${bookingTitle}\n\n${bookingNote}` : (bookingNote || "No note provided.");
 
             // Robust ID resolution: prioritize artisan-specific IDs (bridge IDs)
             let resolvedSkillId = 0;
@@ -51,19 +51,24 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
             if (!resolvedSkillId) {
                 resolvedSkillId = artisan?.artisanSkillId || artisan?.skillId ||
                     (typeof artisan?.skillName === 'object' ? artisan.skillName?.id : 0) ||
-                    selectedSkill?.id || 0;
+                    selectedSkill?.id || 1; // Fallback to 1 instead of 0 if nothing else
             }
 
             const resolvedArtisanId = artisan?.artisanId || artisan?.id || artisan?.userId || 0;
 
+            // Set booking date 5 minutes in the future to avoid backend "past time" errors
+            const futureDate = new Date();
+            futureDate.setMinutes(futureDate.getMinutes() + 5);
+            const formattedDate = futureDate.toISOString().split('.')[0] + 'Z';
+
             const payload = {
                 artisanId: resolvedArtisanId,
-                bookingDate: new Date().toISOString().split('.')[0] + 'Z', // Remove milliseconds for broader compatibility
+                bookingDate: formattedDate,
                 bookingNote: finalNote,
                 bookingMedia: images || [],
                 serviceMode: selectedServiceMode,
                 artisanSkillId: resolvedSkillId,
-                customerAddressId: userProfile?.customerAddresses?.[0]?.id || userProfile?.addresses?.[0]?.id || 0
+                customerAddressId: userProfile?.customerAddresses?.[0]?.id || userProfile?.addresses?.[0]?.id || 1 // Fallback to 1 instead of 0
             };
 
             console.log('[BookingForm] FINAL PAYLOAD:', JSON.stringify(payload, null, 2));

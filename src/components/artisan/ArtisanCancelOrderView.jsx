@@ -12,7 +12,7 @@ const ArtisanCancelOrderView = ({ booking, onBack, onSubmit, reason, setReason, 
                     <button onClick={onBack} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                     <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Cancel Order</h1>
                 </div>
-                {getDetailStatusBadge(booking?.status)}
+                {getDetailStatusBadge(booking?.bookingStatus)}
             </div>
 
             <p className="text-slate-500 font-bold mb-8">Please let us know the reason for your cancellation below</p>

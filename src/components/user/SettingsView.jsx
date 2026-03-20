@@ -18,7 +18,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         try {
             const response = await fileService.upload(file);
             console.log('[SettingsView] Profile Pic Response:', response);
-            
+
             let imageUrl = '';
             if (Array.isArray(response)) {
                 imageUrl = response[0];

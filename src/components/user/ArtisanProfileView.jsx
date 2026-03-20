@@ -10,6 +10,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [reporting, setReporting] = useState(false);
     const [reportDetails, setReportDetails] = useState('');
+    const [reportType, setReportType] = useState('HARASSMENT');
 
     if (isBookingFormOpen) return <BookingForm artisan={artisan} setIsBookingFormOpen={setIsBookingFormOpen} setSelectedArtisan={setSelectedArtisan} userProfile={userProfile} selectedSkill={selectedSkill} setCurrentView={setCurrentView} />;
 
@@ -19,7 +20,8 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
         const reportToast = toast.loading('Submitting report...');
         try {
             await reportService.reportAbuse({
-                reportType: 'HARASSMENT', // Default as per user request example
+                artisanId: artisan?.artisanId || artisan?.id || 0,
+                reportType: reportType,
                 details: reportDetails
             });
             toast.success('Report submitted successfully.', { id: reportToast });
@@ -83,7 +85,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                             <h1 className="text-2xl lg:text-3xl font-bold text-[#0f172a] tracking-tight">{artisan.firstName ? `${artisan.firstName} ${artisan.lastName}` : (artisan.name || 'Chinedu Eze')}</h1>
                             {(artisan.isVerified || artisan.status === 'ACTIVE') && <span className="bg-[#1E4E82] text-white px-2 py-0.5 rounded text-[10px] font-bold">verified</span>}
                         </div>
-                        <p className="text-base font-bold text-[#0f172a] tracking-tight">{typeof (artisan.skillName) === 'object' ? artisan.skillName.name : (artisan.skillName || artisan.role || 'Electrician')}</p>
+                        <p className="text-base font-bold text-[#0f172a] tracking-tight">{typeof (artisan.skillName) === 'object' ? artisan.skillName.name : (artisan.skillName || artisan.role || 'Service Partner')}</p>
                         <div className="flex items-center gap-4 mt-1 text-slate-500 font-semibold text-xs uppercase tracking-tight">
                             <span className="flex items-center gap-1"><MapPin size={12} className="text-slate-400" /> {artisan.distance || '2.1km'}</span>
                             <span className="flex items-center gap-1"><Star size={12} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || '4.8'} (28 reviews)</span>
@@ -118,10 +120,10 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                     </div>
                     {activeTab === 'About' && (
                         <div className="space-y-8 animate-in fade-in duration-500 pt-2 pb-12">
-                            <div>
+                            {/* <div>
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wide">Minimum rate(/hr)</h3>
                                 <p className="text-[15px] font-black text-[#0f172a]">₦{artisan.price || artisan.rate || '3500'}</p>
-                            </div>
+                            </div> */}
 
                             <div>
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wide">Gender</h3>
@@ -131,7 +133,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                             <div>
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-3 uppercase tracking-wide">Skills</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {(artisan.skills || ['Bathroom Installation', 'Leak Repairs', 'Plumbing Design', 'Drainage Systems', 'Full Bathroom Plumbing', 'Blocked Drain Clearing', 'Water Heater Installation']).map((skill, i) => (
+                                    {(artisan.skills && artisan.skills.length > 0 ? artisan.skills : [artisan.skillName || 'Service Partner']).map((skill, i) => (
                                         <span key={i} className="px-3 py-1.5 bg-blue-50 text-[#1E4E82] text-[10px] font-bold rounded-full uppercase tracking-tight">
                                             {typeof skill === 'object' ? skill.name : skill}
                                         </span>
@@ -142,13 +144,13 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                             <div>
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wide">Bio</h3>
                                 <p className="text-base font-bold text-[#0f172a] leading-tight max-w-4xl">
-                                    {artisan.bio || "Passionate about safe and efficient wiring. I've been lighting up homes and fixing electrical faults for over 2 years."}
+                                    {artisan.bio || `Passionate about providing high-quality ${artisan.skillName || 'professional'} services. I've been serving clients and delivering excellence for over ${artisan.yearsOfExperience || '2'} years.`}
                                 </p>
                             </div>
 
                             <div>
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wide">Years of Experience</h3>
-                                <p className="text-sm font-bold text-[#0f172a]">{artisan.yearsOfExperience || '2-3 years'}</p>
+                                <p className="text-sm font-bold text-[#0f172a]">{artisan.yearsOfExperience || '2+ years'}</p>
                             </div>
 
                             <div>
@@ -163,16 +165,35 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                             <div>
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-4 uppercase tracking-wide">Availability</h3>
                                 <div className="space-y-4 max-w-md">
-                                    {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
-                                        <div key={day} className="flex justify-between items-center text-xs font-bold text-[#0f172a]">
-                                            <span className="w-24">{day}</span>
-                                            <div className="flex items-center gap-6">
-                                                <span className="tracking-widest">06 : 00 am</span>
-                                                <span className="text-slate-400 font-medium lowercase">to</span>
-                                                <span className="tracking-widest">16 : 00 pm</span>
+                                    {artisan.availability ? (
+                                        Object.entries(artisan.availability).map(([day, schedule]) => (
+                                            <div key={day} className={`flex justify-between items-center text-xs font-bold ${schedule.active ? 'text-[#0f172a]' : 'text-slate-300'}`}>
+                                                <span className="w-24">{day}</span>
+                                                <div className="flex items-center gap-6">
+                                                    {schedule.active ? (
+                                                        <>
+                                                            <span className="tracking-widest">{schedule.from}</span>
+                                                            <span className="text-slate-400 font-medium lowercase">to</span>
+                                                            <span className="tracking-widest">{schedule.to}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="uppercase tracking-widest text-[9px] opacity-50">Unavailable</span>
+                                                    )}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))}
+                                        ))
+                                    ) : (
+                                        ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+                                            <div key={day} className="flex justify-between items-center text-xs font-bold text-[#0f172a]">
+                                                <span className="w-24">{day}</span>
+                                                <div className="flex items-center gap-6">
+                                                    <span className="tracking-widest">08 : 00 am</span>
+                                                    <span className="text-slate-400 font-medium lowercase">to</span>
+                                                    <span className="tracking-widest">17 : 00 pm</span>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </div>
 
@@ -214,12 +235,14 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                 </div>
                 {/* Fixed Bottom Action Bar */}
                 <div className="fixed bottom-0 left-0 lg:left-[240px] right-0 p-4 lg:p-6 bg-white border-t border-slate-100 flex gap-4 z-50">
-                    <button
-                        onClick={() => setIsBookingFormOpen(true)}
-                        className="flex-1 bg-[#1E4E82] text-white py-3.5 rounded-lg font-bold text-sm shadow-sm active:scale-[0.98] transition-all"
-                    >
-                        Book Now
-                    </button>
+                    {!artisan.hideBookNow && (
+                        <button
+                            onClick={() => setIsBookingFormOpen(true)}
+                            className="flex-1 bg-[#1E4E82] text-white py-3.5 rounded-lg font-bold text-sm shadow-sm active:scale-[0.98] transition-all"
+                        >
+                            Book Now
+                        </button>
+                    )}
                     <button className="flex-1 bg-white text-[#1E4E82] py-3.5 rounded-lg font-bold text-sm border-2 border-[#1E4E82] active:scale-[0.98] transition-all">
                         Message
                     </button>
@@ -240,7 +263,18 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                             </div>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Details</label>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Reason for Reporting</label>
+                                    <select
+                                        value={reportType}
+                                        onChange={(e) => setReportType(e.target.value)}
+                                        className="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-red-600 focus:outline-none font-bold text-slate-700 text-sm appearance-none bg-white transition-colors mb-4"
+                                    >
+                                        <option value="HARASSMENT">Harassment</option>
+                                        <option value="SCAM">Scam or Fraud</option>
+                                        <option value="POOR_SERVICE">Extremely Poor Service</option>
+                                        <option value="MISCONDUCT">Professional Misconduct</option>
+                                    </select>
+                                    <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Additional Details</label>
                                     <textarea
                                         value={reportDetails}
                                         onChange={(e) => setReportDetails(e.target.value)}

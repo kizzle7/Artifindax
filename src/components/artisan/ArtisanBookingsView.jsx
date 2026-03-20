@@ -1,64 +1,56 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, AlertCircle, Calendar, Clock, MapPin, Phone, MessageSquare, Mail, Plus } from 'lucide-react';
-import { ARTISAN_BOOKINGS } from '../../constants/artisanData';
+const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, setCurrentView }) => {
+    const [activeTab, setActiveTab] = useState('New');
 
-const ArtisanBookingsView = ({ onSelectBooking, onCancel, onComplete, onAccept, setCurrentView }) => {
-    const [activeTab, setActiveTab] = useState('Requests');
-    const [activeSubTab, setActiveSubTab] = useState('Ongoing');
+    const tabs = ['New', 'Completed', 'Canceled'];
 
-    const tabs = ['Requests', 'Active', 'Completed', 'Canceled'];
-
-    const filteredBookings = ARTISAN_BOOKINGS.filter(b => {
-        if (activeTab === 'Requests') return b.status === 'urgent';
-        if (activeTab === 'Active') {
-            if (activeSubTab === 'Ongoing') return b.status === 'ongoing';
-            return b.status === 'scheduled';
-        }
-        if (activeTab === 'Completed') return b.status === 'completed';
-        if (activeTab === 'Canceled') return b.status === 'canceled';
+    const filteredBookings = (bookingsData || []).filter(b => {
+        const s = (b.bookingStatus || b.status || '').toString().trim().toUpperCase();
+        if (activeTab === 'New') return ['NEW', 'ACCEPTED', 'PENDING'].includes(s);
+        if (activeTab === 'Completed') return ['COMPLETED', 'FINISHED'].includes(s);
+        if (activeTab === 'Canceled') return ['REJECTED', 'CANCELLED', 'CANCELED', 'DECLINED', 'EXPIRED'].includes(s);
         return false;
     });
 
     const getStatusBadge = (status) => {
-        switch (status) {
-            case 'urgent': return <span className="px-2 py-1 bg-red-50 text-red-500 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1"><AlertCircle size={10} /> Urgent</span>;
-            case 'scheduled': return <span className="px-2 py-1 bg-blue-50 text-blue-500 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-blue-500" /> scheduled</span>;
-            case 'ongoing': return <span className="px-2 py-1 bg-orange-50 text-orange-500 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-orange-500" /> ongoing</span>;
-            case 'completed': return <span className="px-2 py-1 bg-emerald-50 text-emerald-500 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> completed</span>;
-            case 'canceled': return <span className="px-2 py-1 bg-red-50 text-red-400 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-400" /> canceled</span>;
+        const s = (status || '').toUpperCase();
+        switch (s) {
+            case 'NEW': return <span className="px-2 py-1 bg-blue-50 text-blue-500 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1"><AlertCircle size={10} /> New</span>;
+            case 'ACCEPTED': return <span className="px-2 py-1 bg-indigo-50 text-indigo-500 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> Accepted</span>;
+            case 'COMPLETED': return <span className="px-2 py-1 bg-emerald-50 text-emerald-900 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-emerald-900" /> completed</span>;
+            case 'REJECTED':
+            case 'CANCELLED':
+            case 'CANCELED': return <span className="px-2 py-1 bg-red-50 text-red-900 rounded-md text-[10px] font-black uppercase tracking-wider flex items-center gap-1"><div className="w-1.5 h-1.5 rounded-full bg-red-900" /> canceled</span>;
             default: return null;
         }
     };
 
     const getActionButtons = (status, booking) => {
-        switch (status) {
-            case 'urgent':
+        const s = (status || '').toUpperCase();
+        switch (s) {
+            case 'NEW':
                 return (
                     <div className="grid grid-cols-2 gap-3 mt-4">
-                        <button onClick={() => onCancel(booking)} className="py-2.5 border border-[#1E4E82] text-[#1E4E82] rounded-xl font-bold text-sm">Ignore</button>
+                        <button onClick={() => onCancel(booking)} className="py-2.5 border border-[#dc2626] text-[#dc2626] rounded-xl font-bold text-sm">Reject</button>
                         <button onClick={() => onAccept(booking)} className="py-2.5 bg-[#1E4E82] text-white rounded-xl font-bold text-sm">Accept</button>
                     </div>
                 );
-            case 'scheduled':
+            case 'ACCEPTED':
                 return (
                     <div className="grid grid-cols-2 gap-3 mt-4">
                         <button onClick={() => onCancel(booking)} className="py-2.5 border border-[#1E4E82] text-[#1E4E82] rounded-xl font-bold text-sm">Cancel</button>
-                        <button className="py-2.5 bg-[#1E4E82] text-white rounded-xl font-bold text-sm">Mark as Started</button>
+                        <button onClick={() => onComplete(booking)} className="py-2.5 bg-[#1E4E82] text-white rounded-xl font-bold text-sm">Complete</button>
                     </div>
                 );
-            case 'ongoing':
-                return (
-                    <div className="grid grid-cols-2 gap-3 mt-4">
-                        <button onClick={() => onCancel(booking)} className="py-2.5 border border-[#1E4E82] text-[#1E4E82] rounded-xl font-bold text-sm">Cancel</button>
-                        <button onClick={() => onComplete(booking)} className="py-2.5 bg-[#1E4E82] text-white rounded-xl font-bold text-sm">Mark as Completed</button>
-                    </div>
-                );
-            case 'completed':
-            case 'canceled':
+            case 'COMPLETED':
+            case 'REJECTED':
+            case 'CANCELLED':
+            case 'CANCELED':
                 return (
                     <div className="mt-4">
-                        <button className="w-full py-2.5 border border-[#1E4E82] text-[#1E4E82] rounded-xl font-bold text-sm uppercase tracking-widest">View Review</button>
+                        <button className="w-full py-2.5 border border-slate-200 text-slate-400 rounded-xl font-bold text-sm uppercase tracking-widest cursor-not-allowed">No actions available</button>
                     </div>
                 );
             default: return null;
@@ -83,67 +75,65 @@ const ArtisanBookingsView = ({ onSelectBooking, onCancel, onComplete, onAccept, 
                 ))}
             </div>
 
-            {/* Active Sub-tabs */}
-            {activeTab === 'Active' && (
-                <div className="flex justify-center mb-6">
-                    <div className="bg-slate-100/50 p-1.5 rounded-2xl flex gap-1 items-center">
-                        {['Ongoing', 'Upcoming'].map(sub => (
-                            <button
-                                key={sub}
-                                onClick={() => setActiveSubTab(sub)}
-                                className={`px-6 py-2 rounded-xl text-xs font-bold transition-all ${activeSubTab === sub ? 'bg-white text-[#0f172a] shadow-sm' : 'text-gray-400 hover:text-gray-500'}`}
-                            >
-                                {sub}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
 
             {/* Bookings List */}
-            <div className={`space-y-4 ${filteredBookings.length === 0 ? 'flex-1 flex flex-col items-center justify-center min-h-[400px]' : ''}`}>
-                {filteredBookings.length > 0 ? (
-                    filteredBookings.map(booking => (
-                        <div key={booking.id} className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-sm w-full">
-                            <div className="flex justify-between items-start mb-3">
-                                <div>
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-1 block">{booking.id}</span>
-                                    <div className="flex items-center gap-2">
-                                        <h4 className="font-black text-[#0f172a]">{booking.title}</h4>
-                                        {getStatusBadge(booking.status)}
+            <div className={`space-y-4 ${filteredBookings.length === 0 && !loadingBookings ? 'flex-1 flex flex-col items-center justify-center min-h-[400px]' : ''}`}>
+                {loadingBookings ? (
+                    <div className="flex flex-col items-center justify-center py-20 opacity-50">
+                        <div className="w-8 h-8 border-2 border-[#1E4E82] border-t-transparent rounded-full animate-spin mb-4"></div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[#1E4E82]">Fetching your bookings...</p>
+                    </div>
+                ) : filteredBookings.length > 0 ? (
+                    filteredBookings.map(booking => {
+                        const dateObj = booking.bookingDate ? new Date(booking.bookingDate.replace(' ', 'T')) : null;
+                        const displayDate = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : (booking.date || 'TBD');
+                        const displayTime = dateObj && !isNaN(dateObj) ? dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : (booking.time || '--:--');
+
+                        return (
+                            <div key={booking.id} className="bg-white border border-slate-100 rounded-[24px] p-5 shadow-sm w-full transition-all hover:border-[#1E4E82]/10">
+                                <div className="flex justify-between items-start mb-3">
+                                    <div>
+                                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] mb-1 block">#{booking.id || '---'}</span>
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-black text-[#0f172a]">{booking.bookingNote ? (booking.bookingNote.includes('\n\n') ? booking.bookingNote.split('\n\n')[0] : booking.bookingNote) : 'Service Booking'}</h4>
+                                            {getStatusBadge(booking.bookingStatus)}
+                                        </div>
+                                    </div>
+                                    <button onClick={() => onSelectBooking(booking)} className="p-2 border border-slate-200 rounded-full text-slate-400 hover:text-[#1E4E82] hover:bg-blue-50 transition-all">
+                                        <ChevronRight size={18} />
+                                    </button>
+                                </div>
+
+                                <p className="text-[11px] text-slate-500 font-bold leading-relaxed line-clamp-1 mb-4">
+                                    {booking.bookingNote && booking.bookingNote.includes('\n\n') ? booking.bookingNote.split('\n\n')[1] : (booking.bookingNote || 'No description provided.')}
+                                </p>
+
+                                <div className="flex justify-between items-start mb-4">
+                                    <div className="flex flex-wrap gap-x-6 gap-y-2 max-w-[75%]">
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400"><Calendar size={14} className="text-[#1E4E82]/60" /> {displayDate}</div>
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400"><Clock size={14} className="text-[#1E4E82]/60" /> {displayTime}</div>
+                                        <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400"><MapPin size={14} className="text-[#1E4E82]/60" /> {booking.customerAddress?.address?.address?.split(',')[0] || booking.address?.split(',')[0] || 'Address TBD'}</div>
+                                    </div>
+                                    {/* <span className="text-xl font-black text-[#0f172a] shrink-0">₦{booking.price || booking.artisanCategorySkill?.artisanCategory?.rateAmount || '0.00'}</span> */}
+                                </div>
+
+                                <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-slate-50 shadow-inner">
+                                            <img src={booking.customer?.appUser?.profilePicture || booking.customer?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100"} alt="" className="w-full h-full object-cover" />
+                                        </div>
+                                        <span className="font-bold text-slate-700 text-sm">{booking.customer?.appUser ? `${booking.customer.appUser.firstName} ${booking.customer.appUser.lastName}` : (booking.customer?.name || 'Customer')}</span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors"><Phone size={14} /></button>
+                                        <button className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors"><MessageSquare size={14} /></button>
                                     </div>
                                 </div>
-                                <button onClick={() => onSelectBooking(booking)} className="p-2 border border-slate-400 rounded-full text-slate-400 hover:text-slate-600">
-                                    <ChevronRight size={18} />
-                                </button>
+
+                                {getActionButtons(booking.bookingStatus, booking)}
                             </div>
-
-                            <p className="text-[11px] text-slate-500 font-bold leading-relaxed line-clamp-1 mb-4">{booking.shortDescription}</p>
-
-                            <div className="flex justify-between items-start mb-4">
-                                <div className="flex flex-wrap gap-x-6 gap-y-2 max-w-[75%]">
-                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400"><Calendar size={14} /> {booking.date}</div>
-                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400"><Clock size={14} /> {booking.time.from.split(' ')[0]} {booking.time.from.split(' ')[2]}</div>
-                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400"><MapPin size={14} /> {booking.address.split(',')[0]}</div>
-                                </div>
-                                <span className="text-xl font-black text-[#0f172a] shrink-0">₦{booking.payment.total}</span>
-                            </div>
-
-                            <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <img src={booking.customer.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
-                                    <span className="font-bold text-slate-700">{booking.customer.name}</span>
-                                </div>
-                                <div className="flex gap-2">
-                                    <button className="p-2 bg-slate-50 rounded-xl text-blue-900"><Phone size={14} /></button>
-                                    <button className="p-2 bg-slate-50 rounded-xl text-blue-900"><MessageSquare size={14} /></button>
-                                    <button className="p-2 bg-slate-50 rounded-xl text-blue-900"><Mail size={14} /></button>
-                                </div>
-                            </div>
-
-                            {getActionButtons(booking.status, booking)}
-                        </div>
-                    ))
+                        );
+                    })
                 ) : (
                     <div className="flex flex-col items-center text-center p-6">
                         <div className="w-full max-w-xs mb-8 flex justify-center scale-90">

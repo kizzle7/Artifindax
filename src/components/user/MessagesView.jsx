@@ -223,12 +223,12 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                 </div>
                 <div className="space-y-6">
                     <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-2">Payment Summary</h3>
-                    <div className="space-y-4 px-2">
+                    {/* <div className="space-y-4 px-2">
                         <div className="flex justify-between font-bold text-gray-500"><span>Service Charge</span><span className="text-[#0f172a]">₦900</span></div>
                         <div className="flex justify-between font-bold text-gray-500"><span>Artisan Fee</span><span className="text-[#0f172a]">₦8,000</span></div>
                         <div className="flex justify-between font-bold text-gray-500"><span>Discount (5%)</span><span className="text-emerald-500">- ₦445</span></div>
                         <div className="flex justify-between text-3xl font-black text-[#0f172a] pt-6 border-t border-slate-100"><span>Total</span><span>₦8,455</span></div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
             <div className="fixed lg:sticky bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 space-y-4">
@@ -288,7 +288,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                     <div className="flex justify-between items-end border-b-2 border-slate-50 pb-4"><div><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Bank Name</span><h3 className="text-2xl font-bold text-[#0f172a]">Access Bank</h3></div></div>
                     <div className="flex justify-between items-end border-b-2 border-slate-50 pb-4"><div><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest block mb-1">Account Name</span><h3 className="text-2xl font-bold text-[#0f172a]">Artifinda Limited</h3></div></div>
                 </div>
-                <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100 flex justify-between items-center text-xl font-black"><span className="text-slate-400 text-sm uppercase tracking-widest">Total Fee</span><span className="text-[#1E4E82]">₦8,455</span></div>
+                {/* <div className="bg-blue-50/50 p-6 rounded-3xl border border-blue-100 flex justify-between items-center text-xl font-black"><span className="text-slate-400 text-sm uppercase tracking-widest">Total Fee</span><span className="text-[#1E4E82]">₦8,455</span></div> */}
             </div>
             <div className="mt-auto p-6 pb-12"><button onClick={() => setMessagesViewStep('success')} className="w-full py-5 bg-[#1E4E82] text-white rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all">Proceed</button></div>
         </div>
@@ -301,7 +301,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                 <motion.div initial={{ scale: 0.8 }} animate={{ scale: [1, 1.3, 1] }} transition={{ repeat: Infinity, duration: 3 }} className="absolute inset-0 bg-emerald-100/40 rounded-full" />
             </div>
             <h1 className="text-4xl font-black text-[#0f172a] mb-4">Payment Successful!</h1>
-            <p className="text-gray-400 font-bold mb-12 max-w-xs leading-relaxed uppercase tracking-tight text-sm">Your payment of ₦8,455 has been processed successfully.</p>
+            {/* <p className="text-gray-400 font-bold mb-12 max-w-xs leading-relaxed uppercase tracking-tight text-sm">Your payment of ₦8,455 has been processed successfully.</p> */}
             <div className="w-full max-w-sm space-y-4">
                 <button onClick={() => setMessagesViewStep('receipt')} className="w-full py-5 bg-[#1E4E82] text-white rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all">View Receipt</button>
                 <button onClick={() => { setCurrentView('home'); setMessagesViewStep('list'); }} className="w-full py-5 text-[#1E4E82] font-black text-base active:scale-95 transition-all uppercase tracking-widest">Go to Dashboard</button>
@@ -318,13 +318,13 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
             </div>
             <div className="p-4 lg:p-10 flex-1">
                 <div className="bg-white border border-slate-100 rounded-[24px] p-6 lg:p-8 shadow-xl space-y-6 max-w-2xl mx-auto">
-                    <div className="text-center pb-6 border-b border-slate-50"><h2 className="text-3xl font-black text-[#0f172a] mb-1">₦8,455</h2><span className="px-3 py-1 bg-emerald-50 text-emerald-500 rounded-full text-[9px] font-black uppercase tracking-widest">Successful</span></div>
+                    {/* <div className="text-center pb-6 border-b border-slate-50"><h2 className="text-3xl font-black text-[#0f172a] mb-1">₦8,455</h2><span className="px-3 py-1 bg-emerald-50 text-emerald-500 rounded-full text-[9px] font-black uppercase tracking-widest">Successful</span></div> */}
                     <div className="space-y-4">{[{ label: 'Date & Time', value: '24th June, 2025 | 2:30pm' }, { label: 'Transaction ID', value: 'ART-092-124-912' }, { label: 'Paid To', value: 'Chinedu Eze' }, { label: 'Service', value: 'AC Repair' }].map((item, idx) => <div key={idx} className="flex justify-between items-center"><span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{item.label}</span><span className="font-bold text-[#0f172a] text-xs">{item.value}</span></div>)}</div>
-                    <div className="pt-6 border-t border-slate-50 space-y-3">
+                    {/* <div className="pt-6 border-t border-slate-50 space-y-3">
                         <div className="flex justify-between font-bold text-slate-400 text-xs"><span>Service Charge</span><span className="text-[#0f172a]">₦900</span></div>
                         <div className="flex justify-between font-bold text-slate-400 text-xs"><span>Artisan Fee</span><span className="text-[#0f172a]">₦8,000</span></div>
                         <div className="flex justify-between font-bold text-slate-400 text-xs"><span>Discount</span><span className="text-emerald-500">- ₦445</span></div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
             <div className="mt-auto p-5 pb-10 max-w-2xl mx-auto w-full"><button className="w-full py-4 bg-[#1E4E82] text-white rounded-xl font-black text-base shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all"><Download size={20} /> Download Receipt</button></div>

@@ -26,20 +26,21 @@ const ArtisanGenerateInvoiceView = ({ booking, items, setItems, onSubmit, onBack
             <div className="bg-white border border-slate-100 rounded-[24px] p-6 mb-8 shadow-sm">
                 <div className="flex justify-between items-start mb-4">
                     <div>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">{booking.id}</span>
-                        <h4 className="font-black text-[#0f172a] text-lg">{booking.title}</h4>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">#{booking.id || '---'}</span>
+                        <h4 className="font-black text-[#0f172a] text-lg">{booking.bookingNote ? (booking.bookingNote.split('\n\n')[0]) : 'Service Booking'}</h4>
                     </div>
-                    <span className="font-black text-[#0f172a]">{booking.title}</span>
                 </div>
-                <p className="text-xs text-slate-500 font-bold leading-relaxed mb-6">{booking.shortDescription}</p>
+                <p className="text-xs text-slate-500 font-bold leading-relaxed mb-6">{booking.bookingNote && booking.bookingNote.includes('\n\n') ? booking.bookingNote.split('\n\n')[1] : (booking.bookingNote || 'No description provided.')}</p>
                 <div className="flex flex-wrap gap-4 text-[10px] font-bold text-gray-400 mb-6">
-                    <span className="flex items-center gap-1.5"><Calendar size={12} /> {booking.date}</span>
-                    <span className="flex items-center gap-1.5"><Clock size={12} /> {booking.time.from}</span>
-                    <span className="flex items-center gap-1.5"><MapPin size={12} /> {booking.address}</span>
+                    <span className="flex items-center gap-1.5"><Calendar size={12} className="text-[#1E4E82]/60" /> {booking.bookingDate ? new Date(booking.bookingDate.replace(' ', 'T')).toLocaleDateString('en-GB') : 'TBD'}</span>
+                    <span className="flex items-center gap-1.5"><Clock size={12} className="text-[#1E4E82]/60" /> {booking.bookingDate ? new Date(booking.bookingDate.replace(' ', 'T')).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}</span>
+                    <span className="flex items-center gap-1.5"><MapPin size={12} className="text-[#1E4E82]/60" /> {booking.customerAddress?.address?.address?.split(',')[0] || booking.address?.split(',')[0] || 'Address TBD'}</span>
                 </div>
                 <div className="pt-4 border-t border-slate-50 flex items-center gap-3">
-                    <img src={booking.customer.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
-                    <span className="font-bold text-slate-700">{booking.customer.name}</span>
+                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
+                        <img src={booking.customer?.appUser?.profilePicture || booking.customer?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100"} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <span className="font-bold text-slate-700">{booking.customer?.appUser ? `${booking.customer.appUser.firstName} ${booking.customer.appUser.lastName}` : (booking.customer?.name || 'Customer')}</span>
                 </div>
             </div>
 

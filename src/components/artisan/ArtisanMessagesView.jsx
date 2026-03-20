@@ -261,12 +261,12 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
                 </div>
                 <div className="space-y-6">
                     <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-2">Payment Summary</h3>
-                    <div className="space-y-4 px-2">
+                    {/* <div className="space-y-4 px-2">
                         <div className="flex justify-between font-bold text-gray-500"><span>Service Charge</span><span className="text-[#0f172a]">₦900</span></div>
                         <div className="flex justify-between font-bold text-gray-500"><span>Artisan Fee</span><span className="text-[#0f172a]">₦8,000</span></div>
                         <div className="flex justify-between font-bold text-gray-500"><span>Discount</span><span className="text-emerald-500">- ₦0</span></div>
                         <div className="flex justify-between text-3xl font-black text-[#0f172a] pt-6 border-t border-slate-100"><span>Total</span><span>₦8,900</span></div>
-                    </div>
+                    </div> */}
                 </div>
             </div>
             <div className="fixed lg:sticky bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 space-y-4">
@@ -285,10 +285,10 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
             </div>
             <div className="p-4 lg:p-10 flex-1">
                 <div className="bg-white border border-slate-100 rounded-[24px] p-6 lg:p-8 shadow-xl space-y-6 max-w-2xl mx-auto">
-                    <div className="text-center pb-6 border-b border-slate-50">
+                    {/* <div className="text-center pb-6 border-b border-slate-50">
                         <h2 className="text-3xl font-black text-[#0f172a] mb-1">₦8,900</h2>
                         <span className="px-3 py-1 bg-emerald-50 text-emerald-500 rounded-full text-[9px] font-black uppercase tracking-widest">Successful</span>
-                    </div>
+                    </div> */}
                     <div className="space-y-4">
                         {[
                             { label: 'Date & Time', value: '24th June, 2025 | 2:30pm' },

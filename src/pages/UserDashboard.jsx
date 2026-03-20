@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { AlertTriangle, Loader2 } from 'lucide-react';
 import { setKey, fromLatLng } from 'react-geocode';
+import toast from 'react-hot-toast';
 
 // Services
 import categoryService from '../services/categoryService';
@@ -53,6 +55,10 @@ const UserDashboard = () => {
 
     // Messages & Payment State
     const [messagesViewStep, setMessagesViewStep] = useState('list');
+    const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+    const [cancelReason, setCancelReason] = useState('');
+    const [cancelBookingId, setCancelBookingId] = useState(null);
+    const [isCancelling, setIsCancelling] = useState(false);
     const [currentChat, setCurrentChat] = useState(null);
     const [chatMessages, setChatMessages] = useState([]);
     const [searchMessages, setSearchMessages] = useState('');
@@ -197,8 +203,8 @@ const UserDashboard = () => {
                     topArtisans: true
                 };
                 const queryParams = {
-                    page: 1,
-                    size: 10
+                    pageNumber: 1,
+                    pageSize: 10
                 };
 
                 console.log("[Dashboard] Fetching Top Rated Artisans (POST)...");
@@ -257,6 +263,7 @@ const UserDashboard = () => {
         const fetchBookings = async () => {
             if (currentView !== 'bookings') return;
             setLoadingBookings(true);
+            setBookingsData([]); // Clear state as requested by user
             try {
                 const data = await customerService.getBookings({ pageNumber: 1, pageSize: 10 });
                 console.log("[Dashboard] Bookings Response Success:", data);
@@ -278,7 +285,7 @@ const UserDashboard = () => {
             setSelectedCategory(null);
             setSelectedSkill(null);
         }
-    }, [currentView]);
+    }, [currentView, bookingTab]);
 
     const handleLogout = () => {
         authService.clearToken();
@@ -286,8 +293,37 @@ const UserDashboard = () => {
     };
 
     const handleCancelBooking = (bookingId) => {
-        setBookingsData(prev => prev.map(b => b.id === bookingId ? { ...b, status: 'canceled', type: 'canceled' } : b));
-        setSelectedBooking(null);
+        setCancelBookingId(bookingId);
+        setIsCancelModalOpen(true);
+        setCancelReason('');
+    };
+
+    const confirmCancelBooking = async () => {
+        if (!cancelBookingId) return;
+        setIsCancelling(true);
+        const loadingToast = toast.loading("Canceling booking...");
+        try {
+            await customerService.cancelBooking(cancelBookingId, cancelReason);
+            toast.success("Booking canceled successfully", { id: loadingToast });
+
+            // Update local state to reflect cancellation immediately
+            setBookingsData(prev => prev.map(b =>
+                b.id === cancelBookingId ? { ...b, bookingStatus: 'CANCELLED' } : b
+            ));
+
+            if (selectedBooking?.id === cancelBookingId) {
+                setSelectedBooking(prev => ({ ...prev, bookingStatus: 'CANCELLED' }));
+            }
+
+            setIsCancelModalOpen(false);
+            setCancelBookingId(null);
+        } catch (err) {
+            console.error("Failed to cancel booking:", err);
+            const backendMessage = err.response?.data?.message || "Failed to cancel booking. Please try again.";
+            toast.error(backendMessage, { id: loadingToast });
+        } finally {
+            setIsCancelling(false);
+        }
     };
 
     const handleCategoryClick = async (category) => {
@@ -323,8 +359,8 @@ const UserDashboard = () => {
                 topArtisans: true
             };
             const queryParams = {
-                page: 1,
-                size: 10
+                pageNumber: 1,
+                pageSize: 10
             };
             console.log("[Dashboard] Triggering skill search (POST)...", loc.address);
             const data = await customerService.searchArtisans(searchPayload, queryParams);
@@ -391,6 +427,49 @@ const UserDashboard = () => {
                 onLogout={handleLogout}
             />
 
+            {/* Cancellation Reason Modal */}
+            {isCancelModalOpen && (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[250] flex items-center justify-center p-4">
+                    <div className="bg-white rounded-[24px] w-full max-w-md p-6 lg:p-8 animate-in zoom-in-95 duration-300 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-red-50 text-red-600 rounded-2xl">
+                                <AlertTriangle size={24} />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-[#0f172a]">Cancel Booking</h3>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest text-left">Reason for cancellation</p>
+                            </div>
+                        </div>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wide text-left">Tell us why you are canceling</label>
+                                <textarea
+                                    value={cancelReason}
+                                    onChange={(e) => setCancelReason(e.target.value)}
+                                    placeholder="e.g. Changed my mind, found another artisan, etc."
+                                    className="w-full h-32 px-5 py-4 rounded-2xl border border-slate-200 focus:border-red-600 focus:outline-none font-bold text-slate-700 text-sm resize-none transition-colors"
+                                />
+                            </div>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setIsCancelModalOpen(false)}
+                                    className="flex-1 py-3.5 bg-slate-50 text-slate-600 rounded-xl font-bold text-sm"
+                                >
+                                    Go Back
+                                </button>
+                                <button
+                                    onClick={confirmCancelBooking}
+                                    disabled={isCancelling || !cancelReason.trim()}
+                                    className={`flex-1 py-3.5 bg-red-600 text-white rounded-xl font-bold text-sm shadow-sm flex items-center justify-center gap-2 ${isCancelling || !cancelReason.trim() ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}
+                                >
+                                    {isCancelling ? <Loader2 className="animate-spin" size={18} /> : 'Confirm Cancel'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <AnimatePresence mode="wait">
                 <motion.div
                     key={selectedBooking ? `details-${selectedBooking.id}` : currentView}
@@ -408,6 +487,7 @@ const UserDashboard = () => {
                             setCurrentChat={setCurrentChat}
                             setCurrentView={setCurrentView}
                             setMessagesViewStep={setMessagesViewStep}
+                            setSelectedArtisan={setSelectedArtisan}
                         />
                     ) : (
                         <>

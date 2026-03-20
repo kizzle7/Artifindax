@@ -35,7 +35,7 @@ const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking,
     };
 
     return (
-        <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white z-50 px-5 flex items-center justify-between border-b border-gray-100 backdrop-blur-md bg-white/90">
+        <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white z-50 px-5 flex items-center justify-between border-b border-gray-100 backdrop-blur-md ">
             <div className="flex items-center gap-3">
                 {(currentView !== 'home' || isBookingFormOpen || selectedBooking || (currentView === 'notifications' && notificationsViewStep === 'detail') || selectedArtisan || (currentView === 'settings' && settingsStep !== 'main')) && (
                     <button onClick={handleBack} className="w-10 h-10 -ml-1 text-[#0f172a] active:scale-95 transition-all border border-gray-100 rounded-[12px] flex items-center justify-center bg-white shadow-sm hover:bg-slate-50">

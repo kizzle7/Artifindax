@@ -28,7 +28,7 @@ const FilterModal = ({ isFilterModalOpen, setIsFilterModalOpen, setFiltersEnable
                         <button onClick={() => setIsFilterModalOpen(false)} className="absolute right-0 p-1 rounded-full border border-slate-500 text-slate-600 hover:bg-slate-50 cursor-pointer"><X size={14} /></button>
                     </div>
                     <div className="space-y-5 max-h-[75vh] overflow-y-auto pr-1 pb-2 scrollbar-hide">
-                        <div>
+                        {/* <div>
                             <h4 className="text-[12px] text-slate-500 mb-7">Price range(₦/hour)</h4>
                             <div className="px-2">
                                 <div className="relative mb-3">
@@ -41,7 +41,7 @@ const FilterModal = ({ isFilterModalOpen, setIsFilterModalOpen, setFiltersEnable
                                 </div>
                                 <div className="flex justify-between text-[10px] items-center text-[#1E4E82] font-medium"><span>0</span><span className="text-slate-400">10,000</span></div>
                             </div>
-                        </div>
+                        </div> */}
                         <div className="relative">
                             <h4 className="text-[12px] text-slate-600 mb-1.5 font-medium">Address</h4>
                             <input type="text" value={address} onChange={(e) => { setAddress(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)}
