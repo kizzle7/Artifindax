@@ -23,6 +23,8 @@ export const API_CONFIG = {
         },
         CUSTOMERS: {
             SEARCH_ARTISANS: '/api/v1/customers/search-artisans',
+            BOOK_ARTISAN: '/api/v1/customers/book-artisan',
+            GET_BOOKINGS: '/api/v1/customers/bookings',
         },
         USER: {
             PROFILE: '/api/v1/profile',

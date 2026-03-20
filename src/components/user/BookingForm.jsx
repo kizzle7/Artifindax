@@ -1,10 +1,19 @@
 import React, { useState, useRef } from 'react';
-import { ChevronLeft, MapPin, Phone, MessageSquare, Star, Plus, X, Loader2 } from 'lucide-react';
-import fileService from '../../services/fileService';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+    X, Camera, Calendar, Clock, MapPin, 
+    ChevronRight, ChevronLeft, Info, AlertCircle, CheckCircle2,
+    Loader2, Plus, Trash2, Star, Phone, MessageSquare
+} from 'lucide-react';
+import toast from 'react-hot-toast';
 
-const BookingForm = ({ artisan, setIsBookingFormOpen, userProfile, setSelectedArtisan }) => {
+// Services
+import fileService from '../../services/fileService';
+import customerService from '../../services/customerService';
+
+const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill, setSelectedArtisan }) => {
     const [images, setImages] = useState([]);
-    const [uploading, setUploading] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef(null);
 
     const [fromTime, setFromTime] = useState('06:00 am');
@@ -12,23 +21,104 @@ const BookingForm = ({ artisan, setIsBookingFormOpen, userProfile, setSelectedAr
     const [fromDate, setFromDate] = useState('16th June');
     const [toDate, setToDate] = useState('16th June');
 
-    const handleFileUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const [bookingNote, setBookingNote] = useState('');
+    const [bookingTitle, setBookingTitle] = useState('');
+    const [isUrgent, setIsUrgent] = useState(false);
+    const [selectedServiceMode, setSelectedServiceMode] = useState('HOME_SERVICE');
+    const [submitting, setSubmitting] = useState(false);
 
-        setUploading(true);
+    const handleSubmit = async () => {
+        setSubmitting(true);
+        const loadingToast = toast.loading('Sending booking request...');
         try {
-            const response = await fileService.upload(file);
-            // Assuming response contains the image URL in response.secure_url or response.url or response.data.url
-            const imageUrl = response.data?.url || response.url || response.secure_url;
-            if (imageUrl) {
-                setImages([...images, imageUrl]);
+            // Simply send the note as the user typed it, as requested
+            const finalNote = bookingNote || "No note provided.";
+
+            // Robust ID resolution: prioritize artisan-specific IDs (bridge IDs)
+            let resolvedSkillId = 0;
+
+            // 1. Try to find the matching skill ID in the artisan's specific skill list by name
+            if (selectedSkill?.name && Array.isArray(artisan?.skills)) {
+                const matchedSkill = artisan.skills.find(s =>
+                    s.name?.toLowerCase() === selectedSkill.name.toLowerCase()
+                );
+                if (matchedSkill) {
+                    resolvedSkillId = matchedSkill.id;
+                }
+            }
+
+            // 2. Fallbacks if name match failed
+            if (!resolvedSkillId) {
+                resolvedSkillId = artisan?.artisanSkillId || artisan?.skillId ||
+                    (typeof artisan?.skillName === 'object' ? artisan.skillName?.id : 0) ||
+                    selectedSkill?.id || 0;
+            }
+
+            const resolvedArtisanId = artisan?.artisanId || artisan?.id || artisan?.userId || 0;
+
+            const payload = {
+                artisanId: resolvedArtisanId,
+                bookingDate: new Date().toISOString().split('.')[0] + 'Z', // Remove milliseconds for broader compatibility
+                bookingNote: finalNote,
+                bookingMedia: images || [],
+                serviceMode: selectedServiceMode,
+                artisanSkillId: resolvedSkillId,
+                customerAddressId: userProfile?.customerAddresses?.[0]?.id || userProfile?.addresses?.[0]?.id || 0
+            };
+
+            console.log('[BookingForm] FINAL PAYLOAD:', JSON.stringify(payload, null, 2));
+
+            await customerService.bookArtisan(payload);
+            toast.success('Artisan booked successfully!', { id: loadingToast });
+            setIsBookingFormOpen(false);
+            if (setSelectedArtisan) setSelectedArtisan(null);
+            if (setCurrentView) setCurrentView('bookings');
+        } catch (error) {
+            console.error('Booking Error Details:', error.response?.data || error.message);
+            const backendMessage = error.response?.data?.message || 'Failed to book artisan. Please try again.';
+            toast.error(backendMessage, { id: loadingToast });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleFileUpload = async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        setIsUploading(true);
+        const uploadToast = toast.loading('Uploading images...');
+        try {
+            const uploadPromises = files.map(file => fileService.upload(file));
+            const responses = await Promise.all(uploadPromises);
+            console.log('[BookingForm] Upload Responses:', responses);
+
+            const newUrls = responses.map(res => {
+                // Robust URL extraction from various API response formats
+                if (!res) return null;
+                if (typeof res === 'string') return res;
+                if (Array.isArray(res)) return res[0]; // If the backend returns an array of URLs
+                if (res?.url) return res.url;
+                if (res?.secure_url) return res.secure_url;
+                if (res?.data?.url) return res.data.url;
+                if (res?.data?.secure_url) return res.data.secure_url;
+                if (res?.data && typeof res.data === 'string') return res.data;
+                return null;
+            }).filter(url => url !== null);
+
+            if (newUrls.length === 0) {
+                console.error('[BookingForm] EXTRACTED NO URLS FROM:', responses);
+                toast.error('Failed to extract image URLs from response.', { id: uploadToast });
+            } else {
+                setImages(prev => [...prev, ...newUrls]);
+                toast.success(`Successfully uploaded ${newUrls.length} image(s)!`, { id: uploadToast });
             }
         } catch (error) {
-            console.error('Upload failed:', error);
-            alert('Failed to upload image. Please try again.');
+            console.error('File Upload Error:', error);
+            const backendMessage = error.response?.data?.message || 'Failed to upload images.';
+            toast.error(backendMessage, { id: uploadToast });
         } finally {
-            setUploading(false);
+            setIsUploading(false);
         }
     };
 
@@ -37,10 +127,10 @@ const BookingForm = ({ artisan, setIsBookingFormOpen, userProfile, setSelectedAr
     };
 
     return (
-        <div className="flex-1 lg:ml-[240px] bg-white min-h-screen transition-all duration-300">
+        <div className="flex-1 bg-white min-h-screen transition-all duration-300">
             <div className="w-full pb-32 flex flex-col pt-4 bg-white min-h-screen border border-transparent">
                 {/* Header */}
-                <div className="flex items-center gap-4 mb-4 px-6 lg:px-12">
+                <div className="hidden lg:flex items-center gap-4 mb-4 px-6 lg:px-12">
                     <button onClick={() => setIsBookingFormOpen(false)} className="p-1 text-[#0f172a] active:scale-90 transition-all">
                         <ChevronLeft size={24} strokeWidth={2.5} />
                     </button>
@@ -78,21 +168,34 @@ const BookingForm = ({ artisan, setIsBookingFormOpen, userProfile, setSelectedAr
                         {/* Urgent Toggle */}
                         <div className="flex items-center justify-between">
                             <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Mark as Urgent</label>
-                            <div className="w-10 h-5 bg-[#1E4E82] rounded-full relative cursor-pointer">
-                                <div className="absolute right-1 top-1 bottom-1 w-3 bg-white rounded-full shadow-sm" />
+                            <div
+                                onClick={() => setIsUrgent(!isUrgent)}
+                                className={`w-10 h-5 rounded-full relative cursor-pointer transition-colors duration-300 ${isUrgent ? 'bg-[#1E4E82]' : 'bg-slate-200'}`}
+                            >
+                                <div className={`absolute top-1 bottom-1 w-3 bg-white rounded-full shadow-sm transition-all duration-300 ${isUrgent ? 'right-1' : 'right-6'}`} />
                             </div>
                         </div>
 
                         {/* Title */}
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-2">Title (eg Broken pipe)</label>
-                            <input type="text" className="w-full px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm" />
+                            <input
+                                type="text"
+                                value={bookingTitle}
+                                onChange={(e) => setBookingTitle(e.target.value)}
+                                className="w-full px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm"
+                            />
                         </div>
 
                         {/* Short description */}
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-2">Short description</label>
-                            <textarea placeholder="I need help with..." className="w-full h-24 px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm resize-none" />
+                            <textarea
+                                value={bookingNote}
+                                onChange={(e) => setBookingNote(e.target.value)}
+                                placeholder="I need help with..."
+                                className="w-full h-24 px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm resize-none"
+                            />
                         </div>
 
                         {/* Add Images */}
@@ -106,20 +209,30 @@ const BookingForm = ({ artisan, setIsBookingFormOpen, userProfile, setSelectedAr
                                     </div>
                                 ))}
                                 {images.length < 5 && (
-                                    <div 
-                                        onClick={() => !uploading && fileInputRef.current?.click()}
-                                        className={`w-28 h-28 rounded-[12px] border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer transition-all ${uploading ? 'opacity-50 cursor-not-allowed' : 'hover:border-[#1E4E82]/30 hover:bg-slate-50'}`}
+                                    <div
+                                        onClick={() => !isUploading && fileInputRef.current?.click()}
+                                        className={`w-28 h-28 rounded-[12px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50/50 hover:bg-slate-50 hover:border-[#1E4E82]/30 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
-                                        {uploading ? <Loader2 size={24} className="text-slate-400 animate-spin" /> : <Plus size={24} className="text-slate-400" />}
+                                        {isUploading ? (
+                                            <div className="flex flex-col items-center gap-2">
+                                                <Loader2 size={24} className="text-[#1E4E82] animate-spin" />
+                                                <span className="text-[10px] font-bold text-slate-400">Uploading...</span>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center gap-2 text-slate-400 group-hover:text-[#1E4E82] transition-colors">
+                                                <Plus size={24} />
+                                                <span className="text-[10px] font-bold">Add Image</span>
+                                            </div>
+                                        )}
                                     </div>
                                 )}
                             </div>
-                            <input 
-                                type="file" 
-                                ref={fileInputRef} 
-                                onChange={handleFileUpload} 
-                                className="hidden" 
-                                accept="image/*" 
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                onChange={handleFileUpload}
+                                className="hidden"
+                                accept="image/*"
                             />
                         </div>
 
@@ -164,10 +277,13 @@ const BookingForm = ({ artisan, setIsBookingFormOpen, userProfile, setSelectedAr
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-2">Service mode</label>
                             <div className="relative">
-                                <select className="w-full px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm appearance-none bg-white">
-                                    <option>Select...</option>
-                                    <option>Home Service</option>
-                                    <option>Work Station</option>
+                                <select
+                                    className="w-full px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm appearance-none bg-white"
+                                    value={selectedServiceMode}
+                                    onChange={(e) => setSelectedServiceMode(e.target.value)}
+                                >
+                                    <option value="HOME_SERVICE">Home Service</option>
+                                    <option value="WORK_STATION">Work Station</option>
                                 </select>
                                 <ChevronRight size={16} className="absolute right-5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400" />
                             </div>
@@ -175,8 +291,12 @@ const BookingForm = ({ artisan, setIsBookingFormOpen, userProfile, setSelectedAr
 
                         {/* Continue Button */}
                         <div className="pt-4">
-                            <button onClick={() => setIsBookingFormOpen(false)} className="w-full py-4 bg-[#D6E4F4] text-[#1E4E82] rounded-[12px] font-bold text-[15px] shadow-sm active:scale-[0.98] transition-all">
-                                Continue
+                            <button
+                                onClick={handleSubmit}
+                                disabled={submitting}
+                                className={`w-full py-4 bg-[#1E4E82] text-white rounded-[12px] font-bold text-[15px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${submitting ? 'opacity-70' : 'hover:bg-[#153a61]'}`}
+                            >
+                                {submitting ? <Loader2 className="animate-spin" size={20} /> : 'Continue'}
                             </button>
                         </div>
                     </div>

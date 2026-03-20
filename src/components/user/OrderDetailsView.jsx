@@ -14,19 +14,38 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                     <div className="bg-white border border-slate-100 rounded-[24px] p-4 lg:p-6 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-3 lg:gap-4">
                             <div className="w-12 h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden shrink-0 shadow-inner ring-2 ring-slate-50">
-                                <img src={booking.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"} alt="" className="w-full h-full object-cover" />
+                                <img src={booking.artisan?.appUser?.profilePicture || booking.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"} alt="" className="w-full h-full object-cover" />
                             </div>
                             <div>
-                                <h5 className="font-black text-base lg:text-lg text-[#0f172a] mb-0.5 leading-tight">{booking.artisan}</h5>
+                                <h5 className="font-black text-base lg:text-lg text-[#0f172a] mb-0.5 leading-tight">
+                                    {booking.artisan?.appUser
+                                        ? `${booking.artisan.appUser.firstName || ''} ${booking.artisan.appUser.lastName || ''}`.trim()
+                                        : (booking.artisanName || 'Artisan')}
+                                </h5>
                                 <div className="flex items-center gap-2 text-[8px] font-black uppercase text-slate-400 tracking-widest">
-                                    <span>{booking.artisanRole}</span>
-                                    <span className="flex items-center gap-0.5"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {booking.artisanRating}</span>
+                                    <span>{booking.artisanCategorySkill?.artisanCategory?.category?.name || booking.artisanRole || 'Professional'}</span>
+                                    <span className="flex items-center gap-0.5"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {booking.artisanRating || booking.artisan?.rating || '5.0'}</span>
                                 </div>
                             </div>
                         </div>
                         <div className="flex gap-1.5">
                             <button className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all"><Phone size={14} /></button>
-                            <button onClick={() => { setCurrentChat({ artisan: booking.artisan, avatar: booking.avatar, location: booking.location }); setCurrentView('messages'); setMessagesViewStep('chat'); setSelectedBooking(null); }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all"><MessageSquare size={14} /></button>
+                            <button onClick={() => {
+                                const artisanObj = booking.artisan;
+                                const name = artisanObj?.appUser
+                                    ? `${artisanObj.appUser.firstName || ''} ${artisanObj.appUser.lastName || ''}`.trim()
+                                    : (booking.artisanName || 'Artisan');
+                                const avatar = artisanObj?.appUser?.profilePicture || booking.avatar;
+
+                                setCurrentChat({
+                                    artisan: name,
+                                    avatar: avatar,
+                                    location: booking.customerAddress?.address?.address || booking.location
+                                });
+                                setCurrentView('messages');
+                                setMessagesViewStep('chat');
+                                setSelectedBooking(null);
+                            }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all"><MessageSquare size={14} /></button>
                         </div>
                     </div>
                     <div className="bg-white border border-slate-100 rounded-[24px] p-6 lg:p-8 shadow-sm space-y-6">

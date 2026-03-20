@@ -131,7 +131,7 @@ const SearchView = ({
                         )}
                     </div>
                 ) : (
-                    <ArtisanProfileView artisan={selectedArtisan} setSelectedArtisan={setSelectedArtisan} setIsBookingFormOpen={setIsBookingFormOpen} isBookingFormOpen={isBookingFormOpen} userProfile={userProfile} />
+                    <ArtisanProfileView artisan={selectedArtisan} setSelectedArtisan={setSelectedArtisan} setIsBookingFormOpen={setIsBookingFormOpen} isBookingFormOpen={isBookingFormOpen} userProfile={userProfile} selectedSkill={selectedSkill} />
                 )}
             </div>
         </div>

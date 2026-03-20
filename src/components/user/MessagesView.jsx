@@ -65,8 +65,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     };
 
     const renderReport = () => (
-        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-24 lg:pt-0">
-            <div className="fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 flex items-center gap-4 border-b border-gray-50">
+        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col lg:pt-0 pt-16">
+            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 items-center gap-4 border-b border-gray-50">
                 <button onClick={() => setMessagesViewStep('chat')} className="p-2 -ml-2 text-[#0f172a]"><ChevronLeft size={32} strokeWidth={2.5} /></button>
                 <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Report</h1>
             </div>
@@ -86,8 +86,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     );
 
     const renderReportOther = () => (
-        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-24 lg:pt-0">
-            <div className="fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 flex items-center gap-4 border-b border-gray-50">
+        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col lg:pt-0 pt-16">
+            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 items-center gap-4 border-b border-gray-50">
                 <button onClick={() => setMessagesViewStep('report')} className="p-2 -ml-2 text-[#0f172a]"><ChevronLeft size={32} strokeWidth={2.5} /></button>
                 <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Report</h1>
             </div>
@@ -113,12 +113,19 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     );
 
     const renderChat = () => (
-        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-24 lg:pt-0 overflow-x-hidden relative">
-            <div className="fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-20 lg:h-16 flex items-center justify-between border-b border-gray-50">
+        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0 overflow-x-hidden relative">
+            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-20 lg:h-16 items-center justify-between border-b border-gray-50">
                 <div className="flex items-center gap-3">
                     <button onClick={() => setMessagesViewStep('list')} className="p-2 -ml-2 text-[#0f172a]"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm"><img src={currentChat?.avatar} alt="" className="w-full h-full object-cover" /></div>
-                    <div className="min-w-0"><h4 className="font-bold text-[#0f172a] -mb-1 truncate text-base">{currentChat?.artisan}</h4><div className="flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-widest truncate"><MapPin size={8} /> {currentChat?.location}</div></div>
+                    <div className="min-w-0">
+                        <h4 className="font-bold text-[#0f172a] -mb-1 truncate text-base">
+                            {typeof currentChat?.artisan === 'object' 
+                                ? (currentChat.artisan.appUser ? `${currentChat.artisan.appUser.firstName} ${currentChat.artisan.appUser.lastName}` : 'Artisan')
+                                : (currentChat?.artisan || 'Chat')}
+                        </h4>
+                        <div className="flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-widest truncate"><MapPin size={8} /> {currentChat?.location}</div>
+                    </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                     {currentChat?.hasInvoice && <button onClick={() => setMessagesViewStep('invoice_detail')} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors animate-pulse"><CreditCard size={20} strokeWidth={2.5} /></button>}
@@ -197,8 +204,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     );
 
     const renderInvoiceDetail = () => (
-        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-24 lg:pt-0">
-            <div className="fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 flex items-center gap-4 border-b border-gray-50">
+        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0">
+            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 items-center gap-4 border-b border-gray-50">
                 <button onClick={() => setMessagesViewStep('chat')} className="p-2 -ml-2 text-[#0f172a]"><ChevronLeft size={32} strokeWidth={2.5} /></button>
                 <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Invoice - IN00254</h1>
             </div>
@@ -232,8 +239,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     );
 
     const renderPaymentMethod = () => (
-        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-24 lg:pt-0">
-            <div className="fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 flex items-center gap-4 border-b border-gray-50">
+        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0">
+            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 items-center gap-4 border-b border-gray-50">
                 <button onClick={() => setMessagesViewStep('invoice_detail')} className="p-2 -ml-2 text-[#0f172a]"><ChevronLeft size={32} strokeWidth={2.5} /></button>
                 <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Payment</h1>
             </div>
@@ -252,8 +259,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     );
 
     const renderSelectCard = () => (
-        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-24 lg:pt-0">
-            <div className="fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 flex items-center justify-between border-b border-gray-50">
+        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0">
+            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 items-center justify-between border-b border-gray-50">
                 <div className="flex items-center gap-4"><button onClick={() => setMessagesViewStep('payment')} className="p-2 -ml-2 text-[#0f172a]"><ChevronLeft size={32} strokeWidth={2.5} /></button><h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Select Card</h1></div>
                 <div className="flex gap-4"><Plus size={24} className="text-gray-400" /></div>
             </div>
@@ -270,8 +277,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     );
 
     const renderBankTransfer = () => (
-        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-24 lg:pt-0">
-            <div className="fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 flex items-center justify-between border-b border-gray-50">
+        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0">
+            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 items-center justify-between border-b border-gray-50">
                 <div className="flex items-center gap-4"><button onClick={() => setMessagesViewStep('payment')} className="p-2 -ml-2 text-[#0f172a]"><ChevronLeft size={32} strokeWidth={2.5} /></button><h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Bank Transfer</h1></div>
                 <Plus size={24} className="text-gray-400" />
             </div>

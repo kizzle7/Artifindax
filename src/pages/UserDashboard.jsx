@@ -42,7 +42,8 @@ const UserDashboard = () => {
     const navigate = useNavigate();
     const [currentView, setCurrentView] = useState('home');
     const [bookingTab, setBookingTab] = useState('active');
-    const [bookingsData, setBookingsData] = useState(BOOKINGS);
+    const [bookingsData, setBookingsData] = useState([]);
+    const [loadingBookings, setLoadingBookings] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -97,6 +98,61 @@ const UserDashboard = () => {
 
     const toggleFaq = (id) => setVisibleFaq(visibleFaq === id ? null : id);
 
+    const getEffectiveLocation = async () => {
+        // 1. Check Profile Address
+        const profileAddress = userProfile.addresses?.find(a => a.isDefault || a.status === 'ACTIVE' || a.status === 'verified') || userProfile.addresses?.[0];
+        if (profileAddress && profileAddress.address && profileAddress.latitude && profileAddress.longitude) {
+            console.log("[Dashboard] Using Profile Address:", profileAddress);
+            return {
+                address: profileAddress.address,
+                latitude: profileAddress.latitude,
+                longitude: profileAddress.longitude
+            };
+        }
+
+        // 2. Check Saved Location (LocalStorage)
+        const savedLocation = authService.getLocation();
+        if (savedLocation && savedLocation.latitude && savedLocation.longitude) {
+            console.log("[Dashboard] Using Saved Location:", savedLocation);
+            return {
+                address: savedLocation.address || "",
+                latitude: savedLocation.latitude,
+                longitude: savedLocation.longitude
+            };
+        }
+
+        // 3. Try Browser Geolocation
+        const getUserCoords = () => new Promise((resolve) => {
+            if (!navigator.geolocation) return resolve({ lat: 0, lng: 0 });
+            navigator.geolocation.getCurrentPosition(
+                (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                () => resolve({ lat: 0, lng: 0 }),
+                { timeout: 5000 }
+            );
+        });
+
+        const coords = await getUserCoords();
+        let finalLat = coords.lat;
+        let finalLng = coords.lng;
+        let finalAddress = "";
+
+        if (finalLat !== 0 && finalLng !== 0) {
+            try {
+                const geoRes = await fromLatLng(finalLat, finalLng);
+                finalAddress = geoRes.results[0]?.formatted_address || "";
+            } catch (geoErr) {
+                console.warn("Reverse geocode failed:", geoErr);
+            }
+        }
+
+        // 4. Default Fallback
+        return {
+            address: finalAddress || "52 oriola street ketu Lagos",
+            latitude: finalLat || 6.5916,
+            longitude: finalLng || 3.39621,
+        };
+    };
+
     useEffect(() => {
         const fetchPopular = async () => {
             if (popularServices.length > 0) return;
@@ -127,43 +183,15 @@ const UserDashboard = () => {
         const fetchTopRated = async () => {
             setLoadingTopRated(true);
             try {
-                let lat = 0, lng = 0, resolvedAddress = "";
-
-                const savedLocation = authService.getLocation();
-                if (savedLocation && savedLocation.latitude && savedLocation.longitude) {
-                    lat = savedLocation.latitude;
-                    lng = savedLocation.longitude;
-                    resolvedAddress = savedLocation.address || "";
-                } else {
-                    const getUserCoords = () => new Promise((resolve) => {
-                        if (!navigator.geolocation) return resolve({ lat: 0, lng: 0 });
-                        navigator.geolocation.getCurrentPosition(
-                            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                            () => resolve({ lat: 0, lng: 0 }),
-                            { timeout: 5000 }
-                        );
-                    });
-                    const coords = await getUserCoords();
-                    lat = coords.lat;
-                    lng = coords.lng;
-
-                    if (lat !== 0 && lng !== 0) {
-                        try {
-                            const geoRes = await fromLatLng(lat, lng);
-                            resolvedAddress = geoRes.results[0]?.formatted_address || "";
-                        } catch (geoErr) {
-                            console.warn("Reverse geocode failed:", geoErr);
-                        }
-                    }
-                }
+                const loc = await getEffectiveLocation();
 
                 const searchPayload = {
                     categorySkillId: 1,
                     categoryId: 1,
                     location: {
-                        address: resolvedAddress || "52 oriola street ketu Lagos",
-                        latitude: lat || 6.5916,
-                        longitude: lng || 3.39621,
+                        address: loc.address,
+                        latitude: loc.latitude,
+                        longitude: loc.longitude,
                     },
                     serviceMode: "HOME_SERVICE",
                     topArtisans: true
@@ -191,6 +219,16 @@ const UserDashboard = () => {
                 // Map API data to UI state
                 const account = data.accounts?.find(acc => acc.accountType === 'CUSTOMER') || data.accounts?.[0];
 
+                const apiAddresses = (account?.customerAddresses || account?.artisanAddresses || []);
+                const mappedAddresses = apiAddresses.map(addr => ({
+                    id: addr.id,
+                    address: addr.address.address,
+                    latitude: addr.address.latitude,
+                    longitude: addr.address.longitude,
+                    isDefault: addr.id === account?.defaultAddressId || true,
+                    status: addr.status
+                }));
+
                 setUserProfile({
                     firstName: data.firstName || '',
                     lastName: data.lastName || '',
@@ -198,7 +236,7 @@ const UserDashboard = () => {
                     gender: account?.gender || '',
                     dob: account?.dateOfBirth || '',
                     email: account?.email || '',
-                    addresses: userProfile.addresses,
+                    addresses: mappedAddresses.length > 0 ? mappedAddresses : userProfile.addresses,
                     profilePicture: account?.profilePicture || '',
                     status: data.status || 'ACTIVE',
                     identityVerificationStatus: data.identityVerificationStatus || 'PENDING',
@@ -214,6 +252,33 @@ const UserDashboard = () => {
         fetchTopRated();
         fetchProfile();
     }, []);
+
+    useEffect(() => {
+        const fetchBookings = async () => {
+            if (currentView !== 'bookings') return;
+            setLoadingBookings(true);
+            try {
+                const data = await customerService.getBookings({ pageNumber: 1, pageSize: 10 });
+                console.log("[Dashboard] Bookings Response Success:", data);
+                console.log("[Dashboard] Bookings Response:", data);
+                const content = Array.isArray(data) ? data : (data.records || data.content || data.data || []);
+                setBookingsData(content);
+            } catch (err) {
+                console.error("Failed to load bookings:", err);
+            } finally {
+                setLoadingBookings(false);
+            }
+        };
+        fetchBookings();
+
+        // Check if we navigated away from search to clear its state
+        if (currentView !== 'search') {
+            setSearchQuery('');
+            setSearchResults([]);
+            setSelectedCategory(null);
+            setSelectedSkill(null);
+        }
+    }, [currentView]);
 
     const handleLogout = () => {
         authService.clearToken();
@@ -244,43 +309,15 @@ const UserDashboard = () => {
         setSelectedSkill(skill);
         setLoadingSearch(true);
         try {
-            let lat = 0, lng = 0, resolvedAddress = "";
-
-            const savedLocation = authService.getLocation();
-            if (savedLocation && savedLocation.latitude && savedLocation.longitude) {
-                lat = savedLocation.latitude;
-                lng = savedLocation.longitude;
-                resolvedAddress = savedLocation.address || "";
-            } else {
-                const getUserCoords = () => new Promise((resolve) => {
-                    if (!navigator.geolocation) return resolve({ lat: 0, lng: 0 });
-                    navigator.geolocation.getCurrentPosition(
-                        (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-                        () => resolve({ lat: 0, lng: 0 }),
-                        { timeout: 5000 }
-                    );
-                });
-                const coords = await getUserCoords();
-                lat = coords.lat;
-                lng = coords.lng;
-
-                if (lat !== 0 && lng !== 0) {
-                    try {
-                        const geoRes = await fromLatLng(lat, lng);
-                        resolvedAddress = geoRes.results[0]?.formatted_address || "";
-                    } catch (geoErr) {
-                        console.warn("Reverse geocode failed:", geoErr);
-                    }
-                }
-            }
+            const loc = await getEffectiveLocation();
 
             const searchPayload = {
                 categorySkillId: skill.id,
                 categoryId: selectedCategory?.id,
                 location: {
-                    address: resolvedAddress,
-                    latitude: lat,
-                    longitude: lng,
+                    address: loc.address,
+                    latitude: loc.latitude,
+                    longitude: loc.longitude,
                 },
                 serviceMode: "HOME_SERVICE",
                 topArtisans: true
@@ -289,7 +326,7 @@ const UserDashboard = () => {
                 page: 1,
                 size: 10
             };
-            console.log("[Dashboard] Triggering skill search (POST)...");
+            console.log("[Dashboard] Triggering skill search (POST)...", loc.address);
             const data = await customerService.searchArtisans(searchPayload, queryParams);
             const content = Array.isArray(data) ? data : (data.content || []);
             setSearchResults(content);
@@ -328,6 +365,8 @@ const UserDashboard = () => {
                 setSettingsStep={setSettingsStep}
                 settingsSubStep={settingsSubStep}
                 setSettingsSubStep={setSettingsSubStep}
+                isBookingFormOpen={isBookingFormOpen}
+                setIsBookingFormOpen={setIsBookingFormOpen}
             />
             <MobileMenu
                 isMenuOpen={isMenuOpen}
@@ -396,6 +435,7 @@ const UserDashboard = () => {
                                     setCurrentChat={setCurrentChat}
                                     setMessagesViewStep={setMessagesViewStep}
                                     setCurrentView={setCurrentView}
+                                    loadingBookings={loadingBookings}
                                 />
                             )}
                             {currentView === 'messages' && (

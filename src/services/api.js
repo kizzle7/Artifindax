@@ -19,6 +19,7 @@ api.interceptors.request.use(
             '/auth/verify-phone-number',
             '/auth/initiate-otp',
             '/auth/register-device',
+
             '/login'
         ];
 

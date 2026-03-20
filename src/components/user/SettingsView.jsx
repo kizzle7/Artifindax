@@ -140,7 +140,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     );
 
     const renderProfile = () => (
-        <div className="pt-24 lg:pt-4 pb-10 flex flex-col items-center">
+        <div className="lg:pt-4 pb-10 flex flex-col items-center">
             <div className="flex justify-center mb-10">
                 <label className="relative cursor-pointer group">
                     <div className="w-28 h-28 rounded-full bg-slate-200 shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
@@ -196,8 +196,8 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     const renderPasswordFlow = () => {
         if (settingsStep === 'password_success') return renderSuccess("You're all Set!", "Your password has been changed successfully");
         if (settingsStep === 'password_otp') return (
-            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Verify your phone number</h2>
+            <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Verify your phone number</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">We've sent a 4-digit verification code to your phone number. Please enter it below to continue.</p>
                 <div className="flex justify-center gap-4 mb-8">{[1, 2, 3, 4].map(i => <div key={i} className="w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}</div>
                 <div className="text-center mb-12"><p className="text-xs font-bold text-gray-400">Didn't get code? <span className="text-[#1E4E82]">Resend 2:59</span></p></div>
@@ -205,8 +205,8 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             </div>
         );
         if (settingsStep === 'password_reset') return (
-            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Reset your Password</h2>
+            <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Reset your Password</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter your new password below. Make sure it's strong and secure</p>
                 <div className="space-y-6">
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">Old Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
@@ -216,8 +216,8 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             </div>
         );
         return (
-            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl flex flex-col">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-8 mt-4 lg:mt-0">Change Password</h2>
+            <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl flex flex-col">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-8 hidden lg:block">Change Password</h2>
                 <div className="space-y-6 flex-1">
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">Email</label><input type="email" defaultValue="artifinda@gmail.com" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold" /></div>
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">Old Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
@@ -230,16 +230,16 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     const renderPinFlow = () => {
         if (settingsStep === 'pin_success') return renderSuccess("You're all Set!", "Your login pin has been changed successfully");
         if (settingsStep === 'pin_new') return (
-            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Set a new 6-Digit PIN</h2>
+            <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Set a new 6-Digit PIN</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter new pin below</p>
                 <div className="flex justify-center gap-2 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-11 lg:w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}</div>
                 <button onClick={() => setSettingsStep('pin_success')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Continue</button>
             </div>
         );
         return (
-            <div className="px-5 lg:px-8 pt-24 lg:pt-6 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Change Login PIN</h2>
+            <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Change Login PIN</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter current pin below</p>
                 <div className="flex justify-center gap-2 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-11 lg:w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}</div>
                 <button onClick={() => setSettingsStep('pin_new')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Continue</button>
@@ -249,8 +249,8 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
 
     const renderAddresses = () => {
         if (settingsSubStep === 'add') return (
-            <div className="pt-24 lg:pt-4 pb-10 max-w-2xl text-left">
-                <div className="mb-8 mt-4 lg:mt-0">
+            <div className="lg:pt-4 pb-10 max-w-2xl text-left">
+                <div className="mb-8 hidden lg:block">
                     <h2 className="text-2xl font-black text-[#0f172a] mb-2">Help us locate you better</h2>
                     <p className="text-gray-500 font-bold text-sm">Please provide your address and a document for verification.</p>
                 </div>
@@ -328,7 +328,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             </div>
         );
         return (
-            <div className="pt-24 lg:pt-4 pb-10 max-w-2xl text-left">
+            <div className="lg:pt-4 pb-10 max-w-2xl text-left">
                 <div className="space-y-4">
                     {userProfile.addresses.map((addr) => (
                         <div key={addr.id} className="p-6 bg-[#EEF4FB] border border-[#D1E1F4] rounded-[16px] shadow-sm">
@@ -353,7 +353,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     const renderFaq = () => {
         const filteredFaqs = FAQ_DATA.filter(item => item.category === faqCategory);
         return (
-            <div className="pt-24 lg:pt-4 pb-12 text-left">
+            <div className="lg:pt-4 pb-12 text-left">
                 <div className="flex border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar">
                     {['General', 'Account & Profile', 'Bookings', 'Payments'].map(cat => (
                         <button key={cat} onClick={() => { setFaqCategory(cat); setVisibleFaq(null); }} className={`px-6 py-4 font-bold text-sm whitespace-nowrap transition-all border-b-2 ${faqCategory === cat ? 'border-[#1E4E82] text-[#1E4E82]' : 'border-transparent text-gray-400'}`}>{cat}</button>
@@ -390,7 +390,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     };
 
     const renderContact = () => (
-        <div className="pt-24 lg:pt-4 pb-10">
+        <div className="lg:pt-4 pb-10">
             <div className="space-y-4">
                 {[
                     { icon: Mail, label: 'Email', value: 'support@artifinda.com', color: 'bg-blue-50 text-blue-500' },
@@ -410,7 +410,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     );
 
     const renderAbout = () => (
-        <div className="pt-24 lg:pt-4 pb-10">
+        <div className="lg:pt-4 pb-10">
             <div className="flex flex-col items-center mb-12">
                 <div className="w-24 h-24 bg-[#1E4E82] rounded-[32px] flex items-center justify-center text-white text-3xl font-black mb-4 shadow-xl rotate-12">A</div>
                 <h3 className="text-xl font-black text-[#0f172a]">Version 2.0.4</h3>

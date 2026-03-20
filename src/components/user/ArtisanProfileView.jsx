@@ -1,41 +1,44 @@
 import React, { useState } from 'react';
 import { ChevronLeft, MapPin, Phone, MessageSquare, Star, Share2, Home, Briefcase, CheckCircle2, Mail, MoreVertical, AlertTriangle, Loader2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 import BookingForm from './BookingForm';
 import reportService from '../../services/reportService';
 
-const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen, isBookingFormOpen, userProfile, setCurrentView }) => {
+const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen, isBookingFormOpen, userProfile, setCurrentView, selectedSkill }) => {
     const [activeTab, setActiveTab] = useState('About');
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [reporting, setReporting] = useState(false);
     const [reportDetails, setReportDetails] = useState('');
 
-    if (isBookingFormOpen) return <BookingForm artisan={artisan} setIsBookingFormOpen={setIsBookingFormOpen} setSelectedArtisan={setSelectedArtisan} userProfile={userProfile} />;
+    if (isBookingFormOpen) return <BookingForm artisan={artisan} setIsBookingFormOpen={setIsBookingFormOpen} setSelectedArtisan={setSelectedArtisan} userProfile={userProfile} selectedSkill={selectedSkill} setCurrentView={setCurrentView} />;
 
     const handleReport = async () => {
         if (!reportDetails.trim()) return;
         setReporting(true);
+        const reportToast = toast.loading('Submitting report...');
         try {
             await reportService.reportAbuse({
                 reportType: 'HARASSMENT', // Default as per user request example
                 details: reportDetails
             });
-            alert('Report submitted successfully.');
+            toast.success('Report submitted successfully.', { id: reportToast });
             setIsReportModalOpen(false);
             setReportDetails('');
         } catch (error) {
-            alert('Failed to submit report. Please try again.');
+            const backendMessage = error.response?.data?.message || 'Failed to submit report. Please try again.';
+            toast.error(backendMessage, { id: reportToast });
         } finally {
             setReporting(false);
         }
     };
 
     return (
-        <div className="flex-1 lg:ml-[240px] bg-white min-h-screen transition-all duration-300">
+        <div className="flex-1 bg-white min-h-screen transition-all duration-300">
             <div className="w-full pb-32 animate-in slide-in-from-right-4 duration-500 lg:py-8 flex flex-col pt-2 bg-white min-h-screen">
                 {/* Header */}
                 <div className="flex items-center justify-between gap-4 mb-6 px-4 lg:px-8">
-                    <div className="flex items-center gap-4">
+                    <div className="hidden lg:flex items-center gap-4">
                         <button onClick={() => setSelectedArtisan(null)} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform">
                             <ChevronLeft size={24} strokeWidth={2.5} />
                         </button>
@@ -47,7 +50,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                         </button>
                         {isMenuOpen && (
                             <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-lg z-[100] py-2 animate-in fade-in zoom-in-95 duration-200">
-                                <button 
+                                <button
                                     onClick={() => { setIsReportModalOpen(true); setIsMenuOpen(false); }}
                                     className="w-full text-left px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2"
                                 >
@@ -238,7 +241,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Details</label>
-                                    <textarea 
+                                    <textarea
                                         value={reportDetails}
                                         onChange={(e) => setReportDetails(e.target.value)}
                                         placeholder="Describe the issue in detail..."
@@ -246,13 +249,13 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                                     />
                                 </div>
                                 <div className="flex gap-4">
-                                    <button 
+                                    <button
                                         onClick={() => setIsReportModalOpen(false)}
                                         className="flex-1 py-3.5 bg-slate-50 text-slate-600 rounded-xl font-bold text-sm"
                                     >
                                         Cancel
                                     </button>
-                                    <button 
+                                    <button
                                         onClick={handleReport}
                                         disabled={reporting || !reportDetails.trim()}
                                         className={`flex-1 py-3.5 bg-red-600 text-white rounded-xl font-bold text-sm shadow-sm flex items-center justify-center gap-2 ${reporting || !reportDetails.trim() ? 'opacity-50 cursor-not-allowed' : 'active:scale-95'}`}

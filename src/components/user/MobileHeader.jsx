@@ -1,8 +1,9 @@
 import React from 'react';
 import { ChevronLeft, X, Menu } from 'lucide-react';
 
-const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking, setSelectedBooking, notificationsViewStep, setNotificationsViewStep, currentChat, messagesViewStep, setCurrentView, selectedArtisan, setSelectedArtisan, settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep }) => {
+const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking, setSelectedBooking, notificationsViewStep, setNotificationsViewStep, currentChat, messagesViewStep, setCurrentView, selectedArtisan, setSelectedArtisan, settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, isBookingFormOpen, setIsBookingFormOpen }) => {
     const getHeaderTitle = () => {
+        if (isBookingFormOpen) return 'Booking Form';
         if (selectedBooking) return 'Order Details';
         if (currentView === 'messages' && messagesViewStep === 'chat') return currentChat?.artisan;
         if (currentView === 'notifications' && notificationsViewStep === 'detail') return 'Notifications';
@@ -21,7 +22,8 @@ const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking,
     };
 
     const handleBack = () => {
-        if (selectedBooking) setSelectedBooking(null);
+        if (isBookingFormOpen) setIsBookingFormOpen(false);
+        else if (selectedBooking) setSelectedBooking(null);
         else if (selectedArtisan) setSelectedArtisan(null);
         else if (currentView === 'notifications' && notificationsViewStep === 'detail') setNotificationsViewStep('list');
         else if (currentView === 'settings') {
@@ -35,7 +37,7 @@ const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking,
     return (
         <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white z-50 px-5 flex items-center justify-between border-b border-gray-100 backdrop-blur-md bg-white/90">
             <div className="flex items-center gap-3">
-                {(currentView !== 'home' || selectedBooking || (currentView === 'notifications' && notificationsViewStep === 'detail') || selectedArtisan || (currentView === 'settings' && settingsStep !== 'main')) && (
+                {(currentView !== 'home' || isBookingFormOpen || selectedBooking || (currentView === 'notifications' && notificationsViewStep === 'detail') || selectedArtisan || (currentView === 'settings' && settingsStep !== 'main')) && (
                     <button onClick={handleBack} className="w-10 h-10 -ml-1 text-[#0f172a] active:scale-95 transition-all border border-gray-100 rounded-[12px] flex items-center justify-center bg-white shadow-sm hover:bg-slate-50">
                         <ChevronLeft size={20} strokeWidth={2.5} />
                     </button>

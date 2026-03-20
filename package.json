@@ -18,6 +18,7 @@
     "react-geocode": "^2.0.1",
     "react-google-places-autocomplete": "^4.1.0",
     "react-hook-form": "^7.71.2",
+    "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.13.1",
     "recharts": "^3.7.0"
   },

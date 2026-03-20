@@ -66,7 +66,7 @@ const ArtisanBookingsView = ({ onSelectBooking, onCancel, onComplete, onAccept, 
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-2">
             <h1 className="hidden lg:block text-2xl font-black text-[#0f172a] tracking-tight">Bookings</h1>
 
             {/* Main Tabs */}
