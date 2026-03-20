@@ -53,7 +53,7 @@ const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
             </div>
 
             {/* Balance Card */}
-            {/* <div className="bg-black text-white p-6 rounded-[24px] relative overflow-hidden">
+            <div className="bg-black text-white p-6 rounded-[24px] relative overflow-hidden">
                 <div className="flex justify-between items-start mb-4">
                     <span className="text-xs opacity-70">Available Balance</span>
                     <button className="p-1 rounded-full border border-white/20">
@@ -66,7 +66,7 @@ const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
                         Withdraw
                     </button>
                 </div>
-            </div> */}
+            </div>
 
             {/* Category Filter & Stats */}
             <div className="space-y-4">
@@ -114,7 +114,7 @@ const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
             </div>
 
             {/* Earnings Chart */}
-            {/* <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
+            <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-sm font-bold text-[#0f172a]">Earnings</h3>
                     <div className="relative">
@@ -166,7 +166,7 @@ const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
                     <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-[#FB7185]"></div><span className="text-[10px] text-gray-400 font-bold">Feb</span></div>
                     <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-[#818CF8]"></div><span className="text-[10px] text-gray-400 font-bold">Mar</span></div>
                 </div>
-            </div> */}
+            </div>
 
             {/* Work Stats Chart */}
             <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">

@@ -27,7 +27,10 @@ const ArtisanInvoicePreviewView = ({ booking, items, onSend, onEdit, onBack }) =
 
                 <div className="flex items-center gap-3 mb-8">
                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0">
-                        <img src={booking.customer?.appUser?.profilePicture || booking.customer?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100"} alt="" className="w-full h-full object-cover" />
+                        <img
+                            src={booking.customer?.appUser?.profilePicture || booking.customer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=100`}
+                            onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=100`; }}
+                            alt="" className="w-full h-full object-cover" />
                     </div>
                     <span className="font-bold text-slate-700">{booking.customer?.appUser ? `${booking.customer.appUser.firstName} ${booking.customer.appUser.lastName}` : (booking.customer?.name || 'Customer')}</span>
                     <div className="flex gap-2 ml-auto">

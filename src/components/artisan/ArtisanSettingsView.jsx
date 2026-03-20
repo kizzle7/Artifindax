@@ -67,7 +67,16 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             <div className="flex items-center justify-between p-4 lg:p-6 bg-white border border-gray-100 rounded-[28px] shadow-sm mb-8">
                 <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-white shadow-md overflow-hidden flex items-center justify-center">
-                        <User size={32} className="text-gray-400" />
+                        {(profilePic || userProfile.profilePicture) ? (
+                            <img
+                                src={profilePic || userProfile.profilePicture}
+                                onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile.firstName || 'A') + ' ' + (userProfile.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
+                                alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                            <img
+                                src={`https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile.firstName || 'A') + ' ' + (userProfile.lastName || ''))}&background=1E4E82&color=fff&size=150`}
+                                alt="Profile" className="w-full h-full object-cover" />
+                        )}
                     </div>
                     <div>
                         <h3 className="font-black text-[#0f172a] text-lg">{userProfile.firstName} {userProfile.lastName}</h3>

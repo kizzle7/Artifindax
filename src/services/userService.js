@@ -22,7 +22,7 @@ const userService = {
      */
     updateProfile: async (payload) => {
         try {
-            const response = await api.get(API_CONFIG.ENDPOINTS.USER.PROFILE, { params: payload });
+            const response = await api.put(API_CONFIG.ENDPOINTS.USER.PROFILE, payload);
             return response.data;
         } catch (error) {
             throw error.response?.data || error.message;

@@ -1,8 +1,8 @@
 import React from 'react';
-import { Home, Briefcase, MessageCircle, Settings } from 'lucide-react';
+import { Home, Briefcase, MessageCircle, Settings, LogOut } from 'lucide-react';
 import logo from '../../assets/Artifinda logo 3.png';
 
-const Sidebar = ({ currentView, setCurrentView, setBookingsViewStep, setNotificationsViewStep, setMessagesViewStep, setSelectedBooking }) => (
+const Sidebar = ({ currentView, setCurrentView, setBookingsViewStep, setNotificationsViewStep, setMessagesViewStep, setSelectedBooking, setShowLogoutModal }) => (
     <div className="hidden lg:flex w-[240px] bg-[#1E4E82] h-screen fixed left-0 top-0 flex-col p-6 text-white z-50">
         <div className="mb-10">
             <img src={logo} alt="Artifinda" className="h-8 brightness-0 invert" />
@@ -30,6 +30,15 @@ const Sidebar = ({ currentView, setCurrentView, setBookingsViewStep, setNotifica
                 </button>
             ))}
         </nav>
+        <div className="mt-auto">
+            <button
+                onClick={() => setShowLogoutModal(true)}
+                className="flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all font-bold tracking-wider text-[11px] w-full hover:bg-white/10 opacity-70 hover:opacity-100"
+            >
+                <LogOut size={18} />
+                <span>LOGOUT</span>
+            </button>
+        </div>
     </div>
 );
 

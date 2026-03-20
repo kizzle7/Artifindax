@@ -49,7 +49,10 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                                 }}
                                 className="w-12 h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden shrink-0 shadow-inner ring-2 ring-slate-50 hover:ring-[#1E4E82] transition-all active:scale-95"
                             >
-                                <img src={booking.artisan?.appUser?.profilePicture || booking.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"} alt="" className="w-full h-full object-cover" />
+                                <img
+                                    src={booking.artisan?.appUser?.profilePicture || booking.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.artisan?.appUser?.firstName || '') + ' ' + (booking.artisan?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=150`}
+                                    onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.artisan?.appUser?.firstName || 'A') + ' ' + (booking.artisan?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
+                                    alt="" className="w-full h-full object-cover" />
                             </button>
                             <div>
                                 <button

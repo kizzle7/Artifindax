@@ -383,6 +383,7 @@ const UserDashboard = () => {
                 setNotificationsViewStep={setNotificationsViewStep}
                 setMessagesViewStep={setMessagesViewStep}
                 setSettingsStep={setSettingsStep}
+                setShowLogoutModal={setShowLogoutModal}
             />
             <MobileHeader
                 currentView={currentView}

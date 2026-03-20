@@ -69,7 +69,10 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                                     <div className="flex items-center justify-between pt-2.5 border-t border-gray-50">
                                         <div className="flex items-center gap-2">
                                             <div className="w-6 h-6 rounded-full overflow-hidden shadow-inner ring-1 ring-slate-100">
-                                                <img src={artisanAvatar || "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?auto=format&fit=crop&q=80&w=150"} alt="" className="w-full h-full object-cover" />
+                                                <img
+                                                    src={artisanAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(artisanName)}&background=1E4E82&color=fff&size=150`}
+                                                    onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(artisanName || 'Artisan')}&background=1E4E82&color=fff&size=150`; }}
+                                                    alt="" className="w-full h-full object-cover" />
                                             </div>
                                             <div>
                                                 <h5 className="font-bold text-gray-900 text-xs leading-none mb-0.5">{artisanName}</h5>
@@ -78,8 +81,8 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                                         </div>
                                         <div className="flex gap-1">
                                             <div className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider ${bookingTab === 'active' ? 'bg-blue-50 text-[#1E4E82]' :
-                                                    bookingTab === 'completed' ? 'bg-green-50 text-green-600' :
-                                                        'bg-red-50 text-red-600'
+                                                bookingTab === 'completed' ? 'bg-green-50 text-green-600' :
+                                                    'bg-red-50 text-red-600'
                                                 }`}>
                                                 {booking.bookingStatus || booking.status}
                                             </div>

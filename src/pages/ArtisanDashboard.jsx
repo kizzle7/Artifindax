@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { USER_PROFILE } from '../constants/artisanData';
 import userService from '../services/userService';
 import authService from '../services/authService';
 import artisanService from '../services/artisanService';
@@ -64,7 +63,19 @@ const ArtisanDashboard = () => {
     const [settingsStep, setSettingsStep] = useState('main');
     const [settingsSubStep, setSettingsSubStep] = useState('list');
     const [showLogoutModal, setShowLogoutModal] = useState(false);
-    const [userProfile, setUserProfile] = useState(USER_PROFILE);
+    const [userProfile, setUserProfile] = useState({
+        firstName: '',
+        lastName: '',
+        phone: '',
+        gender: '',
+        dob: '',
+        email: '',
+        addresses: [],
+        profilePicture: '',
+        status: 'ACTIVE',
+        identityVerificationStatus: 'PENDING',
+        kycApprovalStatus: 'NOT_STARTED'
+    });
     const [faqCategory, setFaqCategory] = useState('General');
     const [visibleFaq, setVisibleFaq] = useState(null);
 
@@ -94,15 +105,25 @@ const ArtisanDashboard = () => {
                 const data = await userService.getProfile();
                 const account = data.accounts?.find(acc => acc.accountType === 'ARTISAN') || data.accounts?.[0];
 
+                const apiAddresses = (account?.artisanAddresses || account?.customerAddresses || account?.addresses || []);
+                const mappedAddresses = apiAddresses.map(addr => ({
+                    id: addr.id,
+                    address: addr.address?.address || addr.address || '',
+                    latitude: addr.address?.latitude,
+                    longitude: addr.address?.longitude,
+                    isDefault: addr.id === account?.defaultAddressId || true,
+                    status: addr.status
+                }));
+
                 setUserProfile({
                     firstName: data.firstName || '',
                     lastName: data.lastName || '',
                     phone: data.phoneNumber || '',
-                    gender: account?.gender || '',
+                    gender: account?.gender || data.gender || '',
                     dob: account?.dateOfBirth || '',
-                    email: account?.email || '',
-                    addresses: userProfile.addresses,
-                    profilePicture: account?.profilePicture || '',
+                    email: data.email || account?.email || '',
+                    addresses: mappedAddresses,
+                    profilePicture: account?.profilePicture || data.profilePicture || '',
                     status: data.status || 'ACTIVE',
                     identityVerificationStatus: data.identityVerificationStatus || 'PENDING',
                     kycApprovalStatus: account?.kycApprovalStatus || 'NOT_STARTED'
@@ -399,6 +420,7 @@ const ArtisanDashboard = () => {
                 setNotificationsViewStep={setNotificationsViewStep}
                 setMessagesViewStep={setMessagesViewStep}
                 setSelectedBooking={setSelectedBooking}
+                setShowLogoutModal={setShowLogoutModal}
             />
 
             <main className={`lg:ml-[240px] ${['notifications', 'messages', 'settings'].includes(currentView) ? '' : 'p-4 lg:p-8 pt-20 lg:pt-8'} min-h-screen transition-all duration-300`}>

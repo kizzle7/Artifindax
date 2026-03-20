@@ -148,7 +148,10 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                     <div className="bg-white border border-[#B5CAE4] rounded-[16px] p-4 flex items-center justify-between shadow-sm">
                         <div className="flex items-center gap-4">
                             <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                                <img src={artisan?.profilePicture || artisan?.image || 'https://images.unsplash.com/photo-1595246140625-573b715d11dc?auto=format&fit=crop&q=80&w=100'} alt="" className="w-full h-full object-cover" />
+                                <img
+                                    src={artisan?.profilePicture || artisan?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan?.firstName || artisan?.name || 'A') + ' ' + (artisan?.lastName || ''))}&background=1E4E82&color=fff&size=100`}
+                                    onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan?.firstName || artisan?.name || 'A') + ' ' + (artisan?.lastName || ''))}&background=1E4E82&color=fff&size=100`; }}
+                                    alt="" className="w-full h-full object-cover" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-1.5 mb-0.5">

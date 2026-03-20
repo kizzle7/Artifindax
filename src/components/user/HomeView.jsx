@@ -79,7 +79,10 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
                                 }}
                                     className="bg-white p-3.5 rounded-[16px] border border-gray-100 flex items-center gap-3.5 shadow-sm hover:border-[#1E4E82]/20 transition-all group cursor-pointer overflow-hidden active:scale-[0.98]">
                                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform">
-                                        <img src={artisan.profilePicture || artisan.image || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"} alt="" className="w-full h-full object-cover" />
+                                        <img
+                                            src={artisan.profilePicture || artisan.image || `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan.firstName || artisan.name || 'A') + ' ' + (artisan.lastName || ''))}&background=1E4E82&color=fff&size=150`}
+                                            onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan.firstName || artisan.name || 'A') + ' ' + (artisan.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
+                                            alt="" className="w-full h-full object-cover" />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-xs text-[#0f172a] truncate">{artisan.firstName ? `${artisan.firstName} ${artisan.lastName}` : (artisan.name || 'Artisan')}</h4>

@@ -61,7 +61,10 @@ const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAcce
             <div className="bg-white border border-slate-100 rounded-[24px] p-4 lg:p-6 flex items-center justify-between shadow-sm ring-1 ring-black/[0.01] mb-6">
                 <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 shadow-inner ring-2 ring-slate-50">
-                        <img src={booking.customer?.appUser?.profilePicture || booking.customer?.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"} alt="" className="w-full h-full object-cover" />
+                        <img
+                            src={booking.customer?.appUser?.profilePicture || booking.customer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=150`}
+                            onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
+                            alt="" className="w-full h-full object-cover" />
                     </div>
                     <div>
                         <h5 className="font-black text-lg text-[#0f172a] mb-0.5 leading-tight">{booking.customer?.appUser ? `${booking.customer.appUser.firstName} ${booking.customer.appUser.lastName}` : (booking.customer?.name || 'Customer')}</h5>
