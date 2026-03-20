@@ -423,8 +423,8 @@ const ArtisanDashboard = () => {
                 setShowLogoutModal={setShowLogoutModal}
             />
 
-            <main className={`lg:ml-[240px] ${['notifications', 'messages', 'settings'].includes(currentView) ? '' : 'p-4 lg:p-8 pt-20 lg:pt-8'} min-h-screen transition-all duration-300`}>
-                <div className={`${['notifications', 'messages', 'settings'].includes(currentView) ? 'w-full' : 'max-w-4xl mx-auto'}`}>
+            <main className={`lg:ml-[240px] ${['notifications', 'messages', 'settings'].includes(currentView) ? '' : 'p-4 lg:p-5 pt-20 lg:pt-6'} min-h-screen transition-all duration-300`}>
+                <div className={`${['notifications', 'messages', 'settings'].includes(currentView) ? 'w-full' : 'max-w-5xl mx-auto'}`}>
                     {renderView()}
                 </div>
             </main>
