@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronDown, Eye, EyeOff, ArrowRight, Check, X, Smartphone as MobilePhone } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import loginBg from '../assets/RP.png';
 import successIllustration from '../assets/Frame 1000004078.png';
@@ -9,6 +9,7 @@ import authService from '../services/authService';
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [step, setStep] = useState(1);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -407,7 +408,17 @@ const LoginPage = () => {
                         </p>
                         <Button
                             variant="primary"
-                            onClick={() => navigate('/dashboard')}
+                            onClick={() => {
+                                const role = authService.getRole();
+                                const from = location.state?.from;
+                                if (from) {
+                                    navigate(from.pathname + (from.search || ''), { replace: true });
+                                } else if (role === 'ARTISAN') {
+                                    navigate('/artisan/dashboard');
+                                } else {
+                                    navigate('/dashboard');
+                                }
+                            }}
                             className="w-full py-3 rounded-xl text-lg font-bold transition-all relative group bg-[#1E4E82] shadow-xl hover:shadow-2xl hover:scale-[1.02] active:scale-95"
                         >
                             <span>Go to Home page</span>

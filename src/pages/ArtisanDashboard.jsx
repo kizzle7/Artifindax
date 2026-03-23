@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import userService from '../services/userService';
 import authService from '../services/authService';
 import artisanService from '../services/artisanService';
@@ -30,7 +30,8 @@ import ServiceCompletionModal from '../components/artisan/ServiceCompletionModal
 
 const ArtisanDashboard = () => {
     const navigate = useNavigate();
-    const [currentView, setCurrentView] = useState('dashboard');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [currentView, setCurrentView] = useState(searchParams.get('view') || 'dashboard');
     const [bookingsViewStep, setBookingsViewStep] = useState('list');
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -81,6 +82,21 @@ const ArtisanDashboard = () => {
     const [visibleFaq, setVisibleFaq] = useState(null);
 
     const toggleFaq = (id) => setVisibleFaq(visibleFaq === id ? null : id);
+
+    useEffect(() => {
+        const view = searchParams.get('view');
+        if (view && view !== currentView) {
+            setCurrentView(view);
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            newParams.set('view', currentView);
+            return newParams;
+        }, { replace: true });
+    }, [currentView, setSearchParams]);
 
     React.useEffect(() => {
         if (currentView === 'bookings') {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Loader2 } from 'lucide-react';
 import { setKey, fromLatLng } from 'react-geocode';
 import toast from 'react-hot-toast';
@@ -42,7 +42,8 @@ setKey(GEOCODE_API_KEY);
 
 const UserDashboard = () => {
     const navigate = useNavigate();
-    const [currentView, setCurrentView] = useState('home');
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [currentView, setCurrentView] = useState(searchParams.get('view') || 'home');
     const [bookingTab, setBookingTab] = useState('ongoing');
     const [bookingsData, setBookingsData] = useState([]);
     const [loadingBookings, setLoadingBookings] = useState(false);
@@ -158,6 +159,21 @@ const UserDashboard = () => {
             longitude: finalLng || 3.39621,
         };
     };
+
+    useEffect(() => {
+        const view = searchParams.get('view');
+        if (view && view !== currentView) {
+            setCurrentView(view);
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        setSearchParams(prev => {
+            const newParams = new URLSearchParams(prev);
+            newParams.set('view', currentView);
+            return newParams;
+        }, { replace: true });
+    }, [currentView, setSearchParams]);
 
     useEffect(() => {
         const fetchPopular = async () => {
