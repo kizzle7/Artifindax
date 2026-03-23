@@ -21,7 +21,7 @@ const Sidebar = ({ currentView, setCurrentView, setSelectedBooking, setNotificat
                         if (item.id === 'messages') setMessagesViewStep('list');
                         if (item.id === 'settings') setSettingsStep('main');
                     }}
-                    className={`flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all font-bold tracking-wider text-[11px] ${currentView === item.id ? 'bg-white text-[#1E4E82]' : 'hover:bg-white/10 opacity-70 hover:opacity-100'}`}
+                    className={`flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all font-bold tracking-wider text-[11px] cursor-pointer ${currentView === item.id ? 'bg-white text-[#1E4E82]' : 'hover:bg-white/10 opacity-70 hover:opacity-100'}`}
                 >
                     <item.icon size={18} fill={currentView === item.id ? 'currentColor' : 'none'} />
                     <span>{item.label}</span>
@@ -31,7 +31,7 @@ const Sidebar = ({ currentView, setCurrentView, setSelectedBooking, setNotificat
         <div className="mt-auto">
             <button
                 onClick={() => setShowLogoutModal(true)}
-                className="flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all font-bold tracking-wider text-[11px] w-full hover:bg-white/10 opacity-70 hover:opacity-100"
+                className="flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all font-bold tracking-wider text-[11px] w-full hover:bg-white/10 opacity-70 hover:opacity-100 cursor-pointer"
             >
                 <LogOut size={18} />
                 <span>LOGOUT</span>

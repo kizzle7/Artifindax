@@ -24,7 +24,7 @@ const MobileMenu = ({ isMenuOpen, setIsMenuOpen, currentView, setCurrentView, se
                                 if (item.id === 'messages') setMessagesViewStep('list');
                                 if (item.id === 'settings') setSettingsStep('main');
                             }}
-                            className={`flex items-center gap-3.5 px-6 py-3.5 rounded-2xl transition-all font-bold tracking-wider w-full justify-center text-sm ${currentView === item.id ? 'bg-[#1E4E82] text-white shadow-lg' : 'text-gray-600'}`}
+                            className={`flex items-center gap-3.5 px-6 py-3.5 rounded-2xl transition-all font-bold tracking-wider w-full justify-center text-sm cursor-pointer ${currentView === item.id ? 'bg-[#1E4E82] text-white shadow-lg' : 'text-gray-600'}`}
                         >
                             <item.icon size={20} fill={currentView === item.id ? 'currentColor' : 'none'} />
                             <span>{item.label}</span>

@@ -29,9 +29,8 @@ const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAcce
                 );
             case 'ACCEPTED':
                 return (
-                    <div className="grid grid-cols-2 gap-4 mt-8">
-                        <button onClick={() => onCancel(booking)} className="py-4 border-2 border-[#1E4E82] text-[#1E4E82] rounded-[16px] font-black text-sm uppercase tracking-widest">Cancel</button>
-                        <button onClick={() => onComplete(booking)} className="py-4 bg-[#1E4E82] text-white rounded-[16px] font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-900/10">Mark as Completed</button>
+                    <div className="grid grid-cols-1 gap-4 mt-8">
+                        <button onClick={() => onComplete(booking)} className="py-4 bg-[#1E4E82] text-white rounded-[16px] font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-900/10 cursor-pointer active:scale-[0.98] transition-all">Mark as Completed</button>
                     </div>
                 );
             case 'COMPLETED':
@@ -62,8 +61,8 @@ const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAcce
                 <div className="flex items-center gap-4">
                     <div className="w-14 h-14 rounded-full overflow-hidden shrink-0 shadow-inner ring-2 ring-slate-50">
                         <img
-                            src={booking.customer?.appUser?.profilePicture || booking.customer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=150`}
-                            onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
+                            src={booking.customer?.profilePicture || booking.customer?.appUser?.profilePicture || booking.customer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || booking.customer?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || booking.customer?.lastName || ''))}&background=1E4E82&color=fff&size=150`}
+                            onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || booking.customer?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || booking.customer?.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
                             alt="" className="w-full h-full object-cover" />
                     </div>
                     <div>

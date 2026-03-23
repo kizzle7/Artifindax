@@ -1,5 +1,5 @@
-import React from 'react';
 import { ChevronLeft, MapPin, Phone, MessageSquare, Star } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, setCurrentChat, setCurrentView, setMessagesViewStep, setSelectedArtisan }) => {
     if (!booking) return null;
@@ -7,7 +7,7 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
         <div className="flex-1 lg:ml-[240px] bg-[#F8FAFC] min-h-screen transition-all duration-300">
             <div className="max-w-6xl mx-auto w-full pb-6 animate-in slide-in-from-right-4 duration-500 px-0 lg:px-4 flex flex-col pt-20 lg:pt-6 bg-[#F8FAFC] min-h-screen">
                 <div className="hidden lg:flex items-center gap-4 mb-2 pb-4 border-b border-slate-100 mt-2">
-                    <button onClick={() => setSelectedBooking(null)} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                    <button onClick={() => setSelectedBooking(null)} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                     <div className="flex flex-col">
                         <h1 className="text-2xl font-black text-[#0f172a] tracking-tight mb-1">Order Details</h1>
                         <div className="flex items-center gap-2">
@@ -47,7 +47,7 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                                         setCurrentView('search');
                                     }
                                 }}
-                                className="w-12 h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden shrink-0 shadow-inner ring-2 ring-slate-50 hover:ring-[#1E4E82] transition-all active:scale-95"
+                                className="w-12 h-12 lg:w-14 lg:h-14 rounded-full overflow-hidden shrink-0 shadow-inner ring-2 ring-slate-50 hover:ring-[#1E4E82] transition-all active:scale-95 cursor-pointer"
                             >
                                 <img
                                     src={booking.artisan?.appUser?.profilePicture || booking.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.artisan?.appUser?.firstName || '') + ' ' + (booking.artisan?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=150`}
@@ -79,7 +79,7 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                                             setCurrentView('search');
                                         }
                                     }}
-                                    className="font-black text-base lg:text-lg text-[#0f172a] mb-0.5 leading-tight hover:text-[#1E4E82] transition-colors block text-left"
+                                    className="font-black text-base lg:text-lg text-[#0f172a] mb-0.5 leading-tight hover:text-[#1E4E82] transition-colors block text-left cursor-pointer"
                                 >
                                     {booking.artisan?.appUser
                                         ? `${booking.artisan.appUser.firstName || ''} ${booking.artisan.appUser.lastName || ''}`.trim()
@@ -92,7 +92,15 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                             </div>
                         </div>
                         <div className="flex gap-1.5">
-                            <button className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all"><Phone size={14} /></button>
+                            <button onClick={() => {
+                                const phone = booking.artisan?.appUser?.phoneNumber || booking.artisan?.phoneNumber || '';
+                                if (phone) {
+                                    navigator.clipboard.writeText(phone);
+                                    toast.success('Phone number copied');
+                                } else {
+                                    toast.error('Phone number not available');
+                                }
+                            }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"><Phone size={14} /></button>
                             <button onClick={() => {
                                 const artisanObj = booking.artisan;
                                 const name = artisanObj?.appUser
@@ -101,14 +109,16 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                                 const avatar = artisanObj?.appUser?.profilePicture || booking.avatar;
 
                                 setCurrentChat({
+                                    id: booking.id,
                                     artisan: name,
                                     avatar: avatar,
-                                    location: booking.customerAddress?.address?.address || booking.location
+                                    location: booking.customerAddress?.address?.address || booking.location,
+                                    phoneNumber: artisanObj?.appUser?.phoneNumber || booking.artisan?.phoneNumber || ''
                                 });
                                 setCurrentView('messages');
                                 setMessagesViewStep('chat');
                                 setSelectedBooking(null);
-                            }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all"><MessageSquare size={14} /></button>
+                            }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"><MessageSquare size={14} /></button>
                         </div>
                     </div>
                     <div className="bg-white border border-slate-100 rounded-[24px] p-6 lg:p-8 shadow-sm space-y-6">
@@ -165,7 +175,7 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                             </div>
                         </div> */}
                         {booking.bookingStatus === 'NEW' && (
-                            <button onClick={() => handleCancelBooking(booking.id)} className="w-full py-3.5 text-[#b91c1c] font-black text-xs border border-red-100 rounded-xl hover:bg-red-50 transition-all active:scale-[0.98]">Cancel Booking</button>
+                            <button onClick={() => handleCancelBooking(booking.id)} className="w-full py-3.5 text-[#b91c1c] font-black text-xs border border-red-100 rounded-xl hover:bg-red-50 transition-all active:scale-[0.98] cursor-pointer">Cancel Booking</button>
                         )}
                     </div>
                 </div>

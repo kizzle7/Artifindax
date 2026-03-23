@@ -122,7 +122,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                         <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.18em] pt-6 pb-3">{group.section}</p>
                         {group.items.map((item) => (
                             <button key={item.id} onClick={() => setSettingsStep(item.id)}
-                                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-slate-50 transition-colors -mx-1 px-1 rounded-lg active:scale-[0.99]">
+                                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-slate-50 transition-colors -mx-1 px-1 rounded-lg active:scale-[0.99] cursor-pointer">
                                 <div className="flex items-center gap-3"><item.icon size={18} className="text-[#1E4E82] shrink-0" /><span className="font-bold text-[#0f172a] text-sm">{item.label}</span></div>
                                 <ChevronRight size={18} className="text-gray-300 shrink-0 ml-auto" />
                             </button>
@@ -130,7 +130,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                     </div>
                 ))}
                 <div className="pt-8">
-                    <button onClick={() => setShowLogoutModal(true)} className="flex items-center gap-3 py-4 text-red-500 font-bold text-sm active:scale-[0.99] transition-transform">
+                    <button onClick={() => setShowLogoutModal(true)} className="flex items-center gap-3 py-4 text-red-500 font-bold text-sm active:scale-[0.99] transition-transform cursor-pointer">
                         <LogOut size={18} /><span>Logout</span>
                     </button>
                 </div>
@@ -169,12 +169,12 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                         {updateMessage}
                     </div>
                 )}
-                <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-4 bg-[#1E4E82] text-white font-black rounded-[10px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50">
+                <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-4 bg-[#1E4E82] text-white font-black rounded-[10px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 cursor-pointer">
                     {isUpdating ? 'Saving...' : 'Save Changes'}
                 </button>
             </div>
             <div className="w-full max-w-md mt-6">
-                <button onClick={() => setShowLogoutModal(true)} className="w-full py-3 bg-[#DC2626] text-white font-black rounded-[10px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
+                <button onClick={() => setShowLogoutModal(true)} className="w-full py-3 bg-[#DC2626] text-white font-black rounded-[10px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer">
                     <LogOut size={20} strokeWidth={2.5} /> Logout
                 </button>
             </div>
@@ -189,7 +189,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             </div>
             <h2 className="text-2xl font-black text-[#0f172a] mb-2">{title}</h2>
             <p className="text-gray-500 font-bold mb-12 px-4 text-sm leading-relaxed">{message}</p>
-            <button onClick={() => setSettingsStep('main')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl transition-transform active:scale-95">Continue</button>
+            <button onClick={() => setSettingsStep('main')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl transition-transform active:scale-95 cursor-pointer">Continue</button>
         </div>
     );
 
@@ -201,7 +201,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 <p className="text-gray-500 font-bold text-sm mb-12">We've sent a 4-digit verification code to your phone number. Please enter it below to continue.</p>
                 <div className="flex justify-center gap-4 mb-8">{[1, 2, 3, 4].map(i => <div key={i} className="w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}</div>
                 <div className="text-center mb-12"><p className="text-xs font-bold text-gray-400">Didn't get code? <span className="text-[#1E4E82]">Resend 2:59</span></p></div>
-                <button onClick={() => setSettingsStep('password_reset')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Verify</button>
+                <button onClick={() => setSettingsStep('password_reset')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Verify</button>
             </div>
         );
         if (settingsStep === 'password_reset') return (
@@ -212,7 +212,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">Old Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">New Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
                 </div>
-                <button onClick={() => setSettingsStep('password_success')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl mb-6">Reset</button>
+                <button onClick={() => setSettingsStep('password_success')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl mb-6 cursor-pointer">Reset</button>
             </div>
         );
         return (
@@ -222,7 +222,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">Email</label><input type="email" defaultValue="artifinda@gmail.com" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold" /></div>
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">Old Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
                 </div>
-                <button onClick={() => setSettingsStep('password_otp')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] mb-6">Generate OTP</button>
+                <button onClick={() => setSettingsStep('password_otp')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] mb-6 cursor-pointer">Generate OTP</button>
             </div>
         );
     };
@@ -234,7 +234,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Set a new 6-Digit PIN</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter new pin below</p>
                 <div className="flex justify-center gap-2 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-11 lg:w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}</div>
-                <button onClick={() => setSettingsStep('pin_success')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Continue</button>
+                <button onClick={() => setSettingsStep('pin_success')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Continue</button>
             </div>
         );
         return (
@@ -242,7 +242,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Change Login PIN</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter current pin below</p>
                 <div className="flex justify-center gap-2 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-11 lg:w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}</div>
-                <button onClick={() => setSettingsStep('pin_new')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Continue</button>
+                <button onClick={() => setSettingsStep('pin_new')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Continue</button>
             </div>
         );
     };

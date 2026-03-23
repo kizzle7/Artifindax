@@ -42,6 +42,7 @@ const ArtisanDashboard = () => {
     const [completionImages, setCompletionImages] = useState([]);
     const [invoiceItems, setInvoiceItems] = useState([{ description: '', amount: '' }]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [bookingTab, setBookingTab] = useState('New');
     const [notificationsViewStep, setNotificationsViewStep] = useState('list');
     const [selectedNotification, setSelectedNotification] = useState(null);
 
@@ -181,7 +182,10 @@ const ArtisanDashboard = () => {
         // setCurrentView('generate-invoice');
         setShowAcceptModal(true);
     };
-    const confirmCompletion = () => { setShowCompletionModal(false); setCurrentView('confirm-completion'); };
+    const confirmCompletion = async () => {
+        setShowCompletionModal(false);
+        await handleFinalCompletion();
+    };
     const confirmCancellation = () => { setShowCancelModal(false); setCurrentView('cancel-reason'); };
     const confirmAccept = async () => {
         if (!selectedBooking) return;
@@ -197,11 +201,35 @@ const ArtisanDashboard = () => {
             setShowAcceptModal(false);
             setCurrentView('bookings');
             setBookingsViewStep('list');
+            setBookingTab('Ongoing');
             setSelectedBooking(null);
             fetchBookings(); // Refresh list
         } catch (err) {
             console.error("Failed to accept booking:", err);
             const backendMessage = err.response?.data?.message || 'Failed to accept booking. Please try again.';
+            toast.error(backendMessage, { id: loadingToast });
+        } finally {
+            setIsSubmittingAction(false);
+        }
+    };
+
+    const handleFinalCompletion = async () => {
+        if (!selectedBooking) return;
+        setIsSubmittingAction(true);
+        const loadingToast = toast.loading('Completing service...');
+        try {
+            await artisanService.respondToBooking({
+                bookingId: selectedBooking.id,
+                bookingResponseStatus: 'COMPLETED',
+                comment: completionNotes || 'Service completed'
+            });
+            toast.success('Service marked as completed!', { id: loadingToast });
+            setCurrentView('completion-success');
+            setBookingTab('Completed');
+            fetchBookings(); // Refresh list
+        } catch (err) {
+            console.error("Failed to complete booking:", err);
+            const backendMessage = err.response?.data?.message || 'Failed to complete booking. Please try again.';
             toast.error(backendMessage, { id: loadingToast });
         } finally {
             setIsSubmittingAction(false);
@@ -216,6 +244,8 @@ const ArtisanDashboard = () => {
                     <ArtisanBookingsView
                         bookingsData={bookingsData}
                         loadingBookings={loadingBookings}
+                        activeTab={bookingTab}
+                        setActiveTab={setBookingTab}
                         onSelectBooking={(booking) => { setSelectedBooking(booking); setBookingsViewStep('detail'); }}
                         onCancel={handleCancelClick}
                         onComplete={handleCompleteClick}
@@ -268,18 +298,6 @@ const ArtisanDashboard = () => {
                             setCancelReason('');
                             setOtherReason('');
                         }}
-                    />
-                );
-            case 'confirm-completion':
-                return (
-                    <ArtisanConfirmCompletionView
-                        booking={selectedBooking}
-                        notes={completionNotes}
-                        setNotes={setCompletionNotes}
-                        images={completionImages}
-                        setImages={setCompletionImages}
-                        onSubmit={() => setCurrentView('completion-success')}
-                        onBack={handleBack}
                     />
                 );
             case 'completion-success':

@@ -102,7 +102,7 @@ const FilterModal = ({ isFilterModalOpen, setIsFilterModalOpen, setFiltersEnable
                         </div>
                     </div>
                     <div className="mt-8">
-                        <button onClick={() => { setFiltersEnabled(true); setIsFilterModalOpen(false); }} className="w-full py-3 bg-[#D6E6F9] text-[#1E4E82] rounded-[10px] font-bold text-[13px] shadow-sm active:scale-95 transition-all hover:bg-[#c6dbf5]">Apply</button>
+                        <button onClick={() => { setFiltersEnabled(true); setIsFilterModalOpen(false); }} className="w-full py-3 bg-[#D6E6F9] text-[#1E4E82] rounded-[10px] font-bold text-[13px] shadow-sm active:scale-95 transition-all hover:bg-[#c6dbf5] cursor-pointer">Apply</button>
                     </div>
                 </div>
             </div>

@@ -1,5 +1,5 @@
-import React from 'react';
 import { ChevronLeft, Phone, MessageSquare, ArrowRight } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { NOTIFICATIONS } from '../../constants/userData';
 
 const NotificationsView = ({ notificationsViewStep, setNotificationsViewStep, selectedNotification, setSelectedNotification, setCurrentView }) => {
@@ -16,7 +16,7 @@ const NotificationsView = ({ notificationsViewStep, setNotificationsViewStep, se
                 </div>
                 <h2 className="text-xl lg:text-2xl font-black text-[#0f172a] mb-2 tracking-tight">No Notifications yet!</h2>
                 <p className="text-gray-400 font-black mb-8 max-w-xs leading-relaxed uppercase tracking-widest text-[10px]">We'll let you know as soon as you have something.</p>
-                <button onClick={() => setCurrentView('home')} className="w-full max-w-xs py-4 bg-[#1E4E82] text-white rounded-[20px] font-black text-sm shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-2 group">
+                <button onClick={() => setCurrentView('home')} className="w-full max-w-xs py-4 bg-[#1E4E82] text-white rounded-[20px] font-black text-sm shadow-xl hover:shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-2 group cursor-pointer">
                     <span>Go to Home</span>
                     <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
                 </button>
@@ -62,7 +62,7 @@ const NotificationsView = ({ notificationsViewStep, setNotificationsViewStep, se
             <div className="flex-1 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen lg:p-6 transition-all duration-300">
                 <div className="w-full pb-32 flex flex-col pt-16 lg:pt-6 bg-white min-h-screen border border-transparent lg:border-slate-100 lg:rounded-[24px] lg:shadow-sm">
                     <div className="hidden lg:flex items-center gap-3 px-8 mb-6 border-b border-slate-50 pb-4">
-                        <button onClick={() => setNotificationsViewStep('list')} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                        <button onClick={() => setNotificationsViewStep('list')} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                         <h1 className="text-xl font-black text-[#0f172a] tracking-tight">Notification Detail</h1>
                     </div>
                     <div className="w-full px-5 lg:px-8 space-y-8 flex flex-col items-center text-center">
@@ -103,13 +103,17 @@ const NotificationsView = ({ notificationsViewStep, setNotificationsViewStep, se
                                         </div>
                                     </div>
                                     <div className="flex gap-1.5">
-                                        <button className="p-2 bg-white rounded-xl text-[#1E4E82] shadow-sm active:scale-95 transition-all"><Phone size={16} /></button>
-                                        <button className="p-2 bg-white rounded-xl text-[#1E4E82] shadow-sm active:scale-95 transition-all"><MessageSquare size={16} /></button>
+                                        <button onClick={() => {
+                                            const phone = selectedNotification?.phoneNumber || '+234 812 345 6789';
+                                            navigator.clipboard.writeText(phone);
+                                            toast.success('Phone number copied');
+                                        }} className="p-2 bg-white rounded-xl text-[#1E4E82] shadow-sm active:scale-95 transition-all cursor-pointer"><Phone size={16} /></button>
+                                        <button className="p-2 bg-white rounded-xl text-[#1E4E82] shadow-sm active:scale-95 transition-all cursor-pointer"><MessageSquare size={16} /></button>
                                     </div>
                                 </div>
                             </div>
                         )}
-                        <button onClick={() => setCurrentView('bookings')} className="w-full max-w-xl py-5 bg-[#1E4E82] text-white rounded-2xl font-black text-sm shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3">
+                        <button onClick={() => setCurrentView('bookings')} className="w-full max-w-xl py-5 bg-[#1E4E82] text-white rounded-2xl font-black text-sm shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 cursor-pointer">
                             <span>View in Bookings</span><ArrowRight size={18} strokeWidth={2.5} />
                         </button>
                     </div>

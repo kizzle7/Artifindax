@@ -26,7 +26,7 @@ const SearchView = ({
                                 if (selectedSkill) { setSelectedSkill(null); setSearchResults([]); }
                                 else if (selectedCategory) { setSelectedCategory(null); setCategorySkills([]); }
                                 else { setCurrentView('home'); }
-                            }} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                            }} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                             <h1 className="text-xl font-black text-[#0f172a] tracking-tight">
                                 {selectedSkill ? selectedSkill.name : selectedCategory ? selectedCategory.name : 'Search'}
                             </h1>
@@ -38,7 +38,7 @@ const SearchView = ({
                         <div className="relative mb-6 group">
                             <input type="text" placeholder="Search for artisan or service..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-5 pr-14 py-3.5 rounded-2xl border border-gray-100 bg-white focus:outline-none focus:border-[#1E4E82]/30 text-[#0f172a] font-bold text-sm transition-all shadow-sm placeholder:text-slate-300" />
-                            <button onClick={() => setIsFilterModalOpen(true)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#1E4E82] hover:bg-blue-50 rounded-xl transition-all active:scale-95">
+                            <button onClick={() => setIsFilterModalOpen(true)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-[#1E4E82] hover:bg-blue-50 rounded-xl transition-all active:scale-95 cursor-pointer">
                                 <Filter size={20} strokeWidth={2.5} />
                             </button>
                         </div>
@@ -50,7 +50,7 @@ const SearchView = ({
                                         {filteredCategories.length > 0 ? (
                                             filteredCategories.map((category) => (
                                                 <button key={category.id} onClick={() => { if (searchQuery) setSearchQuery(''); handleCategoryClick(category); }}
-                                                    className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-gray-100 hover:border-blue-200 transition-all active:scale-95">
+                                                    className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-slate-50 border border-gray-100 hover:border-blue-200 transition-all active:scale-95 cursor-pointer">
                                                     <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center text-blue-900 shadow-sm overflow-hidden">
                                                         {category.image ? <img src={category.image} alt="" className="w-full h-full object-cover" /> : <Info size={24} />}
                                                     </div>
@@ -70,14 +70,14 @@ const SearchView = ({
                         {selectedCategory && !selectedSkill && (
                             <div className="animate-in slide-in-from-right duration-300">
                                 <div className="flex items-center gap-2 mb-6">
-                                    <button onClick={() => setSelectedCategory(null)} className="text-blue-900 text-xs font-black uppercase tracking-widest">Back to Categories</button>
+                                    <button onClick={() => setSelectedCategory(null)} className="text-blue-900 text-xs font-black uppercase tracking-widest cursor-pointer">Back to Categories</button>
                                 </div>
                                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Skills for {selectedCategory.name}</h3>
                                 {loadingSkills ? <SearchSkeleton type="skill" /> : (
                                     <div className="flex flex-wrap gap-2 mb-8">
                                         {categorySkills.map((skill) => (
                                             <button key={skill.id} onClick={() => handleSkillClick(skill)}
-                                                className="px-5 py-2.5 bg-white border border-gray-100 rounded-full text-xs font-bold text-[#0f172a] hover:border-blue-900 hover:text-blue-900 transition-all active:scale-95">
+                                                className="px-5 py-2.5 bg-white border border-gray-100 rounded-full text-xs font-bold text-[#0f172a] hover:border-blue-900 hover:text-blue-900 transition-all active:scale-95 cursor-pointer">
                                                 {skill.name}
                                             </button>
                                         ))}

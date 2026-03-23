@@ -7,7 +7,7 @@ const ArtisanConfirmCompletionView = ({ booking, onSubmit, notes, setNotes, imag
     <div className="animate-in slide-in-from-right-4 duration-500 pb-10">
         <div className="hidden lg:flex items-center justify-between mb-8 pb-4">
             <div className="flex items-center gap-4">
-                <button onClick={onBack} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                <button onClick={onBack} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                 <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Confirm Service Completion</h1>
             </div>
             {getDetailStatusBadge(booking?.status)}
@@ -62,7 +62,7 @@ const ArtisanConfirmCompletionView = ({ booking, onSubmit, notes, setNotes, imag
         </div>
 
         <div className="flex justify-center mt-20">
-            <button onClick={onSubmit} className="w-full lg:w-auto px-20 py-4 bg-[#1E4E82] text-white rounded-[16px] font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-900/10 active:scale-[0.98] transition-all">
+            <button onClick={onSubmit} className="w-full lg:w-auto px-20 py-4 bg-[#1E4E82] text-white rounded-[16px] font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-900/10 active:scale-[0.98] transition-all cursor-pointer">
                 Submit
             </button>
         </div>

@@ -9,8 +9,8 @@ const LogoutModal = ({ showLogoutModal, setShowLogoutModal, onLogout }) => (
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="relative bg-white rounded-[32px] w-full max-w-sm p-8 shadow-2xl text-center">
                     <h3 className="text-xl font-bold text-[#0f172a] mb-8">Are you sure you want to logout?</h3>
                     <div className="space-y-3">
-                        <button onClick={onLogout} className="w-full py-4 bg-[#DDE6F5] text-[#1E4E82] font-bold rounded-2xl transition-all hover:bg-[#1E4E82] hover:text-white">Yes, Logout</button>
-                        <button onClick={() => setShowLogoutModal(false)} className="w-full py-4 bg-[#1E4E82] text-white font-bold rounded-2xl transition-all shadow-lg">No, go back</button>
+                        <button onClick={onLogout} className="w-full py-4 bg-[#DDE6F5] text-[#1E4E82] font-bold rounded-2xl transition-all hover:bg-[#1E4E82] hover:text-white cursor-pointer">Yes, Logout</button>
+                        <button onClick={() => setShowLogoutModal(false)} className="w-full py-4 bg-[#1E4E82] text-white font-bold rounded-2xl transition-all shadow-lg cursor-pointer">No, go back</button>
                     </div>
                 </motion.div>
             </div>

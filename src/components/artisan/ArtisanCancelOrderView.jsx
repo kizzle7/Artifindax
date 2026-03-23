@@ -9,7 +9,7 @@ const ArtisanCancelOrderView = ({ booking, onBack, onSubmit, reason, setReason, 
         <div className="animate-in slide-in-from-right-4 duration-500">
             <div className="hidden lg:flex items-center justify-between gap-4 mb-8 pb-4">
                 <div className="flex items-center gap-4">
-                    <button onClick={onBack} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                    <button onClick={onBack} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                     <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Cancel Order</h1>
                 </div>
                 {getDetailStatusBadge(booking?.bookingStatus)}
@@ -37,7 +37,7 @@ const ArtisanCancelOrderView = ({ booking, onBack, onSubmit, reason, setReason, 
 
             <div className="flex justify-center mt-20">
                 <button disabled={!reason || (reason === 'Other' && !otherReason)} onClick={onSubmit}
-                    className="px-20 py-4 bg-[#1E4E82] text-white rounded-[16px] font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-900/10 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98]">
+                    className="px-20 py-4 bg-[#1E4E82] text-white rounded-[16px] font-black text-sm uppercase tracking-widest shadow-lg shadow-blue-900/10 disabled:opacity-50 disabled:shadow-none transition-all active:scale-[0.98] cursor-pointer">
                     Submit
                 </button>
             </div>

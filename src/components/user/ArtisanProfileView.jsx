@@ -41,20 +41,20 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                 {/* Header */}
                 <div className="flex items-center justify-between gap-4 mb-6 px-4 lg:px-8">
                     <div className="hidden lg:flex items-center gap-4">
-                        <button onClick={() => setSelectedArtisan(null)} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform">
+                        <button onClick={() => setSelectedArtisan(null)} className="p-1 -ml-1 text-[#0f172a] active:scale-90 transition-transform cursor-pointer">
                             <ChevronLeft size={24} strokeWidth={2.5} />
                         </button>
                         <h1 className="text-xl font-bold text-[#0f172a] tracking-tight">View Profile</h1>
                     </div>
                     <div className="relative">
-                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-1 text-slate-400 hover:text-slate-600 transition-colors">
+                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer">
                             <MoreVertical size={24} />
                         </button>
                         {isMenuOpen && (
                             <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-xl shadow-lg z-[100] py-2 animate-in fade-in zoom-in-95 duration-200">
                                 <button
                                     onClick={() => { setIsReportModalOpen(true); setIsMenuOpen(false); }}
-                                    className="w-full text-left px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                    className="w-full text-left px-4 py-2 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
                                 >
                                     <AlertTriangle size={16} /> Report Artisan
                                 </button>
@@ -94,13 +94,21 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
 
                     {/* Action Buttons */}
                     <div className="flex gap-4">
-                        <button className="flex-1 bg-[#1E4E82] text-white py-3.5 rounded-[12px] font-bold text-sm flex items-center justify-center gap-2 shadow-sm">
+                        <button onClick={() => {
+                            const phone = artisan.appUser?.phoneNumber || artisan.phoneNumber || '';
+                            if (phone) {
+                                navigator.clipboard.writeText(phone);
+                                toast.success('Phone number copied');
+                            } else {
+                                toast.error('Phone number not available');
+                            }
+                        }} className="flex-1 bg-[#1E4E82] text-white py-3.5 rounded-[12px] font-bold text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer">
                             <Phone size={18} /> Call
                         </button>
-                        <button className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100">
+                        <button className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100 cursor-pointer">
                             <MessageSquare size={18} />
                         </button>
-                        <button className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100">
+                        <button className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100 cursor-pointer">
                             <Mail size={18} />
                         </button>
                     </div>
@@ -111,7 +119,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
-                                className={`px-12 lg:px-24 py-4 text-sm font-bold transition-all relative ${activeTab === tab ? 'text-[#1E4E82]' : 'text-slate-400'}`}
+                                className={`px-12 lg:px-24 py-4 text-sm font-bold transition-all relative cursor-pointer ${activeTab === tab ? 'text-[#1E4E82]' : 'text-slate-400'}`}
                             >
                                 {tab}
                                 {activeTab === tab && <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#1E4E82] rounded-t-full" />}
@@ -238,12 +246,12 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                     {!artisan.hideBookNow && (
                         <button
                             onClick={() => setIsBookingFormOpen(true)}
-                            className="flex-1 bg-[#1E4E82] text-white py-3.5 rounded-lg font-bold text-sm shadow-sm active:scale-[0.98] transition-all"
+                            className="flex-1 bg-[#1E4E82] text-white py-3.5 rounded-lg font-bold text-sm shadow-sm active:scale-[0.98] transition-all cursor-pointer"
                         >
                             Book Now
                         </button>
                     )}
-                    <button className="flex-1 bg-white text-[#1E4E82] py-3.5 rounded-lg font-bold text-sm border-2 border-[#1E4E82] active:scale-[0.98] transition-all">
+                    <button className="flex-1 bg-white text-[#1E4E82] py-3.5 rounded-lg font-bold text-sm border-2 border-[#1E4E82] active:scale-[0.98] transition-all cursor-pointer">
                         Message
                     </button>
                 </div>
@@ -285,7 +293,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                                 <div className="flex gap-4">
                                     <button
                                         onClick={() => setIsReportModalOpen(false)}
-                                        className="flex-1 py-3.5 bg-slate-50 text-slate-600 rounded-xl font-bold text-sm"
+                                        className="flex-1 py-3.5 bg-slate-50 text-slate-600 rounded-xl font-bold text-sm cursor-pointer"
                                     >
                                         Cancel
                                     </button>

@@ -136,7 +136,7 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
             <div className="w-full pb-32 flex flex-col pt-4 bg-white min-h-screen border border-transparent">
                 {/* Header */}
                 <div className="hidden lg:flex items-center gap-4 mb-4 px-6 lg:px-12">
-                    <button onClick={() => setIsBookingFormOpen(false)} className="p-1 text-[#0f172a] active:scale-90 transition-all">
+                    <button onClick={() => setIsBookingFormOpen(false)} className="p-1 text-[#0f172a] active:scale-90 transition-all cursor-pointer">
                         <ChevronLeft size={24} strokeWidth={2.5} />
                     </button>
                     <h1 className="text-xl lg:text-2xl font-bold text-[#0f172a] tracking-tight">Booking form</h1>
@@ -166,8 +166,16 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                             </div>
                         </div>
                         <div className="flex gap-2">
-                            <button className="w-9 h-9 bg-slate-50 border border-slate-100 text-[#0f172a] rounded-full flex items-center justify-center shadow-sm"><Phone size={16} /></button>
-                            <button className="w-9 h-9 bg-slate-50 border border-slate-100 text-[#0f172a] rounded-full flex items-center justify-center shadow-sm"><MessageSquare size={16} /></button>
+                            <button onClick={() => {
+                                const phone = artisan?.phoneNumber || '';
+                                if (phone) {
+                                    navigator.clipboard.writeText(phone);
+                                    toast.success('Phone number copied');
+                                } else {
+                                    toast.error('Phone number not available');
+                                }
+                            }} className="w-9 h-9 bg-slate-50 border border-slate-100 text-[#0f172a] rounded-full flex items-center justify-center shadow-sm cursor-pointer"><Phone size={16} /></button>
+                            <button className="w-9 h-9 bg-slate-50 border border-slate-100 text-[#0f172a] rounded-full flex items-center justify-center shadow-sm cursor-pointer"><MessageSquare size={16} /></button>
                         </div>
                     </div>
 
@@ -213,7 +221,7 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                                 {images.map((img, index) => (
                                     <div key={index} className="relative w-24 h-24 rounded-[12px] overflow-hidden border border-slate-200">
                                         <img src={img} alt="" className="w-full h-full object-cover" />
-                                        <button onClick={() => removeImage(index)} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-slate-600 hover:bg-white shadow-sm transition-all"><X size={12} /></button>
+                                        <button onClick={() => removeImage(index)} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-slate-600 hover:bg-white shadow-sm transition-all cursor-pointer"><X size={12} /></button>
                                     </div>
                                 ))}
                                 {images.length < 5 && (
@@ -302,7 +310,7 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                             <button
                                 onClick={handleSubmit}
                                 disabled={submitting}
-                                className={`w-full py-4 bg-[#1E4E82] text-white rounded-[12px] font-bold text-[15px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${submitting ? 'opacity-70' : 'hover:bg-[#153a61]'}`}
+                                className={`w-full py-4 bg-[#1E4E82] text-white rounded-[12px] font-bold text-[15px] shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer ${submitting ? 'opacity-70' : 'hover:bg-[#153a61]'}`}
                             >
                                 {submitting ? <Loader2 className="animate-spin" size={20} /> : 'Continue'}
                             </button>

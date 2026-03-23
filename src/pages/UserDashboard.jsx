@@ -43,7 +43,7 @@ setKey(GEOCODE_API_KEY);
 const UserDashboard = () => {
     const navigate = useNavigate();
     const [currentView, setCurrentView] = useState('home');
-    const [bookingTab, setBookingTab] = useState('active');
+    const [bookingTab, setBookingTab] = useState('ongoing');
     const [bookingsData, setBookingsData] = useState([]);
     const [loadingBookings, setLoadingBookings] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
@@ -246,7 +246,8 @@ const UserDashboard = () => {
                     profilePicture: account?.profilePicture || '',
                     status: data.status || 'ACTIVE',
                     identityVerificationStatus: data.identityVerificationStatus || 'PENDING',
-                    kycApprovalStatus: account?.kycApprovalStatus || 'NOT_STARTED'
+                    kycApprovalStatus: account?.kycApprovalStatus || 'NOT_STARTED',
+                    id: data.id || account?.id // Adding ID for chat identification
                 });
             } catch (err) {
                 console.error("Failed to load user profile:", err);
@@ -536,6 +537,8 @@ const UserDashboard = () => {
                                     selectedReportOption={selectedReportOption}
                                     setSelectedReportOption={setSelectedReportOption}
                                     setCurrentView={setCurrentView}
+                                    userProfile={userProfile}
+                                    bookingsData={bookingsData}
                                 />
                             )}
                             {currentView === 'notifications' && (

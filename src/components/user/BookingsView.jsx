@@ -5,10 +5,10 @@ import { Phone, MessageSquare, ChevronRight, MapPin, Clock, Calendar, Plus } fro
 const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBooking, setCurrentChat, setMessagesViewStep, setCurrentView, loadingBookings }) => {
     const getStatusGroup = (status) => {
         const s = (status || '').toString().trim().toUpperCase();
-        if (['NEW', 'ACCEPTED', 'PENDING'].includes(s)) return 'active';
+        if (['NEW', 'ACCEPTED', 'PENDING', 'ONGOING'].includes(s)) return 'ongoing';
         if (['COMPLETED', 'FINISHED'].includes(s)) return 'completed';
         if (['REJECTED', 'CANCELLED', 'CANCELED', 'DECLINED', 'EXPIRED'].includes(s)) return 'canceled';
-        return 'active'; // Default for unknown/active-like states
+        return 'ongoing'; // Default for unknown/active-like states
     };
 
     const filteredBookings = bookingsData.filter(b => getStatusGroup(b.bookingStatus || b.status) === bookingTab);
@@ -17,8 +17,8 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
         <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 overflow-x-hidden relative flex flex-col">
             <h1 className="hidden lg:block text-base font-black text-[#0f172a] mb-4 uppercase tracking-[0.05em]">Bookings</h1>
             <div className="flex items-center gap-5 border-b border-gray-50 mb-4 overflow-x-auto scrollbar-hide">
-                {['active', 'completed', 'canceled'].map(tab => (
-                    <button key={tab} onClick={() => setBookingTab(tab)} className={`pb-2 text-xs font-black uppercase tracking-[0.15em] relative whitespace-nowrap ${bookingTab === tab ? 'text-[#1E4E82]' : 'text-gray-400'}`}>
+                {['ongoing', 'completed', 'canceled'].map(tab => (
+                    <button key={tab} onClick={() => setBookingTab(tab)} className={`pb-2 text-xs font-black uppercase tracking-[0.15em] relative whitespace-nowrap cursor-pointer ${bookingTab === tab ? 'text-[#1E4E82]' : 'text-gray-400'}`}>
                         {tab}
                         {bookingTab === tab && <motion.div layoutId="tab-underline" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E4E82] rounded-full" />}
                     </button>
@@ -80,7 +80,7 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                                             </div>
                                         </div>
                                         <div className="flex gap-1">
-                                            <div className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider ${bookingTab === 'active' ? 'bg-blue-50 text-[#1E4E82]' :
+                                            <div className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-wider ${bookingTab === 'ongoing' ? 'bg-blue-50 text-[#1E4E82]' :
                                                 bookingTab === 'completed' ? 'bg-green-50 text-green-600' :
                                                     'bg-red-50 text-red-600'
                                                 }`}>
@@ -99,7 +99,7 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                     </>
                 )}
             </div>
-            <button onClick={() => setCurrentView('search')} className="fixed bottom-28 right-5 lg:right-10 w-10 h-10 bg-[#1E4E82] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50 border border-white">
+            <button onClick={() => setCurrentView('search')} className="fixed bottom-28 right-5 lg:right-10 w-10 h-10 bg-[#1E4E82] text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-90 transition-all z-50 border border-white cursor-pointer">
                 <Plus size={18} strokeWidth={3} />
             </button>
         </div>

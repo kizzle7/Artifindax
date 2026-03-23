@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, AlertCircle, Calendar, Clock, MapPin, Phone, MessageSquare, Mail, Plus } from 'lucide-react';
-const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, setCurrentView }) => {
-    const [activeTab, setActiveTab] = useState('New');
-
-    const tabs = ['New', 'Completed', 'Canceled'];
+const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, setCurrentView, activeTab, setActiveTab }) => {
+    const tabs = ['New', 'Ongoing', 'Completed', 'Canceled'];
 
     const filteredBookings = (bookingsData || []).filter(b => {
         const s = (b.bookingStatus || b.status || '').toString().trim().toUpperCase();
-        if (activeTab === 'New') return ['NEW', 'ACCEPTED', 'PENDING'].includes(s);
+        if (activeTab === 'New') return ['NEW', 'PENDING'].includes(s);
+        if (activeTab === 'Ongoing') return ['ACCEPTED'].includes(s);
         if (activeTab === 'Completed') return ['COMPLETED', 'FINISHED'].includes(s);
         if (activeTab === 'Canceled') return ['REJECTED', 'CANCELLED', 'CANCELED', 'DECLINED', 'EXPIRED'].includes(s);
         return false;
@@ -39,8 +38,7 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                 );
             case 'ACCEPTED':
                 return (
-                    <div className="grid grid-cols-2 gap-3 mt-4">
-                        <button onClick={() => onCancel(booking)} className="py-2.5 border border-[#1E4E82] text-[#1E4E82] rounded-xl font-bold text-sm">Cancel</button>
+                    <div className="grid grid-cols-1 gap-3 mt-4">
                         <button onClick={() => onComplete(booking)} className="py-2.5 bg-[#1E4E82] text-white rounded-xl font-bold text-sm">Complete</button>
                     </div>
                 );
@@ -67,7 +65,7 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
-                        className={`pb-3 text-sm font-bold transition-all relative shrink-0 min-w-fit px-2 ${activeTab === tab ? 'text-[#1E4E82]' : 'text-gray-400 hover:text-gray-600'}`}
+                        className={`pb-3 text-sm font-bold transition-all relative shrink-0 min-w-fit px-2 cursor-pointer ${activeTab === tab ? 'text-[#1E4E82]' : 'text-gray-400 hover:text-gray-600'}`}
                     >
                         {tab}
                         {activeTab === tab && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#1E4E82]" />}
@@ -99,7 +97,7 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                                             {getStatusBadge(booking.bookingStatus)}
                                         </div>
                                     </div>
-                                    <button onClick={() => onSelectBooking(booking)} className="p-2 border border-slate-200 rounded-full text-slate-400 hover:text-[#1E4E82] hover:bg-blue-50 transition-all">
+                                    <button onClick={() => onSelectBooking(booking)} className="p-2 border border-slate-200 rounded-full text-slate-400 hover:text-[#1E4E82] hover:bg-blue-50 transition-all cursor-pointer">
                                         <ChevronRight size={18} />
                                     </button>
                                 </div>
@@ -120,9 +118,9 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-slate-50 shadow-inner">
-                                            <img
-                                                src={booking.customer?.appUser?.profilePicture || booking.customer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=100`}
-                                                onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || ''))}&background=1E4E82&color=fff&size=100`; }}
+                                             <img
+                                                src={booking.customer?.profilePicture || booking.customer?.appUser?.profilePicture || booking.customer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || booking.customer?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || booking.customer?.lastName || ''))}&background=1E4E82&color=fff&size=100`}
+                                                onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || booking.customer?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || booking.customer?.lastName || ''))}&background=1E4E82&color=fff&size=100`; }}
                                                 alt="" className="w-full h-full object-cover" />
                                         </div>
                                         <span className="font-bold text-slate-700 text-sm">{booking.customer?.appUser ? `${booking.customer.appUser.firstName} ${booking.customer.appUser.lastName}` : (booking.customer?.name || 'Customer')}</span>

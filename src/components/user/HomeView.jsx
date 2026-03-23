@@ -10,7 +10,7 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
         <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 transition-all duration-300">
             <div className="hidden lg:flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center cursor-pointer">
                         {userProfile.profilePicture ? (
                             <img src={userProfile.profilePicture} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
@@ -25,10 +25,10 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
                     </div>
                 </div>
                 <div className="flex items-center gap-1.5">
-                    <button onClick={() => { setCurrentView('notifications'); setNotificationsViewStep('list'); }} className="p-2 bg-white rounded-xl shadow-sm relative transition-all active:scale-90 border border-gray-50"><Bell size={16} className="text-gray-600" /><span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full border border-white" /></button>
+                    <button onClick={() => { setCurrentView('notifications'); setNotificationsViewStep('list'); }} className="p-2 bg-white rounded-xl shadow-sm relative transition-all active:scale-90 border border-gray-50 cursor-pointer"><Bell size={16} className="text-gray-600" /><span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full border border-white" /></button>
                 </div>
             </div>
-            <div className="relative mb-6" onClick={() => setCurrentView('search')}>
+            <div className="relative mb-6 cursor-pointer" onClick={() => setCurrentView('search')}>
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
                 <input type="text" readOnly placeholder="Search for artisan or service" className="w-full bg-white pl-11 pr-4 py-3 rounded-2xl cursor-pointer border border-gray-100 focus:border-[#1E4E82]/20 transition-all text-gray-700 text-xs shadow-sm" />
             </div>
@@ -41,7 +41,7 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
                                 <h3 className="text-base font-black text-white mt-1.5 leading-tight">{banner.title}</h3>
                                 <p className="text-white/80 text-[9px] mt-0.5 font-bold">{banner.sub}</p>
                             </div>
-                            <button className="z-10 self-end bg-white/20 text-white text-[7px] font-bold px-3 py-1 rounded-full border border-white/30 uppercase tracking-widest hover:bg-white/40 transition-colors">Claim now</button>
+                            <button className="z-10 self-end bg-white/20 text-white text-[7px] font-bold px-3 py-1 rounded-full border border-white/30 uppercase tracking-widest hover:bg-white/40 transition-colors cursor-pointer">Claim now</button>
                             <div className="absolute right-2 bottom-0 text-6xl opacity-20 pointer-events-none">{banner.icon}</div>
                         </div>
                     ))}
@@ -54,7 +54,7 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
                 <div className="grid grid-cols-4 gap-3 mb-8 px-1 overflow-x-auto pb-2 -mx-1 lg:mx-0 lg:overflow-visible">
                     {popularServices.slice(0, 4).map((item) => (
                         <button key={item.id} onClick={() => handleCategoryClick(item.category)}
-                            className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-gray-50 hover:border-blue-200 transition-all active:scale-95 min-w-[80px]">
+                            className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-white border border-gray-50 hover:border-blue-200 transition-all active:scale-95 min-w-[80px] cursor-pointer">
                             <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-blue-900 shadow-inner overflow-hidden">
                                 {item.category?.image ? <img src={item.category.image} alt="" className="w-full h-full object-cover" /> : <Info size={16} />}
                             </div>

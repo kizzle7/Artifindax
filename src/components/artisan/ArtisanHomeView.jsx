@@ -32,7 +32,7 @@ const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
                     </div>
                 </div>
                 <div className="hidden lg:flex items-center gap-4">
-                    <button onClick={() => setCurrentView('notifications')} className="p-2 text-gray-400 hover:text-gray-600 relative">
+                    <button onClick={() => setCurrentView('notifications')} className="p-2 text-gray-400 hover:text-gray-600 relative cursor-pointer">
                         <Bell size={24} />
                         <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
                     </button>
@@ -43,7 +43,7 @@ const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
             <div className="flex items-center justify-between py-2">
                 <span className="text-sm font-medium text-gray-600 font-bold uppercase tracking-wider text-[11px]">Availability</span>
                 <button
-                    className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 flex items-center ${isAvailable ? 'bg-[#1E4E82]' : 'bg-gray-300'}`}
+                    className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 flex items-center cursor-pointer ${isAvailable ? 'bg-[#1E4E82]' : 'bg-gray-300'}`}
                 >
                     <motion.div
                         animate={{ x: isAvailable ? 24 : 0 }}
@@ -56,13 +56,13 @@ const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
             <div className="bg-black text-white p-6 rounded-[24px] relative overflow-hidden">
                 <div className="flex justify-between items-start mb-4">
                     <span className="text-xs opacity-70">Available Balance</span>
-                    <button className="p-1 rounded-full border border-white/20">
+                    <button className="p-1 rounded-full border border-white/20 cursor-pointer">
                         <ArrowUpRight size={16} />
                     </button>
                 </div>
                 <div className="flex justify-between items-end">
                     <h2 className="text-3xl font-bold">₦125,000.00</h2>
-                    <button className="bg-white text-black px-6 py-2 rounded-xl text-sm font-bold">
+                    <button className="bg-white text-black px-6 py-2 rounded-xl text-sm font-bold cursor-pointer">
                         Withdraw
                     </button>
                 </div>

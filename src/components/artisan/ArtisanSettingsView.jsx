@@ -83,8 +83,8 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                         <p className="text-gray-400 text-xs font-bold">{userProfile.email}</p>
                     </div>
                 </div>
-                <button onClick={() => setSettingsStep('profile')} className="hidden lg:block border-2 border-gray-200 text-gray-500 px-6 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors active:scale-95">Edit</button>
-                <button onClick={() => setSettingsStep('profile')} className="lg:hidden p-2 bg-slate-50 text-gray-400 rounded-full active:scale-95 transition-transform"><ChevronRight size={20} /></button>
+                <button onClick={() => setSettingsStep('profile')} className="hidden lg:block border-2 border-gray-200 text-gray-500 px-6 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition-colors active:scale-95 cursor-pointer">Edit</button>
+                <button onClick={() => setSettingsStep('profile')} className="lg:hidden p-2 bg-slate-50 text-gray-400 rounded-full active:scale-95 transition-transform cursor-pointer"><ChevronRight size={20} /></button>
             </div>
             <div className="bg-white border border-gray-100 rounded-[28px] shadow-sm p-2 lg:p-4 divide-y divide-gray-100">
                 {[
@@ -96,7 +96,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                         <p className="text-[11px] font-black text-gray-400 uppercase tracking-[0.18em] pt-6 pb-3 ml-2 lg:ml-0">{group.section}</p>
                         {group.items.map((item) => (
                             <button key={item.id} onClick={() => setSettingsStep(item.id)}
-                                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-slate-50 transition-colors px-3 lg:px-4 rounded-xl active:scale-[0.99]">
+                                className="w-full flex items-center justify-between py-4 border-b border-gray-100 last:border-b-0 hover:bg-slate-50 transition-colors px-3 lg:px-4 rounded-xl active:scale-[0.99] cursor-pointer">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-[#1E4E82]/5 flex items-center justify-center text-[#1E4E82]"><item.icon size={18} /></div>
                                     <span className="font-bold text-[#0f172a] text-sm">{item.label}</span>
@@ -107,7 +107,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     </div>
                 ))}
                 <div className="pt-8 pb-4">
-                    <button onClick={() => setShowLogoutModal(true)} className="w-full flex items-center justify-between py-4 hover:bg-red-50 transition-colors px-3 lg:px-4 rounded-xl active:scale-[0.99] text-red-500">
+                    <button onClick={() => setShowLogoutModal(true)} className="w-full flex items-center justify-between py-4 hover:bg-red-50 transition-colors px-3 lg:px-4 rounded-xl active:scale-[0.99] text-red-500 cursor-pointer">
                         <div className="flex items-center gap-4">
                             <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center"><LogOut size={18} /></div>
                             <span className="font-bold text-sm">Logout</span>
@@ -163,12 +163,12 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                         {updateMessage}
                     </div>
                 )}
-                <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50">
+                <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 cursor-pointer">
                     {isUpdating ? 'Saving...' : 'Save Changes'}
                 </button>
             </div>
             <div className="w-full max-w-md px-5 lg:px-0 mt-6">
-                <button onClick={() => setShowLogoutModal(true)} className="w-full py-5 bg-[#DC2626] text-white font-black rounded-[24px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95">
+                <button onClick={() => setShowLogoutModal(true)} className="w-full py-5 bg-[#DC2626] text-white font-black rounded-[24px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 cursor-pointer">
                     <LogOut size={20} strokeWidth={2.5} /> Logout
                 </button>
             </div>
@@ -185,7 +185,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             </div>
             <h2 className="text-2xl font-black text-[#0f172a] mb-2">{title}</h2>
             <p className="text-gray-500 font-bold mb-12 px-4 text-sm leading-relaxed">{message}</p>
-            <button onClick={() => setSettingsStep('main')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl transition-transform active:scale-95">Continue</button>
+            <button onClick={() => setSettingsStep('main')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl transition-transform active:scale-95 cursor-pointer">Continue</button>
         </div>
     );
 
@@ -197,7 +197,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                 <p className="text-gray-500 font-bold text-sm mb-12">We've sent a 4-digit verification code to your phone number. Please enter it below to continue.</p>
                 <div className="flex justify-center gap-4 mb-8">{[1, 2, 3, 4].map(i => <div key={i} className="w-14 h-14 lg:w-16 lg:h-16 rounded-[20px] bg-white border-2 border-slate-100" />)}</div>
                 <div className="text-center mb-12"><p className="text-xs font-bold text-gray-400">Didn't get code? <span className="text-[#1E4E82] ml-1">Resend 2:59</span></p></div>
-                <button onClick={() => setSettingsStep('password_reset')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Verify</button>
+                <button onClick={() => setSettingsStep('password_reset')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Verify</button>
             </div>
         );
         if (settingsStep === 'password_reset') return (
@@ -208,7 +208,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">New Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Confirm New Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
                 </div>
-                <button onClick={() => setSettingsStep('password_success')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl mt-8 mb-6">Reset</button>
+                <button onClick={() => setSettingsStep('password_success')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl mt-8 mb-6 cursor-pointer">Reset</button>
             </div>
         );
         return (
@@ -218,7 +218,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Email / Phone</label><input type="email" defaultValue={userProfile.email} className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold" /></div>
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Old Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
                 </div>
-                <button onClick={() => setSettingsStep('password_otp')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] mb-6 mt-8">Generate OTP</button>
+                <button onClick={() => setSettingsStep('password_otp')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] mb-6 mt-8 cursor-pointer">Generate OTP</button>
             </div>
         );
     };
@@ -230,7 +230,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                 <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Set a new 6-Digit PIN</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter new pin below</p>
                 <div className="flex justify-center gap-2 lg:gap-3 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-12 h-14 lg:w-14 lg:h-16 rounded-2xl bg-white border-2 border-slate-100" />)}</div>
-                <button onClick={() => setSettingsStep('pin_success')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Continue</button>
+                <button onClick={() => setSettingsStep('pin_success')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Continue</button>
             </div>
         );
         return (
@@ -240,7 +240,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     <p className="text-gray-500 font-bold text-sm mb-12">Enter current pin below</p>
                     <div className="flex justify-center gap-2 lg:gap-3 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-12 h-14 lg:w-14 lg:h-16 rounded-2xl bg-white border-2 border-slate-100" />)}</div>
                 </div>
-                <button onClick={() => setSettingsStep('pin_new')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px]">Continue</button>
+                <button onClick={() => setSettingsStep('pin_new')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Continue</button>
             </div>
         );
     };

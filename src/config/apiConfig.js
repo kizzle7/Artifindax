@@ -40,8 +40,13 @@ export const API_CONFIG = {
         },
         ABUSE_REPORT: {
             REPORT: '/api/v1/abuse-reports/report',
+        },
+        CHAT: {
+            GET_CHATS: (bookingId) => `/api/v1/chats/${bookingId}`,
+            SEND_MESSAGE: '/api/v1/chats/send',
         }
-    }
+    },
+    WEBSOCKET_URL: 'https://artifinda-test-578be529c604.herokuapp.com/ws'
 };
 
 export default API_CONFIG;
