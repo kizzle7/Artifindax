@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, ChevronDown, User, MapPin, Lock, ShieldCheck, HelpCircle, Phone, Info, LogOut, EyeOff, Camera, Plus, Mail, MessageCircle, Twitter, Facebook, Instagram, Home, Image } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, User, MapPin, Lock, ShieldCheck, HelpCircle, Phone, Info, LogOut, EyeOff, Camera, Plus, Mail, MessageCircle, Twitter, Facebook, Instagram, Home, Image, CreditCard } from 'lucide-react';
+import ArtisanSubscriptionsFlow from './ArtisanSubscriptionsFlow';
 import { FAQ_DATA, USER_PROFILE } from '../../constants/artisanData';
 import LogoutModal from './LogoutModal';
 import logo from '../../assets/Artifinda logo 3.png';
@@ -88,7 +89,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             </div>
             <div className="bg-white border border-gray-100 rounded-[28px] shadow-sm p-2 lg:p-4 divide-y divide-gray-100">
                 {[
-                    { section: 'Account', items: [{ id: 'profile', label: 'Personal Information', icon: User }, { id: 'addresses', label: 'Add/Manage Addresses', icon: MapPin }] },
+                    { section: 'Account', items: [{ id: 'profile', label: 'Personal Information', icon: User }, { id: 'addresses', label: 'Add/Manage Addresses', icon: MapPin }, { id: 'subscriptions', label: 'My Subscriptions', icon: CreditCard }] },
                     { section: 'Security', items: [{ id: 'password', label: 'Change Password', icon: Lock }, { id: 'pin', label: 'Change Login PIN', icon: ShieldCheck }] },
                     { section: 'Support', items: [{ id: 'faq', label: 'FAQs', icon: HelpCircle }, { id: 'contact', label: 'Contact Us', icon: Phone }, { id: 'about', label: 'About Artifinda', icon: Info }] }
                 ].map(group => (
@@ -381,7 +382,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
 
     return (
         <div className="max-w-6xl mx-auto w-full px-5 lg:px-4 flex flex-col pt-2 lg:pt-6 bg-[#F8FAFC] min-h-screen overflow-y-auto no-scrollbar">
-            {settingsStep !== 'main' && (
+            {settingsStep !== 'main' && settingsStep !== 'subscriptions' && (
                 <div className="hidden lg:flex items-center gap-3 mb-4">
                     <button onClick={() => {
                         if (settingsStep === 'addresses' && settingsSubStep === 'add') setSettingsSubStep('list');
@@ -406,6 +407,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             {settingsStep === 'faq' && renderFaq()}
             {settingsStep === 'contact' && renderContact()}
             {settingsStep === 'about' && renderAbout()}
+            {settingsStep === 'subscriptions' && <ArtisanSubscriptionsFlow userProfile={userProfile} onBack={() => setSettingsStep('main')} />}
             {settingsStep === 'success' && renderSuccess("You're all set!", "Your changes have been saved successfully.")}
         </div>
     );

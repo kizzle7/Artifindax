@@ -18,7 +18,7 @@ const SessionManager = ({ children }) => {
         console.log('[SessionManager] Session expired due to inactivity');
         authService.clearToken();
         toast.error('Session expired due to inactivity. Please login again.');
-        navigate('/login', { state: { from: location } });
+        window.location.replace('/login');
     }, [navigate, location]);
 
     const resetTimer = useCallback(() => {
