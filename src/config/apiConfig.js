@@ -50,6 +50,9 @@ export const API_CONFIG = {
             VERIFY_SUBSCRIPTION: '/api/v1/payments/subscription/verify',
             CURRENT_SUBSCRIPTION: (categoryId) => `/api/v1/payments/current/subscription/${categoryId}`,
             ALL_PAYMENTS: '/api/v1/payments/all-payments',
+            INIT_BOOST: '/api/v1/payments/boost/init',
+            VERIFY_BOOST: '/api/v1/payments/boost/verify',
+            CURRENT_BOOST: (categoryId) => `/api/v1/payments/current/boost/${categoryId}`,
         },
         CONFIGURATIONS: {
             GET: '/api/v1/configurations',

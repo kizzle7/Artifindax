@@ -46,6 +46,34 @@ const paymentService = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
+    },
+
+    initiateBoost: async (payload) => {
+        try {
+            const response = await api.post(API_CONFIG.ENDPOINTS.PAYMENTS.INIT_BOOST, payload);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    verifyBoost: async (reference) => {
+        try {
+            const response = await api.post(API_CONFIG.ENDPOINTS.PAYMENTS.VERIFY_BOOST, { reference });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
+    },
+
+    getCurrentBoost: async (categoryId) => {
+        try {
+            const response = await api.get(API_CONFIG.ENDPOINTS.PAYMENTS.CURRENT_BOOST(categoryId));
+            return response.data;
+        } catch (error) {
+            // Silently fail if no boost active
+            return null;
+        }
     }
 };
 
