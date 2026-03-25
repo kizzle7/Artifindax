@@ -7,6 +7,7 @@ import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
 import UserDashboard from './pages/UserDashboard';
 import ArtisanDashboard from './pages/ArtisanDashboard';
+import PaymentVerifyPage from './pages/PaymentVerifyPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import SessionManager from './components/auth/SessionManager';
 
@@ -58,6 +59,9 @@ function App() {
             } 
           />
           
+          {/* Payment verification callback route (Paystack redirect) */}
+          <Route path="/verify-payment" element={<PaymentVerifyPage />} />
+
           {/* Redirect any unknown routes to landing page */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

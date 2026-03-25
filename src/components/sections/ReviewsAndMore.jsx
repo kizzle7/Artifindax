@@ -1,18 +1,18 @@
 import React from 'react';
 
 const Partners = () => {
-    return (
-        <section className="py-20 bg-white">
-            <div className="max-w-6xl mx-auto px-6 text-center">
-                <h3 className="text-xl font-bold text-[#0f172a] mb-12">Our valued business partners</h3>
-                <div className="flex flex-wrap justify-center gap-8 md:gap-16 transition-all duration-500">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="w-24 h-24 bg-[#64748B] rounded-md" /> /* Placeholder logos */
-                    ))}
-                </div>
-            </div>
-        </section>
-    );
+    // return (
+    //     <section className="py-20 bg-white">
+    //         <div className="max-w-6xl mx-auto px-6 text-center">
+    //             <h3 className="text-xl font-bold text-[#0f172a] mb-12">Our valued business partners</h3>
+    //             <div className="flex flex-wrap justify-center gap-8 md:gap-16 transition-all duration-500">
+    //                 {[1, 2, 3, 4, 5, 6].map((i) => (
+    //                     <div key={i} className="w-24 h-24 bg-[#64748B] rounded-md" /> /* Placeholder logos */
+    //                 ))}
+    //             </div>
+    //         </div>
+    //     </section>
+    // );
 };
 
 import { useRef, useState, useEffect } from 'react';
@@ -94,8 +94,8 @@ const Reviews = () => {
 
     return (
         <section id="reviews" className="bg-white relative">
-            <div className="max-w-6xl mx-auto px-6 mb-12">
-                <h2 className="text-[28px] font-semibold text-[#0B0C0F] text-center">Reviews</h2>
+            <div className="max-w-6xl mx-auto px-6 mb-8">
+                <h2 className="text-[28px] font-semibold text-[#0B0C0F] text-center mt-6">Reviews</h2>
             </div>
 
             <div className="relative overflow-hidden mb-12">

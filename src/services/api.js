@@ -41,8 +41,23 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        // Log errors or handle specific status codes (e.g., 401)
-        console.error('API Error:', error.response?.data || error.message);
+        const { response } = error;
+        
+        // Handle 401 (Unauthorized) or 403 (Forbidden)
+        if (response && (response.status === 401 || response.status === 403)) {
+            console.warn('[API] Unauthorized/Forbidden error, clearing session...', response.status);
+            
+            // Clear local storage and redirect to login
+            localStorage.removeItem('artifinda_token');
+            localStorage.removeItem('artifinda_role');
+            
+            // Only redirect if not already on the login page to avoid loops
+            if (!window.location.pathname.includes('/login')) {
+                window.location.replace('/login');
+            }
+        }
+
+        console.error('API Error:', response?.data || error.message);
         return Promise.reject(error);
     }
 );

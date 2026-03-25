@@ -15,10 +15,17 @@ const SessionManager = ({ children }) => {
         const token = authService.getToken();
         if (!token) return;
 
-        console.log('[SessionManager] Session expired due to inactivity');
+        console.warn('[SessionManager] Session expired due to inactivity');
         authService.clearToken();
+        
+        // Use a slight delay to ensure toast is seen or state is cleared
         toast.error('Session expired due to inactivity. Please login again.');
-        window.location.replace('/login');
+        
+        // Prevent infinite loops if already on login
+        if (window.location.pathname !== '/login') {
+            console.log('[SessionManager] Redirecting to login...');
+            window.location.href = window.location.origin + '/login';
+        }
     }, [navigate, location]);
 
     const resetTimer = useCallback(() => {

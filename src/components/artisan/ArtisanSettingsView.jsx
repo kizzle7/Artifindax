@@ -8,7 +8,7 @@ import logo from '../../assets/Artifinda logo 3.png';
 import userService from '../../services/userService';
 import fileService from '../../services/fileService';
 
-const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, toggleFaq, handleLogout }) => {
+const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, subscriptionsStep, setSubscriptionsStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, toggleFaq, handleLogout }) => {
 
     const [profilePic, setProfilePic] = React.useState(userProfile.profilePicture || null);
     const handleProfilePicChange = async (e) => {
@@ -407,7 +407,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             {settingsStep === 'faq' && renderFaq()}
             {settingsStep === 'contact' && renderContact()}
             {settingsStep === 'about' && renderAbout()}
-            {settingsStep === 'subscriptions' && <ArtisanSubscriptionsFlow userProfile={userProfile} onBack={() => setSettingsStep('main')} />}
+            {settingsStep === 'subscriptions' && <ArtisanSubscriptionsFlow userProfile={userProfile} onBack={() => setSettingsStep('main')} step={subscriptionsStep} setStep={setSubscriptionsStep} />}
             {settingsStep === 'success' && renderSuccess("You're all set!", "Your changes have been saved successfully.")}
         </div>
     );

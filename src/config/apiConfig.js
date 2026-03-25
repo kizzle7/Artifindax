@@ -44,6 +44,15 @@ export const API_CONFIG = {
         CHAT: {
             GET_CHATS: (bookingId) => `/api/v1/chats/${bookingId}`,
             SEND_MESSAGE: '/api/v1/chats/send',
+        },
+        PAYMENTS: {
+            INIT_SUBSCRIPTION: '/api/v1/payments/subscription/init',
+            VERIFY_SUBSCRIPTION: '/api/v1/payments/subscription/verify',
+            CURRENT_SUBSCRIPTION: (categoryId) => `/api/v1/payments/current/subscription/${categoryId}`,
+            ALL_PAYMENTS: '/api/v1/payments/all-payments',
+        },
+        CONFIGURATIONS: {
+            GET: '/api/v1/configurations',
         }
     },
     WEBSOCKET_URL: 'https://artifinda-test-578be529c604.herokuapp.com/ws'
