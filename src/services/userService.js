@@ -41,6 +41,20 @@ const userService = {
         } catch (error) {
             throw error.response?.data || error.message;
         }
+    },
+
+    /**
+     * Add a new address to the artisan's profile.
+     * @param {Object} payload The address data.
+     * @returns {Promise<Object>} The response data.
+     */
+    addArtisanAddress: async (payload) => {
+        try {
+            const response = await api.post(API_CONFIG.ENDPOINTS.USER.ADD_ARTISAN_ADDRESS, payload);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || error.message;
+        }
     }
 };
 

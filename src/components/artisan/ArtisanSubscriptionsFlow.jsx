@@ -4,6 +4,7 @@ import { ChevronRight, ChevronLeft, CreditCard, Zap, Check, X, Shield, Wallet, L
 import { useSearchParams } from 'react-router-dom';
 import paymentService from '../../services/paymentService';
 import toast from 'react-hot-toast';
+import SubscriptionSkeleton from '../ui/SubscriptionSkeleton';
 
 const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setStep }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -20,10 +21,12 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
     const [ussdPayment, setUssdPayment] = useState(null); // { code, reference }
     const [selectedBoost, setSelectedBoost] = useState(null); // { id, name, price, durationCode }
     const [successType, setSuccessType] = useState('subscription'); // subscription, boost
+    const [isFetchingData, setIsFetchingData] = useState(true);
 
     // Initial data fetch
     // Initial data fetch
     const fetchData = React.useCallback(async () => {
+        setIsFetchingData(true);
         setLoading(true);
         try {
             // Step 1: Fetch current subscription to know active tier
@@ -48,14 +51,14 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
                 try {
                     const boostData = await paymentService.getCurrentBoost(userProfile.artisanCategoryId);
                     console.log('[Subscription] Current Boost Response:', boostData);
-                    
+
                     // Resiliently extract boost status/expiry from various possible shapes
                     const rawBoost = boostData?.data || (Array.isArray(boostData?.records) ? boostData.records[0] : boostData);
                     const expiry = rawBoost?.expiryDate || rawBoost?.expiry;
-                    
+
                     const isValidDate = expiry && !isNaN(new Date(expiry).getTime());
                     const isActive = rawBoost?.status === 'ACTIVE' || rawBoost?.status === 'SUCCESS' || isValidDate;
-                    
+
                     setCurrentBoost(isActive && isValidDate ? rawBoost : null);
                 } catch (boostErr) {
                     console.warn('Could not fetch current boost:', boostErr);
@@ -145,20 +148,20 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
 
                 // Step 5: Fallback for currentBoost from history
                 if (!currentBoost) {
-                    const latestBoost = mappedHistory.find(h => 
+                    const latestBoost = mappedHistory.find(h =>
                         (h.type?.toUpperCase().includes('BOOST') || h.txType?.toUpperCase().includes('BOOST')) &&
                         (h.status === 'SUCCESS' || h.status === 'COMPLETED' || h.status === 'ACTIVE')
                     );
                     if (latestBoost) {
                         console.log('[Subscription] Found successful boost in history:', latestBoost);
-                        
+
                         // Try to find the duration from raw data
                         const raw = latestBoost.raw || {};
                         const durationCode = raw.duration || raw.durationCode || (latestBoost.amount?.includes('1200') ? 'H72' : latestBoost.amount?.includes('3000') ? 'H168' : 'H24');
                         const hoursToAdd = durationCode === 'H72' ? 72 : durationCode === 'H168' ? 168 : 24;
-                        
+
                         const calculatedExpiry = new Date(new Date(latestBoost.raw?.createdOn || latestBoost.raw?.createdAt || latestBoost.date).getTime() + hoursToAdd * 60 * 60 * 1000).toISOString();
-                        
+
                         setCurrentBoost({
                             ...latestBoost,
                             expiryDate: latestBoost.expiryDate || latestBoost.expiry || calculatedExpiry,
@@ -174,6 +177,7 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
             console.error('Failed to fetch subscription data:', err);
         } finally {
             setLoading(false);
+            setIsFetchingData(false);
         }
     }, [userProfile?.artisanCategoryId]);
 
@@ -185,10 +189,10 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
         setLoading(true);
         const loadingToast = toast.loading('Verifying transaction...');
         try {
-            const response = type.toLowerCase().includes('boost') 
+            const response = type.toLowerCase().includes('boost')
                 ? await paymentService.verifyBoost(ref)
                 : await paymentService.verifySubscription(ref);
-                
+
             console.log(`[Subscription] Manual Verify result (${type}):`, response);
             toast.success(`${type.toLowerCase().includes('boost') ? 'Boost' : 'Subscription'} activated successfully!`, { id: loadingToast });
             setSuccessType(type.includes('boost') ? 'boost' : 'subscription');
@@ -271,7 +275,7 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
                     callback_url: callbackUrl
                 }
             };
-            
+
             // Store payment type for verification fallback
             sessionStorage.setItem('pendingPaymentType', 'subscription');
 
@@ -433,7 +437,7 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
                     </div>
                 </div>
                 {(!currentBoost || (!currentBoost.expiryDate && !currentBoost.expiry)) && (
-                    <button 
+                    <button
                         onClick={() => setStep('boost')}
                         className="relative z-10 bg-white text-[#1E4E82] font-black px-6 py-2.5 rounded-xl text-sm shadow-lg active:scale-95 transition-transform"
                     >
@@ -475,8 +479,8 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
                                     </button>
                                 ) : (
                                     <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${item.status === 'SUCCESS' || item.status === 'COMPLETED' || item.status === 'ACTIVE'
-                                            ? 'bg-green-50 text-green-600'
-                                            : 'bg-gray-50 text-gray-400'
+                                        ? 'bg-green-50 text-green-600'
+                                        : 'bg-gray-50 text-gray-400'
                                         }`}>
                                         {item.status}
                                     </span>
@@ -568,8 +572,8 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
                                     onClick={() => handlePlanSelect(plan)}
                                     disabled={loading}
                                     className={`w-full py-4 rounded-2xl font-black text-sm transition-all active:scale-95 shadow-lg flex items-center justify-center gap-2 ${plan.isCurrent
-                                            ? 'bg-slate-100 text-[#334155] cursor-default'
-                                            : 'bg-[#0f172a] text-white hover:shadow-2xl'
+                                        ? 'bg-slate-100 text-[#334155] cursor-default'
+                                        : 'bg-[#0f172a] text-white hover:shadow-2xl'
                                         }`}
                                 >
                                     {loading && selectedPlan?.id === plan.id ? 'Loading...' : plan.buttonText}
@@ -673,7 +677,7 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
         >
             <div className="w-full max-w-sm mb-12">
                 <img
-                    src={successType === 'boost' 
+                    src={successType === 'boost'
                         ? "https://img.freepik.com/premium-vector/vector-design-rocket-with-modern-illustration-style-vector-design_1002636-66.jpg"
                         : "https://img.freepik.com/premium-vector/online-payment-concept-character-successfully-paying-bill-using-mobile-banking_293060-1092.jpg"
                     }
@@ -739,19 +743,18 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
                     { id: '3days', name: '3 days', price: '₦1200', durationCode: 'H72' },
                     { id: '7days', name: '7 days', price: '₦3000', durationCode: 'H168' },
                 ].map((boost) => (
-                    <label 
+                    <label
                         key={boost.id}
-                        className={`flex items-center justify-between p-6 bg-white border rounded-[24px] cursor-pointer transition-all active:scale-[0.99] ${
-                            selectedBoost?.id === boost.id ? 'border-[#1E4E82] shadow-md' : 'border-gray-100'
-                        }`}
+                        className={`flex items-center justify-between p-6 bg-white border rounded-[24px] cursor-pointer transition-all active:scale-[0.99] ${selectedBoost?.id === boost.id ? 'border-[#1E4E82] shadow-md' : 'border-gray-100'
+                            }`}
                     >
                         <div className="flex items-center gap-4">
-                            <input 
-                                type="radio" 
-                                name="boostDuration" 
+                            <input
+                                type="radio"
+                                name="boostDuration"
                                 checked={selectedBoost?.id === boost.id}
                                 onChange={() => setSelectedBoost(boost)}
-                                className="w-5 h-5 accent-[#1E4E82]" 
+                                className="w-5 h-5 accent-[#1E4E82]"
                             />
                             <span className="font-bold text-[#0f172a]">{boost.name} - <span className="font-black">{boost.price}</span></span>
                         </div>
@@ -837,14 +840,20 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
 
     return (
         <div className="min-h-screen relative">
-            <AnimatePresence mode="wait">
-                {step === 'overview' && renderOverview()}
-                {step === 'plans' && renderPlans()}
-                {step === 'boost' && renderBoostSelection()}
-                {step === 'payment' && renderPayment()}
-                {step === 'success' && renderSuccess()}
-                {step === 'receipt' && renderReceipt()}
-            </AnimatePresence>
+            {isFetchingData ? (
+                <div className="max-w-4xl mx-auto">
+                    <SubscriptionSkeleton type={step === 'plans' ? 'plans' : 'overview'} />
+                </div>
+            ) : (
+                <AnimatePresence mode="wait">
+                    {step === 'overview' && renderOverview()}
+                    {step === 'plans' && renderPlans()}
+                    {step === 'boost' && renderBoostSelection()}
+                    {step === 'payment' && renderPayment()}
+                    {step === 'success' && renderSuccess()}
+                    {step === 'receipt' && renderReceipt()}
+                </AnimatePresence>
+            )}
 
             {/* USSD Payment Modal */}
             <AnimatePresence>

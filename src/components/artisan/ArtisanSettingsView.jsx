@@ -1,14 +1,53 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, ChevronLeft, ChevronDown, User, MapPin, Lock, ShieldCheck, HelpCircle, Phone, Info, LogOut, EyeOff, Camera, Plus, Mail, MessageCircle, Twitter, Facebook, Instagram, Home, Image, CreditCard } from 'lucide-react';
+import { ChevronRight, ChevronLeft, ChevronDown, User, MapPin, Lock, ShieldCheck, HelpCircle, Phone, Info, LogOut, EyeOff, Camera, Plus, Mail, MessageCircle, Twitter, Facebook, Instagram, Home, Image, CreditCard, CheckCircle2, FileText } from 'lucide-react';
 import ArtisanSubscriptionsFlow from './ArtisanSubscriptionsFlow';
 import { FAQ_DATA, USER_PROFILE } from '../../constants/artisanData';
+import { useForm } from 'react-hook-form';
+import Location from '../form/Location';
 import LogoutModal from './LogoutModal';
 import logo from '../../assets/Artifinda logo 3.png';
 import userService from '../../services/userService';
 import fileService from '../../services/fileService';
 
 const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, subscriptionsStep, setSubscriptionsStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, toggleFaq, handleLogout }) => {
+
+    const { control, watch, setValue, register, formState: { errors } } = useForm({
+        defaultValues: {
+            addressContact: null
+        }
+    });
+
+    const [locationInfo, setLocationInfo] = React.useState(null);
+    const [verificationFile, setVerificationFile] = React.useState(null);
+    const [previewUrl, setPreviewUrl] = React.useState(null);
+    const [isUploadingFile, setIsUploadingFile] = React.useState(false);
+
+    const handleFileUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Immediate local preview
+        const localUrl = URL.createObjectURL(file);
+        setPreviewUrl(localUrl);
+
+        setIsUploadingFile(true);
+        try {
+            const response = await fileService.upload(file);
+            console.log('[Settings] File Upload Response:', response);
+            // Handle various possible response shapes (object with url, array, etc.)
+            const imageUrl = response.data?.url || response.url || response.secure_url || (Array.isArray(response.data) ? response.data[0]?.url : null) || (Array.isArray(response) ? response[0]?.url : null);
+            
+            if (imageUrl) {
+                setVerificationFile(imageUrl);
+                setUpdateMessage('Verification document uploaded!');
+            }
+        } catch (err) {
+            setUpdateMessage('Failed to upload document.');
+        } finally {
+            setIsUploadingFile(false);
+        }
+    };
 
     const [profilePic, setProfilePic] = React.useState(userProfile.profilePicture || null);
     const handleProfilePicChange = async (e) => {
@@ -246,46 +285,178 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         );
     };
 
+    const [tempAddress, setTempAddress] = useState('');
+    const [selectedAddressForRemoval, setSelectedAddressForRemoval] = useState(null);
+
+    const handleAddAddressRequest = async () => {
+        const addressLabel = watch('addressContact')?.label || tempAddress;
+        console.log('[Settings] Attempting to add address:', { addressLabel, locationInfo, verificationFile });
+        
+        if (!addressLabel) {
+            setUpdateMessage('Please enter an address');
+            return;
+        }
+        if (!verificationFile) {
+            setUpdateMessage('Verification document is required');
+            return;
+        }
+
+        setIsUpdating(true);
+        setUpdateMessage(null); // Clear previous errors
+        try {
+            const payload = {
+                address: addressLabel,
+                latitude: locationInfo?.latitude || 0,
+                longitude: locationInfo?.longitude || 0,
+                addressVerificationFile: verificationFile
+            };
+            console.log('[Settings] Sending address request payload:', payload);
+            await userService.addArtisanAddress(payload);
+            setSettingsSubStep('success');
+        } catch (err) {
+            console.error('[Settings] Address Request Failed:', err);
+            setUpdateMessage(err?.message || 'Failed to send request');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
     const renderAddresses = () => {
-        if (settingsSubStep === 'add') return (
-            <div className="pt-24 lg:pt-4 pb-10 max-w-2xl text-left px-5 lg:px-0">
-                <div className="mb-8 mt-4 lg:mt-0">
-                    <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Help us locate you better</h2>
-                    <p className="text-gray-500 font-bold text-sm">Please provide your address and a document for verification.</p>
+        if (settingsSubStep === 'success') return (
+            <div className="pt-24 lg:pt-6 pb-10 flex flex-col items-center justify-center text-center max-w-md mx-auto px-5 lg:px-0">
+                <div className="w-full aspect-square bg-white rounded-[40px] mb-10 flex items-center justify-center relative overflow-hidden">
+                    <img 
+                        src="https://img.freepik.com/premium-vector/successful-management-concept-business-meeting-discussion-flat-illustration_1013341-118.jpg" 
+                        alt="Success" 
+                        className="w-full h-80 object-contain" 
+                    />
                 </div>
-                <div className="space-y-6 flex-1">
-                    <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Location</label><div className="relative"><input type="text" placeholder="Garki Area 1, Abuja" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><MapPin size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
-                    <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Current coordinates</label><div className="w-full p-4.5 rounded-[20px] bg-slate-50 border border-gray-100 font-bold text-gray-400 text-sm flex items-center gap-3"><MapPin size={18} /> 4.5678° N, 12.3456° E</div></div>
-                    <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Upload a Document (Verification)</label><div className="w-full border-2 border-dashed border-gray-300 rounded-[24px] p-8 flex flex-col items-center justify-center text-center bg-white cursor-pointer hover:bg-slate-50 transition-colors"><div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-gray-400 mb-4"><Image size={32} /></div><p className="text-sm font-bold text-gray-400 max-w-[200px]">Add documents like utility bills, rent receipts etc.</p></div></div>
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2">Your Request Has Been Sent!</h2>
+                <p className="text-gray-500 font-bold mb-12 text-sm leading-relaxed px-4">
+                    {selectedAddressForRemoval 
+                        ? `You have requested to remove "${selectedAddressForRemoval.address}". We'll review and send you an update soon.` 
+                        : "We've sent your request to add your address. We'll review your details and send you an update soon."
+                    }
+                </p>
+                <div className="w-full space-y-4">
+                    <button onClick={() => setSettingsStep('main')} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl transition-transform active:scale-95 cursor-pointer">Back to Home</button>
+                    <button onClick={() => { setSettingsStep('main'); setSelectedAddressForRemoval(null); }} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] transition-transform active:scale-95 cursor-pointer">Cancel</button>
                 </div>
-                <button onClick={() => { setSettingsStep('addresses'); setSettingsSubStep('list'); }} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl mt-8 transition-transform active:scale-95">Submit</button>
             </div>
         );
+
+        if (settingsSubStep === 'add' || settingsSubStep === 'remove') return (
+            <div className="pt-24 lg:pt-4 pb-10 max-w-2xl text-left px-5 lg:px-0">
+                <div className="mb-10 mt-4 lg:mt-0">
+                    <div className="flex items-center gap-3 mb-6 lg:hidden">
+                        <button onClick={() => setSettingsSubStep('list')} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                        <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">My Addresses</h1>
+                    </div>
+                    <label className="text-xs font-bold text-gray-500 mb-4 block ml-1 uppercase tracking-wider">Address</label>
+                    <div className="relative group z-30">
+                        {settingsSubStep === 'remove' ? (
+                            <input 
+                                type="text" 
+                                readOnly 
+                                value={selectedAddressForRemoval?.address} 
+                                className="w-full p-5 rounded-[12px] border-2 border-slate-200 outline-none font-bold text-[#0f172a] bg-slate-50" 
+                            />
+                        ) : (
+                            <Location 
+                                control={control} 
+                                watch={watch} 
+                                errors={errors} 
+                                setValue={setValue}
+                                setLocationInfo={setLocationInfo}
+                            />
+                        )}
+                    </div>
+
+                    {settingsSubStep === 'add' && (
+                        <div className="mt-8">
+                            <label className="text-xs font-bold text-gray-500 mb-4 block ml-1 uppercase tracking-wider">Verification Document</label>
+                            <label className="w-full border-2 border-dashed border-gray-200 rounded-[12px] p-8 flex flex-col items-center justify-center text-center bg-white cursor-pointer hover:bg-slate-50 transition-all group">
+                                <input type="file" accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
+                                <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center text-gray-400 mb-4 group-hover:scale-110 transition-transform overflow-hidden border-2 border-white shadow-sm">
+                                    {isUploadingFile ? (
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1E4E82]" />
+                                    ) : (previewUrl || verificationFile) ? (
+                                        ((previewUrl || verificationFile).match(/\.(jpeg|jpg|gif|png|webp|svg)$/i) != null || (previewUrl && previewUrl.startsWith('blob:'))) ? (
+                                            <img src={previewUrl || verificationFile} alt="Verification" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="relative flex items-center justify-center w-full h-full">
+                                                <FileText size={32} className="text-[#1E4E82]" />
+                                                <div className="absolute top-0 right-0 p-0.5 bg-white rounded-full transition-opacity opacity-100"><CheckCircle2 className="text-[#0F9E7B]" size={14} /></div>
+                                            </div>
+                                        )
+                                    ) : (
+                                        <Image size={32} />
+                                    )}
+                                </div>
+                                <p className="text-sm font-bold text-gray-400">
+                                    {verificationFile ? "Document Uploaded" : "Upload utility bill, rent receipt etc."}
+                                </p>
+                                {updateMessage && <p className="text-[10px] text-red-500 font-bold mt-2">{updateMessage}</p>}
+                            </label>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex flex-col items-center mt-12 gap-3">
+                    {updateMessage && <p className="text-xs text-red-500 font-bold mb-2 animate-bounce">{updateMessage}</p>}
+                    <button 
+                        onClick={settingsSubStep === 'add' ? handleAddAddressRequest : () => setSettingsSubStep('success')} 
+                        disabled={isUpdating || isUploadingFile || (settingsSubStep === 'add' && !verificationFile)}
+                        className="w-full max-w-sm py-5 bg-[#1E4E82] text-white font-black rounded-[12px] shadow-xl transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
+                    >
+                        {isUpdating ? 'Sending...' : settingsSubStep === 'add' ? 'Request to add' : 'Request to remove'}
+                    </button>
+                    {isUploadingFile && <p className="text-[10px] text-[#1E4E82] font-medium italic">Uploading document, please wait...</p>}
+                </div>
+            </div>
+        );
+
         return (
             <div className="pt-24 lg:pt-4 pb-10 max-w-2xl text-left px-5 lg:px-0">
-                <div className="mb-6 mt-4 lg:mt-0 flex items-center justify-between">
-                    <h2 className="text-2xl font-black text-[#0f172a] hidden lg:block">My Addresses</h2>
-                </div>
-                <div className="space-y-4 mb-20">
-                    {userProfile.addresses.map((addr) => (
-                        <div key={addr.id} className="p-6 bg-[#EEF4FB] border border-[#D1E1F4] rounded-[24px] shadow-sm relative transition-all overflow-hidden group">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#24639C] shrink-0 shadow-sm border border-slate-50"><Home size={20} /></div>
-                                    <h4 className="font-black text-[#24639C] text-sm tracking-tight">{addr.type === 'Home' ? 'Default Address' : addr.type}</h4>
+                <div className="space-y-6">
+                    {/* Default Address Section */}
+                    {userProfile.addresses.filter(a => a.type === 'Home' || a.isDefault).map((addr) => (
+                        <div key={addr.id} className="space-y-3">
+                            <div className="bg-[#F1F5F9] border border-slate-200 rounded-[12px] p-6 relative">
+                                <span className="text-xs font-bold text-slate-400 block mb-3 uppercase tracking-wider">Default Address</span>
+                                <div className="flex justify-between items-center gap-4">
+                                    <p className="text-[#0f172a] font-black text-sm leading-relaxed">{addr.address}</p>
+                                    <button onClick={() => { setSettingsSubStep('add'); setTempAddress(addr.address); }} className="text-gray-400 font-bold text-xs hover:text-[#1E4E82] transition-colors shrink-0">Change</button>
                                 </div>
-                                {addr.status === 'verified' && (<span className="text-[10px] font-black text-[#0F9E7B] bg-[#E3F9F1] px-3 py-1.5 rounded-xl uppercase tracking-wider">Verified</span>)}
-                            </div>
-                            <div className="pl-13">
-                                <p className="text-gray-500 font-bold text-xs mt-1 mb-4 leading-relaxed max-w-xs">{addr.address}</p>
-                                <div className="flex items-center gap-2 text-[#0F9E7B] font-black text-[10px]"><MapPin size={14} className="fill-[#0F9E7B]/10" /><span>Location verified</span></div>
                             </div>
                         </div>
                     ))}
-                    <button onClick={() => setSettingsSubStep('add')} className="w-full h-24 mt-4 bg-white border border-gray-200 border-dashed rounded-[24px] flex items-center justify-center gap-2 group transition-all active:scale-[0.98] hover:bg-slate-50 hover:border-solid hover:border-[#1E4E82]/30">
-                        <Plus size={20} className="text-[#24639C] stroke-[2.5]" />
-                        <span className="font-bold text-[#24639C] text-sm">Add New Address</span>
-                    </button>
+
+                    {/* Other Addresses List */}
+                    <div className="space-y-3 pt-6">
+                         {userProfile.addresses.filter(a => a.type !== 'Home' && !a.isDefault).map((addr) => (
+                            <div key={addr.id} className="w-full p-5 rounded-[12px] border-2 border-slate-100 flex items-center justify-between group hover:border-slate-200 transition-all bg-white">
+                                <span className="font-bold text-[#0f172a] text-sm truncate pr-4">{addr.address}</span>
+                                <button 
+                                    onClick={() => { setSelectedAddressForRemoval(addr); setSettingsSubStep('remove'); }}
+                                    className="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 group-hover:border-red-400 group-hover:text-red-400 transition-all shrink-0 active:scale-90"
+                                >
+                                    <EyeOff size={14} className="hidden" /> {/* Using hidden to maintain size check if needed */}
+                                    <div className="w-2.5 h-[2px] bg-current rounded-full" />
+                                </button>
+                            </div>
+                         ))}
+
+                         {/* Add Button */}
+                         <button 
+                            onClick={() => { setTempAddress(''); setSettingsSubStep('add'); }}
+                            className="w-full p-5 rounded-[12px] border-2 border-slate-100 flex items-center justify-center bg-white hover:bg-slate-50 transition-all active:scale-95 group"
+                         >
+                            <div className="w-8 h-8 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 group-hover:border-[#1E4E82] group-hover:text-[#1E4E82] transition-all">
+                                <Plus size={20} strokeWidth={2.5} />
+                            </div>
+                         </button>
+                    </div>
                 </div>
             </div>
         );
