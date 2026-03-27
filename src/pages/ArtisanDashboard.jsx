@@ -27,6 +27,7 @@ import ArtisanSettingsView from '../components/artisan/ArtisanSettingsView';
 // Modal components
 import CancellationModal from '../components/artisan/CancellationModal';
 import ServiceCompletionModal from '../components/artisan/ServiceCompletionModal';
+import DashboardSkeleton from '../components/ui/DashboardSkeleton';
 
 const ArtisanDashboard = () => {
     const navigate = useNavigate();
@@ -51,6 +52,7 @@ const ArtisanDashboard = () => {
     const [bookingsData, setBookingsData] = useState([]);
     const [loadingBookings, setLoadingBookings] = useState(false);
     const [isSubmittingAction, setIsSubmittingAction] = useState(false);
+    const [isInitialProfileLoading, setIsInitialProfileLoading] = useState(true);
 
     // Messages State
     const [messagesViewStep, setMessagesViewStep] = useState('list');
@@ -130,6 +132,7 @@ const ArtisanDashboard = () => {
 
     React.useEffect(() => {
         const fetchProfile = async () => {
+            setIsInitialProfileLoading(true);
             try {
                 const data = await userService.getProfile();
                 const account = data.accounts?.find(acc => acc.accountType === 'ARTISAN') || data.accounts?.[0];
@@ -164,6 +167,8 @@ const ArtisanDashboard = () => {
                 });
             } catch (err) {
                 console.error("Failed to load artisan profile:", err);
+            } finally {
+                setIsInitialProfileLoading(false);
             }
         };
         fetchProfile();
@@ -276,7 +281,10 @@ const ArtisanDashboard = () => {
 
     const renderView = () => {
         switch (currentView) {
-            case 'dashboard': return <ArtisanHomeView setCurrentView={setCurrentView} userProfile={userProfile} />;
+            case 'dashboard': 
+                return isInitialProfileLoading 
+                    ? <DashboardSkeleton type="home" /> 
+                    : <ArtisanHomeView setCurrentView={setCurrentView} userProfile={userProfile} />;
             case 'bookings':
                 return bookingsViewStep === 'list' ? (
                     <ArtisanBookingsView

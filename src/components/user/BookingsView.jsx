@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Phone, MessageSquare, ChevronRight, MapPin, Clock, Calendar, Plus } from 'lucide-react';
+import DashboardSkeleton from '../ui/DashboardSkeleton';
 
 const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBooking, setCurrentChat, setMessagesViewStep, setCurrentView, loadingBookings }) => {
     const getStatusGroup = (status) => {
@@ -26,10 +27,7 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
             </div>
             <div className="space-y-2.5 max-w-full flex-1 pb-32">
                 {loadingBookings ? (
-                    <div className="flex flex-col items-center justify-center py-20 opacity-50">
-                        <div className="w-8 h-8 border-2 border-[#1E4E82] border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#1E4E82]">Fetching your bookings...</p>
-                    </div>
+                    <DashboardSkeleton type="user-bookings" />
                 ) : (
                     <>
                         {filteredBookings.map(booking => {

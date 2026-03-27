@@ -1,7 +1,7 @@
 import React from 'react';
 import { ChevronLeft, Filter, Info, CheckCircle2, MapPin, Star, Search } from 'lucide-react';
 import ArtisanProfileView from './ArtisanProfileView';
-import SearchSkeleton from '../ui/SearchSkeleton';
+import DashboardSkeleton from '../ui/DashboardSkeleton';
 
 const SearchView = ({
     searchQuery, setSearchQuery, isFilterModalOpen, setIsFilterModalOpen,
@@ -45,7 +45,7 @@ const SearchView = ({
                         {!selectedSkill && !selectedCategory && (
                             <div className="animate-in fade-in duration-500">
                                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">{searchQuery ? `Categories for "${searchQuery}"` : 'Browse Categories'}</h3>
-                                {loadingCategories ? <SearchSkeleton type="category" /> : (
+                                {loadingCategories ? <DashboardSkeleton type="user-category" /> : (
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                                         {filteredCategories.length > 0 ? (
                                             filteredCategories.map((category) => (
@@ -73,7 +73,7 @@ const SearchView = ({
                                     <button onClick={() => setSelectedCategory(null)} className="text-blue-900 text-xs font-black uppercase tracking-widest cursor-pointer">Back to Categories</button>
                                 </div>
                                 <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Skills for {selectedCategory.name}</h3>
-                                {loadingSkills ? <SearchSkeleton type="skill" /> : (
+                                {loadingSkills ? <DashboardSkeleton type="user-skill" /> : (
                                     <div className="flex flex-wrap gap-2 mb-8">
                                         {categorySkills.map((skill) => (
                                             <button key={skill.id} onClick={() => handleSkillClick(skill)}
@@ -91,7 +91,7 @@ const SearchView = ({
                                     <h3 className="text-[12px] font-medium text-gray-500">Artisans for <span className="text-[#1E4E82]">"{selectedSkill?.name}" ({searchResults.length || 0})</span></h3>
                                     {selectedSkill && <button onClick={() => { setSelectedSkill(null); setSearchResults([]); }} className="text-[9px] font-black text-blue-900 uppercase">Clear</button>}
                                 </div>
-                                {loadingSearch ? <SearchSkeleton type="results" /> : searchResults.length > 0 ? (
+                                {loadingSearch ? <DashboardSkeleton type="user-results" /> : searchResults.length > 0 ? (
                                     <div className="space-y-4 pb-20">
                                         {searchResults.map((artisan, index) => (
                                             <div key={artisan.id || artisan.email || `artisan-${index}`} onClick={() => setSelectedArtisan(artisan)}

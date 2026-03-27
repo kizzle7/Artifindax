@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ChevronRight, AlertCircle, Calendar, Clock, MapPin, Phone, MessageSquare, Mail, Plus } from 'lucide-react';
+import DashboardSkeleton from '../ui/DashboardSkeleton';
+
 const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, setCurrentView, activeTab, setActiveTab }) => {
     const tabs = ['New', 'Ongoing', 'Completed', 'Canceled'];
 
@@ -77,10 +79,7 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
             {/* Bookings List */}
             <div className={`space-y-4 ${filteredBookings.length === 0 && !loadingBookings ? 'flex-1 flex flex-col items-center justify-center min-h-[400px]' : ''}`}>
                 {loadingBookings ? (
-                    <div className="flex flex-col items-center justify-center py-20 opacity-50">
-                        <div className="w-8 h-8 border-2 border-[#1E4E82] border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#1E4E82]">Fetching your bookings...</p>
-                    </div>
+                    <DashboardSkeleton type="bookings" />
                 ) : filteredBookings.length > 0 ? (
                     filteredBookings.map(booking => {
                         const dateObj = booking.bookingDate ? new Date(booking.bookingDate.replace(' ', 'T')) : null;

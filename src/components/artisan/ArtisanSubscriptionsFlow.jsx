@@ -4,7 +4,7 @@ import { ChevronRight, ChevronLeft, CreditCard, Zap, Check, X, Shield, Wallet, L
 import { useSearchParams } from 'react-router-dom';
 import paymentService from '../../services/paymentService';
 import toast from 'react-hot-toast';
-import SubscriptionSkeleton from '../ui/SubscriptionSkeleton';
+import DashboardSkeleton from '../ui/DashboardSkeleton';
 
 const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setStep }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -842,7 +842,7 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
         <div className="min-h-screen relative">
             {isFetchingData ? (
                 <div className="max-w-4xl mx-auto">
-                    <SubscriptionSkeleton type={step === 'plans' ? 'plans' : 'overview'} />
+                    <DashboardSkeleton type={step === 'plans' ? 'subscription-plans' : 'subscription-overview'} />
                 </div>
             ) : (
                 <AnimatePresence mode="wait">

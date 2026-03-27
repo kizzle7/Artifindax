@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { MapPin, Bell, Search, Star, Info } from 'lucide-react';
 import { BANNERS } from '../../constants/userData';
-import SearchSkeleton from '../ui/SearchSkeleton';
+import DashboardSkeleton from '../ui/DashboardSkeleton';
 
 const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topArtisans, loadingTopRated, setIsMenuOpen, isMenuOpen, handleCategoryClick, popularServices, setSearchQuery, loadingPopular }) => {
     const repeatedBanners = [...BANNERS, ...BANNERS, ...BANNERS];
@@ -49,7 +49,7 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
             </div>
             <h3 className="text-xs font-black text-[#0f172a] mb-4 uppercase tracking-[0.1em] opacity-80">Popular Services</h3>
             {loadingPopular ? (
-                <SearchSkeleton type="category" />
+                <DashboardSkeleton type="user-category" />
             ) : (
                 <div className="grid grid-cols-4 gap-3 mb-8 px-1 overflow-x-auto pb-2 -mx-1 lg:mx-0 lg:overflow-visible">
                     {popularServices.slice(0, 4).map((item) => (
@@ -66,7 +66,7 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
             <h3 className="text-xs font-black text-[#0f172a] mb-4 uppercase tracking-[0.1em] opacity-80">Top Rated</h3>
             <div className="flex flex-col gap-2.5 pb-24">
                 {loadingTopRated ? (
-                    <SearchSkeleton type="results" />
+                    <DashboardSkeleton type="user-results" />
                 ) : (
                     <>
                         {topArtisans.length > 0 ? (

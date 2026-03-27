@@ -36,6 +36,7 @@ import SearchView from '../components/user/SearchView';
 import OrderDetailsView from '../components/user/OrderDetailsView';
 import FilterModal from '../components/user/FilterModal';
 import LogoutModal from '../components/user/LogoutModal';
+import DashboardSkeleton from '../components/ui/DashboardSkeleton';
 
 const GEOCODE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 setKey(GEOCODE_API_KEY);
@@ -49,6 +50,7 @@ const UserDashboard = () => {
     const [loadingBookings, setLoadingBookings] = useState(false);
     const [selectedBooking, setSelectedBooking] = useState(null);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isInitialProfileLoading, setIsInitialProfileLoading] = useState(true);
 
     // Notifications State
     const [notificationsViewStep, setNotificationsViewStep] = useState('list');
@@ -236,6 +238,7 @@ const UserDashboard = () => {
         };
 
         const fetchProfile = async () => {
+            setIsInitialProfileLoading(true);
             try {
                 const data = await userService.getProfile();
                 // Map API data to UI state
@@ -267,6 +270,8 @@ const UserDashboard = () => {
                 });
             } catch (err) {
                 console.error("Failed to load user profile:", err);
+            } finally {
+                setIsInitialProfileLoading(false);
             }
         };
 
@@ -510,19 +515,21 @@ const UserDashboard = () => {
                     ) : (
                         <>
                             {currentView === 'home' && (
-                                <HomeView
-                                    userProfile={userProfile}
-                                    setCurrentView={setCurrentView}
-                                    setNotificationsViewStep={setNotificationsViewStep}
-                                    topArtisans={topArtisans}
-                                    loadingTopRated={loadingTopRated}
-                                    setIsMenuOpen={setIsMenuOpen}
-                                    isMenuOpen={isMenuOpen}
-                                    handleCategoryClick={handleCategoryClick}
-                                    popularServices={popularServices}
-                                    setSearchQuery={setSearchQuery}
-                                    loadingPopular={loadingPopular}
-                                />
+                                isInitialProfileLoading ? <DashboardSkeleton type="user-home" /> : (
+                                    <HomeView
+                                        userProfile={userProfile}
+                                        setCurrentView={setCurrentView}
+                                        setNotificationsViewStep={setNotificationsViewStep}
+                                        topArtisans={topArtisans}
+                                        loadingTopRated={loadingTopRated}
+                                        setIsMenuOpen={setIsMenuOpen}
+                                        isMenuOpen={isMenuOpen}
+                                        handleCategoryClick={handleCategoryClick}
+                                        popularServices={popularServices}
+                                        setSearchQuery={setSearchQuery}
+                                        loadingPopular={loadingPopular}
+                                    />
+                                )
                             )}
                             {currentView === 'bookings' && (
                                 <BookingsView
