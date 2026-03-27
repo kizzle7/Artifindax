@@ -18,7 +18,7 @@ const Location = ({
     setValue,
     registerVal,
 }) => {
-    const value = watch("addressContact");
+    const value = typeof watch === 'function' ? watch("addressContact") : null;
 
     // Set API Key from environment or hardcoded as provided by user
     const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;

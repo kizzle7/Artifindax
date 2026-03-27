@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Loader2 } from 'lucide-react';
@@ -37,6 +37,7 @@ import OrderDetailsView from '../components/user/OrderDetailsView';
 import FilterModal from '../components/user/FilterModal';
 import LogoutModal from '../components/user/LogoutModal';
 import DashboardSkeleton from '../components/ui/DashboardSkeleton';
+import { useForm } from 'react-hook-form';
 
 const GEOCODE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 setKey(GEOCODE_API_KEY);
@@ -106,6 +107,69 @@ const UserDashboard = () => {
     const [visibleFaq, setVisibleFaq] = useState(null);
 
     const toggleFaq = (id) => setVisibleFaq(visibleFaq === id ? null : id);
+    
+    const fetchPopular = useCallback(async () => {
+        setLoadingPopular(true);
+        try {
+            const data = await categoryService.getPopularServices();
+            setPopularServices(data);
+        } catch (err) {
+            console.error("Failed to load popular services:", err);
+        } finally {
+            setLoadingPopular(false);
+        }
+    }, []);
+
+    const fetchCategories = useCallback(async () => {
+        setLoadingCategories(true);
+        try {
+            const data = await categoryService.getCategories();
+            setCategories(Array.isArray(data) ? data : (data.content || []));
+        } catch (err) {
+            console.error("Failed to load categories:", err);
+        } finally {
+            setLoadingCategories(false);
+        }
+    }, []);
+
+    const fetchProfile = useCallback(async () => {
+        setIsInitialProfileLoading(true);
+        try {
+            const data = await userService.getProfile();
+            // Map API data to UI state
+            const account = data.accounts?.find(acc => acc.accountType === 'CUSTOMER') || data.accounts?.[0];
+
+            const apiAddresses = (account?.customerAddresses || account?.artisanAddresses || []);
+            const mappedAddresses = apiAddresses.map(addr => ({
+                id: addr.id,
+                address: addr.address.address,
+                latitude: addr.address.latitude,
+                longitude: addr.address.longitude,
+                isDefault: addr.id === account?.defaultAddressId || true,
+                status: addr.status
+            }));
+
+            setUserProfile(prev => ({
+                ...prev,
+                firstName: data.firstName || '',
+                lastName: data.lastName || '',
+                phone: data.phoneNumber || '',
+                gender: account?.gender || '',
+                dob: account?.dateOfBirth || '',
+                email: account?.email || '',
+                addresses: mappedAddresses.length > 0 ? mappedAddresses : prev.addresses,
+                profilePicture: account?.profilePicture || '',
+                status: data.status || 'ACTIVE',
+                identityVerificationStatus: data.identityVerificationStatus || 'PENDING',
+                kycApprovalStatus: account?.kycApprovalStatus || 'NOT_STARTED',
+                id: data.id || account?.id // Adding ID for chat identification
+            }));
+        } catch (err) {
+            console.error("Failed to load user profile:", err);
+        } finally {
+            setIsInitialProfileLoading(false);
+        }
+    }, []);
 
     const getEffectiveLocation = async () => {
         // 1. Check Profile Address
@@ -177,108 +241,47 @@ const UserDashboard = () => {
         }, { replace: true });
     }, [currentView, setSearchParams]);
 
+
+    const fetchTopRated = useCallback(async () => {
+        setLoadingTopRated(true);
+        try {
+            const loc = await getEffectiveLocation();
+
+            const searchPayload = {
+                categorySkillId: 1,
+                categoryId: 1,
+                location: {
+                    address: loc.address,
+                    latitude: loc.latitude,
+                    longitude: loc.longitude,
+                },
+                serviceMode: "HOME_SERVICE",
+                topArtisans: true
+            };
+            const queryParams = {
+                pageNumber: 1,
+                pageSize: 10
+            };
+
+            console.log("[Dashboard] Fetching Top Rated Artisans (POST)...");
+            const data = await customerService.searchArtisans(searchPayload, queryParams);
+
+            const artisans = Array.isArray(data) ? data : (data.content || []);
+            setTopArtisans(artisans);
+        } catch (err) {
+            console.error("[Dashboard] Failed to load top rated artisans:", err);
+        } finally {
+            setLoadingTopRated(false);
+        }
+    }, []);
+
+
     useEffect(() => {
-        const fetchPopular = async () => {
-            if (popularServices.length > 0) return;
-            setLoadingPopular(true);
-            try {
-                const data = await categoryService.getPopularServices();
-                setPopularServices(data);
-            } catch (err) {
-                console.error("Failed to load popular services:", err);
-            } finally {
-                setLoadingPopular(false);
-            }
-        };
-
-        const fetchCategories = async () => {
-            if (categories.length > 0) return;
-            setLoadingCategories(true);
-            try {
-                const data = await categoryService.getCategories();
-                setCategories(Array.isArray(data) ? data : (data.content || []));
-            } catch (err) {
-                console.error("Failed to load categories:", err);
-            } finally {
-                setLoadingCategories(false);
-            }
-        };
-
-        const fetchTopRated = async () => {
-            setLoadingTopRated(true);
-            try {
-                const loc = await getEffectiveLocation();
-
-                const searchPayload = {
-                    categorySkillId: 1,
-                    categoryId: 1,
-                    location: {
-                        address: loc.address,
-                        latitude: loc.latitude,
-                        longitude: loc.longitude,
-                    },
-                    serviceMode: "HOME_SERVICE",
-                    topArtisans: true
-                };
-                const queryParams = {
-                    pageNumber: 1,
-                    pageSize: 10
-                };
-
-                console.log("[Dashboard] Fetching Top Rated Artisans (POST)...");
-                const data = await customerService.searchArtisans(searchPayload, queryParams);
-
-                const artisans = Array.isArray(data) ? data : (data.content || []);
-                setTopArtisans(artisans);
-            } catch (err) {
-                console.error("[Dashboard] Failed to load top rated artisans:", err);
-            } finally {
-                setLoadingTopRated(false);
-            }
-        };
-
-        const fetchProfile = async () => {
-            setIsInitialProfileLoading(true);
-            try {
-                const data = await userService.getProfile();
-                // Map API data to UI state
-                const account = data.accounts?.find(acc => acc.accountType === 'CUSTOMER') || data.accounts?.[0];
-
-                const apiAddresses = (account?.customerAddresses || account?.artisanAddresses || []);
-                const mappedAddresses = apiAddresses.map(addr => ({
-                    id: addr.id,
-                    address: addr.address.address,
-                    latitude: addr.address.latitude,
-                    longitude: addr.address.longitude,
-                    isDefault: addr.id === account?.defaultAddressId || true,
-                    status: addr.status
-                }));
-
-                setUserProfile({
-                    firstName: data.firstName || '',
-                    lastName: data.lastName || '',
-                    phone: data.phoneNumber || '',
-                    gender: account?.gender || '',
-                    dob: account?.dateOfBirth || '',
-                    email: account?.email || '',
-                    addresses: mappedAddresses.length > 0 ? mappedAddresses : userProfile.addresses,
-                    profilePicture: account?.profilePicture || '',
-                    status: data.status || 'ACTIVE',
-                    identityVerificationStatus: data.identityVerificationStatus || 'PENDING',
-                    kycApprovalStatus: account?.kycApprovalStatus || 'NOT_STARTED',
-                    id: data.id || account?.id // Adding ID for chat identification
-                });
-            } catch (err) {
-                console.error("Failed to load user profile:", err);
-            } finally {
-                setIsInitialProfileLoading(false);
-            }
-        };
-
         fetchPopular();
         fetchCategories();
         fetchTopRated();
         fetchProfile();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -589,6 +592,7 @@ const UserDashboard = () => {
                                     setVisibleFaq={setVisibleFaq}
                                     toggleFaq={toggleFaq}
                                     setCurrentView={setCurrentView}
+                                    refreshProfile={fetchProfile}
                                 />
                             )}
                             {currentView === 'search' && (

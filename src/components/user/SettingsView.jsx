@@ -1,13 +1,21 @@
 import React from 'react';
+import { useForm } from 'react-hook-form';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, ChevronLeft, ChevronDown, User, MapPin, Lock, Shield, ShieldCheck, RefreshCw, Info, HelpCircle, Phone, LogOut, EyeOff, Camera, PlusCircle, Home, Image, Mail, MessageCircle, Instagram, Twitter, Facebook } from 'lucide-react';
 import { FAQ_DATA } from '../../constants/userData';
 import LogoutModal from './LogoutModal';
+import Location from '../form/Location';
 import authService from '../../services/authService';
 import userService from '../../services/userService';
 import fileService from '../../services/fileService';
 
-const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, setVisibleFaq, toggleFaq, setCurrentView }) => {
+const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, setVisibleFaq, toggleFaq, setCurrentView, refreshProfile }) => {
+    const { control, watch, setValue, formState: { errors } } = useForm({
+        defaultValues: {
+            addressContact: null
+        }
+    });
+
     const handleLogout = () => { authService.clearToken(); window.location.href = '/'; };
 
     const [profilePic, setProfilePic] = React.useState(userProfile.profilePicture || null);
@@ -38,7 +46,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         }
     };
 
-    // Address Addition State
     const [newAddress, setNewAddress] = React.useState({
         address: '',
         latitude: 0,
@@ -46,9 +53,56 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         addressVerificationFile: ''
     });
     const [isAddingAddress, setIsAddingAddress] = React.useState(false);
+    const [addressFilePreview, setAddressFilePreview] = React.useState(null);
+    const [isUploadingFile, setIsUploadingFile] = React.useState(false);
 
     const [isUpdating, setIsUpdating] = React.useState(false);
     const [updateMessage, setUpdateMessage] = React.useState('');
+
+    const handleLocationSelect = (loc) => {
+        console.log("[Settings] Location Selected:", loc);
+        setNewAddress(prev => ({
+            ...prev,
+            address: loc.address,
+            latitude: loc.latitude,
+            longitude: loc.longitude
+        }));
+    };
+
+    const handleFileUpload = async (file) => {
+        if (!file) return;
+        setIsUploadingFile(true);
+        setUpdateMessage('Uploading verification document...');
+        
+        // Local preview
+        const blobUrl = URL.createObjectURL(file);
+        setAddressFilePreview(blobUrl);
+
+        try {
+            const response = await fileService.upload(file);
+            console.log('[SettingsView] Address Doc Response:', response);
+
+            let imageUrl = '';
+            if (Array.isArray(response)) {
+                imageUrl = response[0];
+            } else if (typeof response === 'string') {
+                imageUrl = response;
+            } else {
+                imageUrl = response.data?.url || response.url || response.secure_url;
+            }
+
+            if (imageUrl) {
+                setNewAddress(prev => ({ ...prev, addressVerificationFile: imageUrl }));
+                setUpdateMessage('Document uploaded!');
+            }
+        } catch (err) {
+            console.error("Upload failed:", err);
+            setUpdateMessage('Failed to upload document.');
+            setAddressFilePreview(null);
+        } finally {
+            setIsUploadingFile(false);
+        }
+    };
 
     const handleUpdateProfile = async () => {
         setIsUpdating(true);
@@ -61,10 +115,12 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 firstName: userProfile.firstName,
                 lastName: userProfile.lastName,
                 phoneNumber: userProfile.phone,
-                // The backend structure is complex (nested accounts), for MVP we'll send the top-level fields
-                // and assume the backend handles it or we'll need to adjust based on exact backend requirements.
+                gender: userProfile.gender,
+                dateOfBirth: userProfile.dob,
+                email: userProfile.email
             };
             const updatedData = await userService.updateProfile(payload);
+            if (refreshProfile) await refreshProfile();
 
             // Map the returned data back to local state
             const account = updatedData.accounts?.find(acc => acc.accountType === 'CUSTOMER') || updatedData.accounts?.[0];
@@ -92,18 +148,25 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             setUpdateMessage('Please provide an address.');
             return;
         }
+        if (!newAddress.addressVerificationFile) {
+            setUpdateMessage('Please upload a verification document.');
+            return;
+        }
         setIsAddingAddress(true);
         setUpdateMessage('');
         try {
+            console.log("[Settings] Submitting Address Request:", newAddress);
             await userService.addAddress(newAddress);
-            setUpdateMessage('Address added successfully!');
-            // Refresh profile to get the new address or update local state
-            // For now, let's just go back to the list
+            setUpdateMessage('Address request sent successfully!');
+            if (refreshProfile) await refreshProfile();
             setSettingsSubStep('list');
+            setNewAddress({ address: '', latitude: 0, longitude: 0, addressVerificationFile: '' });
+            setAddressFilePreview(null);
             setTimeout(() => setUpdateMessage(''), 3000);
         } catch (err) {
             console.error("Failed to add address:", err);
-            setUpdateMessage('Failed to add address. Please try again.');
+            const backendMsg = err.response?.data?.message || 'Failed to add address. Please try again.';
+            setUpdateMessage(backendMsg);
         } finally {
             setIsAddingAddress(false);
         }
@@ -256,60 +319,80 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 </div>
                 <div className="space-y-6">
                     <div>
-                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Location</label>
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Garki Area 1, Abuja"
-                                value={newAddress.address}
-                                onChange={(e) => setNewAddress({ ...newAddress, address: e.target.value })}
-                                className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12"
-                            />
-                            <MapPin size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                        </div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Search Address</label>
+                        <Location 
+                            control={control}
+                            watch={watch}
+                            errors={errors}
+                            setValue={setValue}
+                            setLocationInfo={(loc) => {
+                                if (loc?.clearAddress) {
+                                    setNewAddress(prev => ({
+                                        ...prev,
+                                        address: loc.clearAddress,
+                                        latitude: loc.latitude || 0,
+                                        longitude: loc.longitude || 0
+                                    }));
+                                }
+                            }}
+                        />
                     </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Current coordinates</label>
-                        <div className="w-full p-4.5 rounded-[20px] bg-slate-50 border border-gray-100 font-bold text-gray-400 text-sm flex items-center gap-3">
-                            <MapPin size={18} /> {newAddress.latitude}° N, {newAddress.longitude}° E
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Upload a Document</label>
-                        <div className="w-full border-2 border-dashed border-gray-200 rounded-[28px] p-10 flex flex-col items-center justify-center text-center bg-slate-50/50 cursor-pointer hover:bg-slate-100 transition-colors">
-                            <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-gray-400 mb-4">
-                                <Image size={32} />
+                    
+                    {newAddress.address && (
+                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                            <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Selected Address</label>
+                            <div className="w-full p-4.5 rounded-[20px] bg-[#1E4E82]/5 border border-[#1E4E82]/10 font-bold text-[#1E4E82] text-sm flex items-start gap-3">
+                                <MapPin size={18} className="shrink-0 mt-0.5" />
+                                <span>{newAddress.address}</span>
                             </div>
-                            <p className="text-sm font-bold text-gray-400">Add documents like utility bills, rent receipts etc.</p>
-                            <input
-                                type="file"
-                                className="hidden"
-                                onChange={async (e) => {
-                                    const file = e.target.files[0];
-                                    if (!file) return;
-                                    setUpdateMessage('Uploading verification document...');
-                                    try {
-                                        const response = await fileService.upload(file);
-                                        console.log('[SettingsView] Address Doc Response:', response);
+                        </div>
+                    )}
 
-                                        let imageUrl = '';
-                                        if (Array.isArray(response)) {
-                                            imageUrl = response[0];
-                                        } else if (typeof response === 'string') {
-                                            imageUrl = response;
-                                        } else {
-                                            imageUrl = response.data?.url || response.url || response.secure_url;
-                                        }
-
-                                        if (imageUrl) {
-                                            setNewAddress({ ...newAddress, addressVerificationFile: imageUrl });
-                                            setUpdateMessage('Document uploaded!');
-                                        }
-                                    } catch (err) {
-                                        setUpdateMessage('Failed to upload document.');
-                                    }
-                                }}
-                            />
+                    <div>
+                        <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Upload Verification Document</label>
+                        <p className="text-[10px] text-slate-400 font-bold mb-3 ml-1 uppercase tracking-tight">Utility bills, rent receipts, or government documents</p>
+                        
+                        <div className="relative group">
+                            <div 
+                                className={`w-full border-2 border-dashed rounded-[28px] p-8 flex flex-col items-center justify-center text-center transition-all min-h-[160px] 
+                                    ${addressFilePreview ? 'border-[#1E4E82] bg-blue-50/30' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'}
+                                    ${isUploadingFile ? 'opacity-50 pointer-events-none' : ''}`}
+                            >
+                                {addressFilePreview ? (
+                                    <div className="relative w-full h-full flex flex-col items-center">
+                                        <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-sm mb-3">
+                                            <img src={addressFilePreview} alt="Preview" className="w-full h-full object-cover" />
+                                        </div>
+                                        <p className="text-xs font-bold text-[#1E4E82]">Document Attached</p>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); setAddressFilePreview(null); setNewAddress(prev => ({ ...prev, addressVerificationFile: '' })); }}
+                                            className="mt-2 text-[10px] font-black uppercase text-red-500 hover:text-red-600"
+                                        >
+                                            Change File
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center text-[#1E4E82] mb-3 group-hover:scale-110 transition-transform">
+                                            <Image size={24} />
+                                        </div>
+                                        <p className="text-xs font-bold text-slate-500">Tap to browse files</p>
+                                    </>
+                                )}
+                                
+                                <input
+                                    type="file"
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                    onChange={(e) => handleFileUpload(e.target.files[0])}
+                                    disabled={isUploadingFile}
+                                />
+                            </div>
+                            
+                            {isUploadingFile && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-white/20 rounded-[28px] backdrop-blur-[1px]">
+                                    <div className="w-6 h-6 border-2 border-[#1E4E82] border-t-transparent rounded-full animate-spin" />
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
