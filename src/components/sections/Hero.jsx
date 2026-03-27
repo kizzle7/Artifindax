@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Mail, MapPin } from 'lucide-react';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
@@ -7,8 +7,12 @@ import artisan2 from '../../assets/Frame 1000003987.png';
 import mobileArtisan1 from '../../assets/Frame 1000003994.png';
 import mobileArtisan2 from '../../assets/Frame 1000003995.png';
 import arrowRight from '../../assets/arrow-right.png';
+import WaitlistModal from '../ui/WaitlistModal';
 
 const Hero = () => {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [email, setEmail] = useState('');
+
     return (
         <section className="relative pt-32 pb-20 lg:pt-18 overflow-hidden">
             <div className="max-w-6xl mx-auto px-6 relative z-10">
@@ -35,16 +39,25 @@ const Hero = () => {
                                 <input
                                     type="email"
                                     placeholder="Enter your email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     className="w-full pl-12 pr-4 py-4 rounded-xl outline-none text-[#404A59] border border-gray-300 transition-all"
                                 />
                             </div>
                             <Button
                                 variant="plain"
-                                className="py-4 px-8 bg-[#D6E5F5] text-[#1E4E82] rounded-xl shadow-lg border-none"
+                                onClick={() => setIsModalOpen(true)}
+                                className="py-4 px-8 bg-[#D6E5F5] text-[#1E4E82] rounded-xl shadow-lg border-none hover:bg-[#ACCBEC] transition-all"
                             >
                                 Join waitlist
                             </Button>
                         </div>
+
+                        <WaitlistModal 
+                            isOpen={isModalOpen} 
+                            onClose={() => setIsModalOpen(false)} 
+                            initialEmail={email}
+                        />
 
                         <div className="flex items-center gap-6 mb-10">
                             <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="App Store" className="h-10 cursor-pointer" />

@@ -58,6 +58,9 @@ export const API_CONFIG = {
         },
         CONFIGURATIONS: {
             GET: '/api/v1/configurations',
+        },
+        WAITLIST: {
+            JOIN: '/api/v1/wait-list',
         }
     },
     WEBSOCKET_URL: 'https://artifinda-test-578be529c604.herokuapp.com/ws'

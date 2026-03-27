@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import logo from '../../assets/Artifinda logo 3.png';
 import Button from '../ui/Button';
+import WaitlistModal from '../ui/WaitlistModal';
 
 const Footer = () => {
     const currentYear = new Date().getFullYear();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [email, setEmail] = useState('');
 
     const footerLinks = {
         'For Customers': [
@@ -66,15 +69,24 @@ const Footer = () => {
                         <input
                             type="email"
                             placeholder="Email address"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             className="w-full px-6 py-3.5 rounded-xl bg-transparent border-2 border-white/20 text-white placeholder:text-gray-300 outline-none focus:border-[#ACCBEC] transition-all text-sm font-semibold"
                         />
                     </div>
                     <Button
                         variant="plain"
+                        onClick={() => setIsModalOpen(true)}
                         className="w-full py-4 text-center font-bold bg-[#D3E4F6] text-[#133253] rounded-2xl hover:bg-[#ACCBEC] transition-all text-md shadow-lg"
                     >
                         Join Waitlist
                     </Button>
+
+                    <WaitlistModal 
+                        isOpen={isModalOpen} 
+                        onClose={() => setIsModalOpen(false)} 
+                        initialEmail={email}
+                    />
                     {/* App Stores Badges Desktop Only (Moved to Right) */}
                     <div className="hidden md:flex flex-col gap-4 mt-8 w-full md:items-start lg:items-start">
                         {/* <span className="text-sm font-semibold opacity-90 lg:text-right w-full">Download our App</span> */}

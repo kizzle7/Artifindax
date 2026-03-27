@@ -19,7 +19,7 @@ api.interceptors.request.use(
             '/auth/verify-phone-number',
             '/auth/initiate-otp',
             '/auth/register-device',
-
+            '/api/v1/wait-list',
             '/login'
         ];
 
