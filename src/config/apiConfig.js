@@ -63,7 +63,7 @@ export const API_CONFIG = {
             JOIN: '/api/v1/wait-list',
         }
     },
-    WEBSOCKET_URL: 'https://artifinda-test-578be529c604.herokuapp.com/ws'
+    WEBSOCKET_URL: "https://artifinda-test-aaf09bed12f5.herokuapp.com/ws"
 };
 
 export default API_CONFIG;

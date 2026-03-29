@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, Search, MapPin, CreditCard, Camera, Mic, MoreVertical, Phone, Flag, Ban, X, CheckCircle2, Share2, Download, Calendar, Clock } from 'lucide-react';
 import { MESSAGES } from '../../constants/artisanData';
 
-const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setCurrentChat, chatMessages, setChatMessages, searchMessages, setSearchMessages, zoomedImage, setZoomedImage, showMenuModal, setShowMenuModal, selectedReportOption, setSelectedReportOption, setCurrentView }) => {
+const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setCurrentChat, chatMessages, setChatMessages, searchMessages, setSearchMessages, zoomedImage, setZoomedImage, showMenuModal, setShowMenuModal, selectedReportOption, setSelectedReportOption, setCurrentView, onCall }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [recordingTime, setRecordingTime] = useState(0);
 
@@ -80,7 +80,12 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
                 </div>
                 <div className="flex items-center gap-1.5">
                     {currentChat?.hasInvoice && <button onClick={() => setMessagesViewStep('invoice_detail')} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors animate-pulse"><CreditCard size={20} strokeWidth={2.5} /></button>}
-                    <button className="p-2 text-[#1E4E82] hover:bg-blue-50 rounded-full transition-colors"><Phone size={20} strokeWidth={2.5} /></button>
+                    <button 
+                        onClick={() => onCall(currentChat)}
+                        className="p-2 text-[#1E4E82] hover:bg-blue-50 rounded-full transition-colors cursor-pointer active:scale-90"
+                    >
+                        <Phone size={20} strokeWidth={2.5} />
+                    </button>
                     <div className="relative">
                         <button onClick={() => setShowMenuModal(!showMenuModal)} className="p-2 text-[#1E4E82] hover:bg-blue-50 rounded-full transition-colors"><MoreVertical size={20} strokeWidth={2.5} /></button>
                         {showMenuModal && (

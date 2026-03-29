@@ -58,7 +58,7 @@ const UserDashboard = () => {
     const [selectedNotification, setSelectedNotification] = useState(null);
 
     // Messages & Payment State
-    const [messagesViewStep, setMessagesViewStep] = useState('list');
+    const [messagesViewStep, setMessagesViewStep] = useState('chat');
     const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [cancelBookingId, setCancelBookingId] = useState(null);
@@ -496,149 +496,156 @@ const UserDashboard = () => {
                 </div>
             )}
 
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={selectedBooking ? `details-${selectedBooking.id}` : currentView}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="flex-1 w-full"
-                >
-                    {selectedBooking ? (
-                        <OrderDetailsView
-                            booking={selectedBooking}
-                            setSelectedBooking={setSelectedBooking}
-                            handleCancelBooking={handleCancelBooking}
-                            setCurrentChat={setCurrentChat}
-                            setCurrentView={setCurrentView}
-                            setMessagesViewStep={setMessagesViewStep}
-                            setSelectedArtisan={setSelectedArtisan}
-                        />
-                    ) : (
-                        <>
-                            {currentView === 'home' && (
-                                isInitialProfileLoading ? <DashboardSkeleton type="user-home" /> : (
-                                    <HomeView
-                                        userProfile={userProfile}
+            <main className="lg:ml-[240px] min-h-screen transition-all duration-300 w-full relative">
+                <AnimatePresence mode="wait">
+                    <motion.div
+                        key={selectedBooking ? `details-${selectedBooking.id}` : currentView}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className={`
+                            ${['notifications', 'messages', 'search'].includes(currentView) ? 'w-full' : 
+                              ['settings', 'bookings'].includes(currentView) && !selectedBooking ? 'max-w-6xl mx-auto w-full px-4 lg:px-6 pt-20 lg:pt-8 pb-10' :
+                              selectedBooking ? 'max-w-6xl mx-auto w-full px-4 lg:px-6 pt-20 lg:pt-8 pb-10' :
+                              'w-full px-4 lg:px-8 pt-20 lg:pt-8 pb-24'}
+                        `}
+                    >
+                        {selectedBooking ? (
+                            <OrderDetailsView
+                                booking={selectedBooking}
+                                setSelectedBooking={setSelectedBooking}
+                                handleCancelBooking={handleCancelBooking}
+                                setCurrentChat={setCurrentChat}
+                                setCurrentView={setCurrentView}
+                                setMessagesViewStep={setMessagesViewStep}
+                                setSelectedArtisan={setSelectedArtisan}
+                            />
+                        ) : (
+                            <>
+                                {currentView === 'home' && (
+                                    isInitialProfileLoading ? <DashboardSkeleton type="user-home" /> : (
+                                        <HomeView
+                                            userProfile={userProfile}
+                                            setCurrentView={setCurrentView}
+                                            setNotificationsViewStep={setNotificationsViewStep}
+                                            topArtisans={topArtisans}
+                                            loadingTopRated={loadingTopRated}
+                                            setIsMenuOpen={setIsMenuOpen}
+                                            isMenuOpen={isMenuOpen}
+                                            handleCategoryClick={handleCategoryClick}
+                                            popularServices={popularServices}
+                                            setSearchQuery={setSearchQuery}
+                                            loadingPopular={loadingPopular}
+                                        />
+                                    )
+                                )}
+                                {currentView === 'bookings' && (
+                                    <BookingsView
+                                        bookingsData={bookingsData}
+                                        bookingTab={bookingTab}
+                                        setBookingTab={setBookingTab}
+                                        setSelectedBooking={setSelectedBooking}
+                                        setCurrentChat={setCurrentChat}
+                                        setMessagesViewStep={setMessagesViewStep}
                                         setCurrentView={setCurrentView}
-                                        setNotificationsViewStep={setNotificationsViewStep}
-                                        topArtisans={topArtisans}
-                                        loadingTopRated={loadingTopRated}
-                                        setIsMenuOpen={setIsMenuOpen}
-                                        isMenuOpen={isMenuOpen}
-                                        handleCategoryClick={handleCategoryClick}
-                                        popularServices={popularServices}
-                                        setSearchQuery={setSearchQuery}
-                                        loadingPopular={loadingPopular}
+                                        loadingBookings={loadingBookings}
                                     />
-                                )
-                            )}
-                            {currentView === 'bookings' && (
-                                <BookingsView
-                                    bookingsData={bookingsData}
-                                    bookingTab={bookingTab}
-                                    setBookingTab={setBookingTab}
-                                    setSelectedBooking={setSelectedBooking}
-                                    setCurrentChat={setCurrentChat}
-                                    setMessagesViewStep={setMessagesViewStep}
-                                    setCurrentView={setCurrentView}
-                                    loadingBookings={loadingBookings}
-                                />
-                            )}
-                            {currentView === 'messages' && (
-                                <MessagesView
-                                    messagesViewStep={messagesViewStep}
-                                    setMessagesViewStep={setMessagesViewStep}
-                                    currentChat={currentChat}
-                                    setCurrentChat={setCurrentChat}
-                                    chatMessages={chatMessages}
-                                    setChatMessages={setChatMessages}
-                                    searchMessages={searchMessages}
-                                    setSearchMessages={setSearchMessages}
-                                    zoomedImage={zoomedImage}
-                                    setZoomedImage={setZoomedImage}
-                                    showMenuModal={showMenuModal}
-                                    setShowMenuModal={setShowMenuModal}
-                                    selectedReportOption={selectedReportOption}
-                                    setSelectedReportOption={setSelectedReportOption}
-                                    setCurrentView={setCurrentView}
-                                    userProfile={userProfile}
-                                    bookingsData={bookingsData}
-                                />
-                            )}
-                            {currentView === 'notifications' && (
-                                <NotificationsView
-                                    notificationsViewStep={notificationsViewStep}
-                                    setNotificationsViewStep={setNotificationsViewStep}
-                                    selectedNotification={selectedNotification}
-                                    setSelectedNotification={setSelectedNotification}
-                                    setCurrentView={setCurrentView}
-                                />
-                            )}
-                            {currentView === 'settings' && (
-                                <SettingsView
-                                    settingsStep={settingsStep}
-                                    setSettingsStep={setSettingsStep}
-                                    settingsSubStep={settingsSubStep}
-                                    setSettingsSubStep={setSettingsSubStep}
-                                    showLogoutModal={showLogoutModal}
-                                    setShowLogoutModal={setShowLogoutModal}
-                                    userProfile={userProfile}
-                                    setUserProfile={setUserProfile}
-                                    faqCategory={faqCategory}
-                                    setFaqCategory={setFaqCategory}
-                                    visibleFaq={visibleFaq}
-                                    setVisibleFaq={setVisibleFaq}
-                                    toggleFaq={toggleFaq}
-                                    setCurrentView={setCurrentView}
-                                    refreshProfile={fetchProfile}
-                                />
-                            )}
-                            {currentView === 'search' && (
-                                <SearchView
-                                    searchQuery={searchQuery}
-                                    setSearchQuery={setSearchQuery}
-                                    recentSearches={recentSearches}
-                                    setRecentSearches={setRecentSearches}
-                                    selectedArtisan={selectedArtisan}
-                                    setSelectedArtisan={setSelectedArtisan}
-                                    isMenuOpen={isMenuOpen}
-                                    setIsMenuOpen={setIsMenuOpen}
-                                    isFilterModalOpen={isFilterModalOpen}
-                                    setIsFilterModalOpen={setIsFilterModalOpen}
-                                    setCurrentView={setCurrentView}
-                                    isBookingFormOpen={isBookingFormOpen}
-                                    setIsBookingFormOpen={setIsBookingFormOpen}
-                                    filtersEnabled={filtersEnabled}
-                                    setFiltersEnabled={setFiltersEnabled}
-                                    popularServices={popularServices}
-                                    setPopularServices={setPopularServices}
-                                    categories={categories}
-                                    loadingCategories={loadingCategories}
-                                    categorySkills={categorySkills}
-                                    setCategorySkills={setCategorySkills}
-                                    searchResults={searchResults}
-                                    setSearchResults={setSearchResults}
-                                    loadingPopular={loadingPopular}
-                                    setLoadingPopular={setLoadingPopular}
-                                    loadingSkills={loadingSkills}
-                                    setLoadingSkills={setLoadingSkills}
-                                    loadingSearch={loadingSearch}
-                                    setLoadingSearch={setLoadingSearch}
-                                    selectedCategory={selectedCategory}
-                                    setSelectedCategory={setSelectedCategory}
-                                    selectedSkill={selectedSkill}
-                                    setSelectedSkill={setSelectedSkill}
-                                    handleCategoryClick={handleCategoryClick}
-                                    handleSkillClick={handleSkillClick}
-                                    userProfile={userProfile}
-                                />
-                            )}
-                        </>
-                    )}
-                </motion.div>
-            </AnimatePresence>
+                                )}
+                                {currentView === 'messages' && (
+                                    <MessagesView
+                                        messagesViewStep={messagesViewStep}
+                                        setMessagesViewStep={setMessagesViewStep}
+                                        currentChat={currentChat}
+                                        setCurrentChat={setCurrentChat}
+                                        chatMessages={chatMessages}
+                                        setChatMessages={setChatMessages}
+                                        searchMessages={searchMessages}
+                                        setSearchMessages={setSearchMessages}
+                                        zoomedImage={zoomedImage}
+                                        setZoomedImage={setZoomedImage}
+                                        showMenuModal={showMenuModal}
+                                        setShowMenuModal={setShowMenuModal}
+                                        selectedReportOption={selectedReportOption}
+                                        setSelectedReportOption={setSelectedReportOption}
+                                        setCurrentView={setCurrentView}
+                                        userProfile={userProfile}
+                                        bookingsData={bookingsData}
+                                    />
+                                )}
+                                {currentView === 'notifications' && (
+                                    <NotificationsView
+                                        notificationsViewStep={notificationsViewStep}
+                                        setNotificationsViewStep={setNotificationsViewStep}
+                                        selectedNotification={selectedNotification}
+                                        setSelectedNotification={setSelectedNotification}
+                                        setCurrentView={setCurrentView}
+                                    />
+                                )}
+                                {currentView === 'settings' && (
+                                    <SettingsView
+                                        settingsStep={settingsStep}
+                                        setSettingsStep={setSettingsStep}
+                                        settingsSubStep={settingsSubStep}
+                                        setSettingsSubStep={setSettingsSubStep}
+                                        showLogoutModal={showLogoutModal}
+                                        setShowLogoutModal={setShowLogoutModal}
+                                        userProfile={userProfile}
+                                        setUserProfile={setUserProfile}
+                                        faqCategory={faqCategory}
+                                        setFaqCategory={setFaqCategory}
+                                        visibleFaq={visibleFaq}
+                                        setVisibleFaq={setVisibleFaq}
+                                        toggleFaq={toggleFaq}
+                                        setCurrentView={setCurrentView}
+                                        refreshProfile={fetchProfile}
+                                    />
+                                )}
+                                {currentView === 'search' && (
+                                    <SearchView
+                                        searchQuery={searchQuery}
+                                        setSearchQuery={setSearchQuery}
+                                        recentSearches={recentSearches}
+                                        setRecentSearches={setRecentSearches}
+                                        selectedArtisan={selectedArtisan}
+                                        setSelectedArtisan={setSelectedArtisan}
+                                        isMenuOpen={isMenuOpen}
+                                        setIsMenuOpen={setIsMenuOpen}
+                                        isFilterModalOpen={isFilterModalOpen}
+                                        setIsFilterModalOpen={setIsFilterModalOpen}
+                                        setCurrentView={setCurrentView}
+                                        isBookingFormOpen={isBookingFormOpen}
+                                        setIsBookingFormOpen={setIsBookingFormOpen}
+                                        filtersEnabled={filtersEnabled}
+                                        setFiltersEnabled={setFiltersEnabled}
+                                        popularServices={popularServices}
+                                        setPopularServices={setPopularServices}
+                                        categories={categories}
+                                        loadingCategories={loadingCategories}
+                                        categorySkills={categorySkills}
+                                        setCategorySkills={setCategorySkills}
+                                        searchResults={searchResults}
+                                        setSearchResults={setSearchResults}
+                                        loadingPopular={loadingPopular}
+                                        setLoadingPopular={setLoadingPopular}
+                                        loadingSkills={loadingSkills}
+                                        setLoadingSkills={setLoadingSkills}
+                                        loadingSearch={loadingSearch}
+                                        setLoadingSearch={setLoadingSearch}
+                                        selectedCategory={selectedCategory}
+                                        setSelectedCategory={setSelectedCategory}
+                                        selectedSkill={selectedSkill}
+                                        setSelectedSkill={setSelectedSkill}
+                                        handleCategoryClick={handleCategoryClick}
+                                        handleSkillClick={handleSkillClick}
+                                        userProfile={userProfile}
+                                    />
+                                )}
+                            </>
+                        )}
+                    </motion.div>
+                </AnimatePresence>
+            </main>
         </div>
     );
 };

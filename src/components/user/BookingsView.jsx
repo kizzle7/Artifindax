@@ -15,7 +15,7 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
     const filteredBookings = bookingsData.filter(b => getStatusGroup(b.bookingStatus || b.status) === bookingTab);
 
     return (
-        <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 overflow-x-hidden relative flex flex-col">
+        <div className="flex-1 overflow-x-hidden relative flex flex-col">
             <h1 className="hidden lg:block text-base font-black text-[#0f172a] mb-4 uppercase tracking-[0.05em]">Bookings</h1>
             <div className="flex items-center gap-5 border-b border-gray-50 mb-4 overflow-x-auto scrollbar-hide">
                 {['ongoing', 'completed', 'canceled'].map(tab => (

@@ -16,24 +16,23 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     const stompClientRef = React.useRef(null);
     const fileInputRef = React.useRef(null);
 
-    const bookingId = currentChat?.id || currentChat?.bookingId || sessionStorage?.getItem("bookingId");
+    const bookingId = localStorage?.getItem("bookingId");
     const currentUserId = userProfile?.id || sessionStorage?.getItem('artID');
 
     useEffect(() => {
-        if (bookingId) {
-            getChats();
-            connectWebSocket();
-        }
-        
         return () => {
-             if (stompClientRef.current) {
-                 stompClientRef.current.deactivate();
-             }
+            if (stompClientRef.current) {
+                stompClientRef.current.deactivate();
+            }
         };
-    }, [bookingId]);
+    }, []);
+
+    useEffect(() => {
+        connectWebSocket();
+
+    }, [])
 
     const connectWebSocket = () => {
-        setLoad(true);
         if (!bookingId) {
             console.error("Booking ID missing for WebSocket connection");
             setLoad(false);
@@ -51,6 +50,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
             onConnect: () => {
                 console.log("✅ Connected to WebSocket");
                 setConnected(true);
+                getChats()
                 stompClient.subscribe(`/topic/chat/${bookingId}`, (message) => {
                     const chatMessage = JSON.parse(message.body);
                     console.log("📥 Received Message:", chatMessage);
@@ -83,7 +83,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     };
 
     const getChats = async () => {
-        if (!bookingId) return;
+        setLoad(true)
         try {
             const result = await chatService.getChats(bookingId);
             if (result) {
@@ -94,7 +94,6 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                         .filter(([key]) => key !== "status")
                         .map(([_, value]) => value);
 
-                console.log("Fetched messages:", chatArray);
                 setChatMessages(chatArray);
             }
         } catch (err) {
@@ -104,8 +103,6 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     };
 
     const handleSendMessage = async (content, type = 'TEXT') => {
-        if (!content.trim() && type === 'TEXT') return;
-
         const chatMessage = {
             bookingId: bookingId,
             messageType: type,
@@ -113,19 +110,9 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
             userToken: localStorage.getItem('artifinda_token') || sessionStorage.getItem('token')
         };
 
-        console.log("📤 Sending Message:", chatMessage);
+        console.log(chatMessage)
 
-        const optimisticMsg = {
-            id: Date.now(),
-            bookingId: bookingId,
-            messageType: type,
-            type: type === 'TEXT' ? 'text' : 'image',
-            content: content,
-            senderId: currentUserId,
-            sender: 'user',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-        setChatMessages(prev => [...prev, optimisticMsg]);
+
 
         if (stompClientRef.current && connected) {
             stompClientRef.current.publish({
@@ -142,10 +129,11 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
         const toastId = toast.loading("Uploading media...");
         try {
             const formData = new FormData();
-            formData.append("file", file);
-            
+            formData.append("files", file);
+
             const response = await chatService.uploadFile(formData);
-            const fileUrl = typeof response === 'string' ? response : (response.url || response.data?.url || response.data || response.message || response.fileUrl);
+            console.log(response[0])
+            const fileUrl = response[0];
 
             await handleSendMessage(fileUrl, 'MEDIA');
             toast.success("Media sent", { id: toastId });
@@ -271,7 +259,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
         <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0 overflow-x-hidden relative">
             <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-20 lg:h-16 items-center justify-between border-b border-gray-50">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => setMessagesViewStep('list')} className="p-2 -ml-2 text-[#0f172a] cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                    <button onClick={() => setCurrentView('bookings')} className="p-2 -ml-2 text-[#0f172a] cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm cursor-pointer"><img src={currentChat?.avatar} alt="" className="w-full h-full object-cover" /></div>
                     <div className="min-w-0 cursor-pointer">
                         <h4 className="font-bold text-[#0f172a] -mb-1 truncate text-base">
@@ -282,7 +270,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                         <div className="flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-widest truncate"><MapPin size={8} /> {currentChat?.location}</div>
                     </div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                {/* <div className="flex items-center gap-1.5">
                     {currentChat?.hasInvoice && <button onClick={() => setMessagesViewStep('invoice_detail')} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors animate-pulse"><CreditCard size={20} strokeWidth={2.5} /></button>}
                     <button onClick={() => {
                         const phone = currentChat?.phoneNumber || currentChat?.artisan?.phoneNumber || '';
@@ -302,39 +290,42 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                             </div>
                         )}
                     </div>
-                </div>
+                </div> */}
             </div>
             <div className="flex-1 p-6 space-y-8 overflow-y-auto pb-32 scroll-smooth">
-                {load && (
+                {load && chatMessages?.length === 0 && (
                     <div className="flex flex-col items-center justify-center py-10 opacity-50">
                         <div className="w-8 h-8 border-2 border-[#1E4E82] border-t-transparent rounded-full animate-spin mb-4"></div>
                         <p className="text-[10px] font-black uppercase tracking-widest text-[#1E4E82]">Loading messages...</p>
                     </div>
                 )}
-                <div className="flex justify-center"><span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest bg-gray-50 px-4 py-1.5 rounded-full border border-gray-100">Today</span></div>
-                {chatMessages.map((msg, idx) => {
-                    const isMe = msg.sender === 'user' || msg.senderId === currentUserId || msg.userToken === sessionStorage.getItem("token");
-                    const displayTime = msg.time || (msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
-                    const isText = msg.type === 'text' || msg.messageType === 'TEXT';
-                    const isMedia = msg.type === 'image' || msg.messageType === 'MEDIA';
+                {!load &&
+                    <div>
+                        {chatMessages.map((msg, idx) => {
+                            const isMe = msg?.sender?.id === Number(currentUserId)
+                            const displayTime = msg.time || (msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
+                            const isText = msg.type === 'text' || msg.messageType === 'TEXT';
+                            const isMedia = msg.type === 'image' || msg.messageType === 'MEDIA';
 
-                    return (
-                        <div key={idx} className={`flex flex-col ${isMe ? 'items-end ml-auto' : 'items-start'} gap-1 max-w-[85%]`}>
-                            {isText && <div className={`${isMe ? 'bg-[#1E4E82] text-white rounded-tr-none' : 'bg-[#F1F5F9] text-[#0f172a] rounded-tl-none'} p-4 font-medium text-base rounded-[24px] leading-relaxed shadow-sm break-words max-w-full text-left`}>{msg.content}</div>}
-                            {isMedia && <div onClick={() => setZoomedImage(msg.content)} className="rounded-[24px] overflow-hidden border-4 border-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform max-w-[240px]"><img src={msg.content} alt="Sent attachment" className="w-full h-full object-cover max-h-64" /></div>}
-                            {msg.type === 'invoice' && (
-                                <div className="bg-[#F1F5F9] p-4 rounded-[24px] rounded-tl-none w-full sm:w-80 border border-gray-50">
-                                    <div className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm">
-                                        <div className="flex items-center gap-3"><div className="p-2.5 bg-slate-50 rounded-xl text-slate-400"><CreditCard size={20} /></div><span className="font-extrabold text-[#0f172a]">{msg.content}</span></div>
-                                        <button onClick={() => setMessagesViewStep('invoice_detail')} className="px-3.5 py-2 bg-blue-50 text-[#1E4E82] text-[10px] font-black uppercase tracking-tighter rounded-xl transition-colors hover:bg-blue-100 cursor-pointer">View Details</button>
-                                    </div>
+                            return (
+                                <div key={idx} className={`flex flex-col ${isMe ? 'items-end ml-auto' : 'items-start'} gap-1 max-w-[85%]`}>
+                                    {isText && <div className={`${isMe ? 'bg-[#1E4E82] text-white rounded-tr-none' : 'bg-[#F1F5F9] text-[#0f172a] rounded-tl-none'} p-4 font-medium text-base rounded-[24px] leading-relaxed shadow-sm break-words max-w-full text-left`}>{msg.content}</div>}
+                                    {isMedia && <div onClick={() => setZoomedImage(msg.content)} className="rounded-[24px] overflow-hidden border-4 border-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform max-w-[240px]"><img src={msg.content} alt="Sent attachment" className="w-full h-full object-cover max-h-64" /></div>}
+                                    {msg.type === 'invoice' && (
+                                        <div className="bg-[#F1F5F9] p-4 rounded-[24px] rounded-tl-none w-full sm:w-80 border border-gray-50">
+                                            <div className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                                                <div className="flex items-center gap-3"><div className="p-2.5 bg-slate-50 rounded-xl text-slate-400"><CreditCard size={20} /></div><span className="font-extrabold text-[#0f172a]">{msg.content}</span></div>
+                                                <button onClick={() => setMessagesViewStep('invoice_detail')} className="px-3.5 py-2 bg-blue-50 text-[#1E4E82] text-[10px] font-black uppercase tracking-tighter rounded-xl transition-colors hover:bg-blue-100 cursor-pointer">View Details</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {msg.type === 'rejected' && <div className="bg-red-50 border-2 border-red-100 p-4 rounded-[24px] rounded-tl-none flex items-center gap-3 text-red-600 font-bold text-sm"><AlertCircle size={20} /> Invoice Rejected</div>}
+                                    <div className="flex items-center gap-1.5 px-1 mt-1"><span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{displayTime}</span>{isMe && <CheckCircle2 size={12} className="text-blue-400" />}</div>
                                 </div>
-                            )}
-                            {msg.type === 'rejected' && <div className="bg-red-50 border-2 border-red-100 p-4 rounded-[24px] rounded-tl-none flex items-center gap-3 text-red-600 font-bold text-sm"><AlertCircle size={20} /> Invoice Rejected</div>}
-                            <div className="flex items-center gap-1.5 px-1 mt-1"><span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{displayTime}</span>{isMe && <CheckCircle2 size={12} className="text-blue-400" />}</div>
-                        </div>
-                    );
-                })}
+                            );
+                        })}
+
+                    </div>}
             </div>
             <div className="fixed bottom-0 lg:sticky lg:bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 px-6 py-4 pb-10 lg:pb-6 z-40">
                 <div className="max-w-4xl mx-auto flex flex-col gap-2">
@@ -507,17 +498,18 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
         </div>
     );
 
-    if (messagesViewStep === 'list') return renderList();
-    if (messagesViewStep === 'chat' || messagesViewStep === 'block') return renderChat();
-    if (messagesViewStep === 'report') return renderReport();
-    if (messagesViewStep === 'report_other') return renderReportOther();
-    if (messagesViewStep === 'feedback') return renderFeedback();
-    if (messagesViewStep === 'invoice_detail') return renderInvoiceDetail();
-    if (messagesViewStep === 'payment') return renderPaymentMethod();
-    if (messagesViewStep === 'select_card') return renderSelectCard();
-    if (messagesViewStep === 'bank_transfer') return renderBankTransfer();
-    if (messagesViewStep === 'success') return renderSuccess();
-    if (messagesViewStep === 'receipt') return renderReceipt();
+    console.log(chatMessages)
+
+    if (messagesViewStep === 'chat') return renderChat();
+    // if (messagesViewStep === 'report') return renderReport();
+    // if (messagesViewStep === 'report_other') return renderReportOther();
+    // if (messagesViewStep === 'feedback') return renderFeedback();
+    // if (messagesViewStep === 'invoice_detail') return renderInvoiceDetail();
+    // if (messagesViewStep === 'payment') return renderPaymentMethod();
+    // if (messagesViewStep === 'select_card') return renderSelectCard();
+    // if (messagesViewStep === 'bank_transfer') return renderBankTransfer();
+    // if (messagesViewStep === 'success') return renderSuccess();
+    // if (messagesViewStep === 'receipt') return renderReceipt();
     return null;
 };
 

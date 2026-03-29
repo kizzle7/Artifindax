@@ -7,7 +7,7 @@ import DashboardSkeleton from '../ui/DashboardSkeleton';
 const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topArtisans, loadingTopRated, setIsMenuOpen, isMenuOpen, handleCategoryClick, popularServices, setSearchQuery, loadingPopular }) => {
     const repeatedBanners = [...BANNERS, ...BANNERS, ...BANNERS];
     return (
-        <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 transition-all duration-300">
+        <div className="flex-1 transition-all duration-300">
             <div className="hidden lg:flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center cursor-pointer">

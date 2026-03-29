@@ -9,7 +9,6 @@ const Sidebar = ({ currentView, setCurrentView, setSelectedBooking, setNotificat
             {[
                 { id: 'home', icon: Home, label: 'HOME' },
                 { id: 'bookings', icon: Briefcase, label: 'BOOKINGS' },
-                { id: 'messages', icon: MessageCircle, label: 'MESSAGES' },
                 { id: 'settings', icon: Settings, label: 'SETTINGS' },
             ].map((item) => (
                 <button

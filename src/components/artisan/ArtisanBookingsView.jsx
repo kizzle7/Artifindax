@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronRight, AlertCircle, Calendar, Clock, MapPin, Phone, MessageSquare, Mail, Plus } from 'lucide-react';
 import DashboardSkeleton from '../ui/DashboardSkeleton';
 
-const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, setCurrentView, activeTab, setActiveTab }) => {
+const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, onCall, onMessage, setCurrentView, activeTab, setActiveTab }) => {
     const tabs = ['New', 'Ongoing', 'Completed', 'Canceled'];
 
     const filteredBookings = (bookingsData || []).filter(b => {
@@ -125,8 +125,18 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                                         <span className="font-bold text-slate-700 text-sm">{booking.customer?.appUser ? `${booking.customer.appUser.firstName} ${booking.customer.appUser.lastName}` : (booking.customer?.name || 'Customer')}</span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors"><Phone size={14} /></button>
-                                        <button className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors"><MessageSquare size={14} /></button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onCall(booking); }}
+                                            className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors cursor-pointer active:scale-90"
+                                        >
+                                            <Phone size={14} />
+                                        </button>
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); onMessage(booking); }}
+                                            className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors cursor-pointer active:scale-90"
+                                        >
+                                            <MessageSquare size={14} />
+                                        </button>
                                     </div>
                                 </div>
 

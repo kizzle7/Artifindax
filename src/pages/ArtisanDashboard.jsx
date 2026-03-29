@@ -225,6 +225,63 @@ const ArtisanDashboard = () => {
         // setCurrentView('generate-invoice');
         setShowAcceptModal(true);
     };
+
+    const handleCallClick = (item) => {
+        console.log('[ArtisanDashboard] handleCallClick for item:', item);
+        if (!item) return;
+
+        // Extract phone number - handles both booking objects and chat objects
+        const customer = item.customer || {};
+        const customerAppUser = customer.appUser || {};
+        
+        let phone = '';
+        if (typeof customer === 'object') {
+            phone = customer.phoneNumber || customer.phone || customerAppUser.phoneNumber || item.phoneNumber || '';
+        } else if (typeof customer === 'string') {
+            // If customer is a string (like in MESSAGES mock), phone might be at the top level item
+            phone = item.phoneNumber || item.phone || '';
+        }
+
+        if (phone) {
+            navigator.clipboard.writeText(phone);
+            toast.success(`Phone number ${phone} copied to clipboard!`);
+        } else {
+            toast.error('Phone number not available for this customer');
+        }
+    };
+
+    const handleMessageClick = (booking) => {
+        console.log('[ArtisanDashboard] handleMessageClick for booking:', booking);
+        if (!booking) return;
+
+        // Extract customer info
+        const customer = booking.customer || {};
+        const customerAppUser = customer.appUser || {};
+        const customerName = customerAppUser.firstName ? `${customerAppUser.firstName} ${customerAppUser.lastName}` : (customer.name || customer.fullName || 'Customer');
+        const customerAvatar = customer.profilePicture || customerAppUser.profilePicture || customer.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(customerName)}&background=1E4E82&color=fff&size=150`;
+        const locationStr = booking.customerAddress?.address?.address?.split(',')[0] || booking.address?.split(',')[0] || 'Address TBD';
+        const phone = customer.phoneNumber || customer.phone || customerAppUser.phoneNumber || '';
+
+        const chatObj = {
+            id: booking.id,
+            customer: customerName,
+            avatar: customerAvatar,
+            location: locationStr,
+            phoneNumber: phone,
+            hasInvoice: false,
+            lastMessage: 'Starting conversation...',
+            time: 'Just now',
+            unread: 0
+        };
+
+        setCurrentChat(chatObj);
+        setChatMessages([
+            { id: 1, type: 'text', content: `Hello ${customerName}! I'm the artisan assigned to your booking #${booking.id || ''}.`, sender: 'artisan', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ]);
+        setMessagesViewStep('chat');
+        setCurrentView('messages');
+    };
+
     const confirmCompletion = async () => {
         setShowCompletionModal(false);
         await handleFinalCompletion();
@@ -296,6 +353,8 @@ const ArtisanDashboard = () => {
                         onCancel={handleCancelClick}
                         onComplete={handleCompleteClick}
                         onAccept={handleAcceptClick}
+                        onCall={handleCallClick}
+                        onMessage={handleMessageClick}
                         setCurrentView={setCurrentView}
                     />
                 ) : (
@@ -305,6 +364,8 @@ const ArtisanDashboard = () => {
                         onCancel={handleCancelClick}
                         onComplete={handleCompleteClick}
                         onAccept={handleAcceptClick}
+                        onCall={handleCallClick}
+                        onMessage={handleMessageClick}
                     />
                 );
             case 'cancel-reason':
@@ -413,6 +474,7 @@ const ArtisanDashboard = () => {
                         selectedReportOption={selectedReportOption}
                         setSelectedReportOption={setSelectedReportOption}
                         setCurrentView={setCurrentView}
+                        onCall={handleCallClick}
                     />
                 );
             case 'notifications':
@@ -489,8 +551,13 @@ const ArtisanDashboard = () => {
                 setShowLogoutModal={setShowLogoutModal}
             />
 
-            <main className={`lg:ml-[240px] ${['notifications', 'messages', 'settings'].includes(currentView) ? '' : 'p-4 lg:p-5 pt-20 lg:pt-6'} min-h-screen transition-all duration-300`}>
-                <div className={`${['notifications', 'messages', 'settings'].includes(currentView) ? 'w-full' : 'max-w-5xl mx-auto'}`}>
+            <main className="lg:ml-[240px] min-h-screen transition-all duration-300">
+                <div className={`
+                    ${['notifications', 'messages'].includes(currentView) ? 'w-full h-screen' : 
+                      ['settings', 'bookings'].includes(currentView) && !selectedBooking ? 'max-w-6xl mx-auto w-full px-4 lg:px-6 pt-20 lg:pt-8 pb-10' :
+                      selectedBooking ? 'max-w-6xl mx-auto w-full px-4 lg:px-6 pt-20 lg:pt-8 pb-10' :
+                      'w-full px-4 lg:px-8 pt-20 lg:pt-8 pb-10'}
+                `}>
                     {renderView()}
                 </div>
             </main>

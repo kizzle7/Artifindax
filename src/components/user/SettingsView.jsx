@@ -73,7 +73,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         if (!file) return;
         setIsUploadingFile(true);
         setUpdateMessage('Uploading verification document...');
-        
+
         // Local preview
         const blobUrl = URL.createObjectURL(file);
         setAddressFilePreview(blobUrl);
@@ -320,7 +320,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 <div className="space-y-6">
                     <div>
                         <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Search Address</label>
-                        <Location 
+                        <Location
                             control={control}
                             watch={watch}
                             errors={errors}
@@ -337,7 +337,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                             }}
                         />
                     </div>
-                    
+
                     {newAddress.address && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                             <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Selected Address</label>
@@ -351,9 +351,9 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                     <div>
                         <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Upload Verification Document</label>
                         <p className="text-[10px] text-slate-400 font-bold mb-3 ml-1 uppercase tracking-tight">Utility bills, rent receipts, or government documents</p>
-                        
+
                         <div className="relative group">
-                            <div 
+                            <div
                                 className={`w-full border-2 border-dashed rounded-[28px] p-8 flex flex-col items-center justify-center text-center transition-all min-h-[160px] 
                                     ${addressFilePreview ? 'border-[#1E4E82] bg-blue-50/30' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'}
                                     ${isUploadingFile ? 'opacity-50 pointer-events-none' : ''}`}
@@ -364,7 +364,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                                             <img src={addressFilePreview} alt="Preview" className="w-full h-full object-cover" />
                                         </div>
                                         <p className="text-xs font-bold text-[#1E4E82]">Document Attached</p>
-                                        <button 
+                                        <button
                                             onClick={(e) => { e.stopPropagation(); setAddressFilePreview(null); setNewAddress(prev => ({ ...prev, addressVerificationFile: '' })); }}
                                             className="mt-2 text-[10px] font-black uppercase text-red-500 hover:text-red-600"
                                         >
@@ -379,7 +379,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                                         <p className="text-xs font-bold text-slate-500">Tap to browse files</p>
                                     </>
                                 )}
-                                
+
                                 <input
                                     type="file"
                                     className="absolute inset-0 opacity-0 cursor-pointer"
@@ -387,7 +387,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                                     disabled={isUploadingFile}
                                 />
                             </div>
-                            
+
                             {isUploadingFile && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/20 rounded-[28px] backdrop-blur-[1px]">
                                     <div className="w-6 h-6 border-2 border-[#1E4E82] border-t-transparent rounded-full animate-spin" />
@@ -511,8 +511,8 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     );
 
     return (
-        <div className="flex-1 lg:ml-[240px] bg-[#F8FAFC] min-h-screen transition-all duration-300">
-            <div className="max-w-6xl mx-auto w-full px-5 lg:px-4 flex flex-col pt-20 lg:pt-6 bg-[#F8FAFC] min-h-screen overflow-y-auto no-scrollbar">
+        <div className="flex-1 transition-all duration-300">
+            <div className="w-full flex flex-col overflow-y-auto no-scrollbar">
                 {settingsStep !== 'main' && (
                     <div className="hidden lg:flex items-center gap-3 mb-4">
                         <button onClick={() => {
