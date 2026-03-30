@@ -58,9 +58,19 @@ const SearchView = ({
                                                 </button>
                                             ))
                                         ) : (
-                                            <div className="col-span-2 md:col-span-4 text-center py-12 bg-slate-50/50 rounded-[28px] border border-dashed border-gray-200">
-                                                <p className="text-gray-400 font-bold uppercase tracking-widest text-[9px] mb-2">No Categories Found</p>
-                                                <p className="text-gray-400 text-xs">Try a different search term.</p>
+                                            <div className="col-span-2 md:col-span-4 flex flex-col items-center text-center py-12 px-6 bg-slate-50/30 rounded-[32px] border border-dashed border-slate-100">
+                                                <div className="w-full max-w-xs mb-6 flex justify-center scale-90">
+                                                    <div className="relative w-48 h-32">
+                                                        {/* Abstract Category Illustration */}
+                                                        <div className="absolute left-1/2 -translate-x-1/2 top-4 w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center border-4 border-white shadow-sm">
+                                                            <Info size={32} className="text-[#1E4E82]/30" />
+                                                        </div>
+                                                        <div className="absolute left-1/3 top-8 w-6 h-6 bg-slate-100 rounded-full border-2 border-white shadow-sm" />
+                                                        <div className="absolute right-1/3 bottom-4 w-8 h-8 bg-slate-100 rounded-lg border-2 border-white shadow-sm rotate-12" />
+                                                    </div>
+                                                </div>
+                                                <h4 className="text-[11px] font-black text-[#0f172a] mb-1 uppercase tracking-widest">No Categories Found</h4>
+                                                <p className="text-slate-400 font-bold max-w-[200px] leading-relaxed text-[10px]">We couldn't find any categories matching "{searchQuery}". Try a different search term!</p>
                                             </div>
                                         )}
                                     </div>
@@ -122,9 +132,18 @@ const SearchView = ({
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="py-20 text-center">
-                                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4"><Search className="text-slate-200" size={32} /></div>
-                                        <p className="text-gray-400 font-black uppercase tracking-widest text-[10px]">No Service Found</p>
+                                    <div className="flex flex-col items-center text-center py-20 px-6">
+                                        <div className="w-full max-w-xs mb-8 flex justify-center scale-90">
+                                            <div className="relative w-48 h-32">
+                                                {/* Abstract Search Illustration */}
+                                                <div className="absolute left-1/2 -translate-x-1/2 top-0 w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center border-4 border-white shadow-sm">
+                                                    <Search size={48} className="text-[#1E4E82]/10" strokeWidth={1} />
+                                                </div>
+                                                <div className="absolute left-1/2 -translate-x-1/2 bottom-2 w-16 h-2 bg-slate-100/50 rounded-full blur-sm" />
+                                            </div>
+                                        </div>
+                                        <h4 className="text-sm font-black text-[#0f172a] mb-2 uppercase tracking-widest">No Artisans Found</h4>
+                                        <p className="text-slate-400 font-bold max-w-[240px] leading-relaxed text-xs">We couldn't find any artisans for "{selectedSkill?.name}" in your area. They might be busy or currently unavailable.</p>
                                     </div>
                                 )}
                             </div>

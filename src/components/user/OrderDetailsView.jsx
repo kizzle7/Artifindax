@@ -4,8 +4,8 @@ import toast from 'react-hot-toast';
 const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, setCurrentChat, setCurrentView, setMessagesViewStep, setSelectedArtisan }) => {
     if (!booking) return null;
     return (
-        <div className="flex-1 transition-all duration-300">
-            <div className="w-full pb-6 animate-in slide-in-from-right-4 duration-500 flex flex-col">
+        <div className="flex-1 lg:ml-[240px] bg-[#F8FAFC] min-h-screen transition-all duration-300">
+            <div className="max-w-6xl mx-auto w-full pb-6 animate-in slide-in-from-right-4 duration-500 px-0 lg:px-4 flex flex-col pt-20 lg:pt-6 bg-[#F8FAFC] min-h-screen">
                 <div className="hidden lg:flex items-center gap-4 mb-2 pb-4 border-b border-slate-100 mt-2">
                     <button onClick={() => setSelectedBooking(null)} className="p-1 -ml-1 text-[#0f172a] active:scale-95 transition-transform cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                     <div className="flex flex-col">
@@ -109,14 +109,13 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                                 const avatar = artisanObj?.appUser?.profilePicture || booking.avatar;
 
                                 setCurrentChat({
-                                    id: booking.id,
+                                    bookingId: booking.id,
                                     artisan: name,
                                     avatar: avatar,
                                     location: booking.customerAddress?.address?.address || booking.location,
                                     phoneNumber: artisanObj?.appUser?.phoneNumber || booking.artisan?.phoneNumber || ''
                                 });
-                                console.log(booking?.id)
-                                localStorage?.setItem('bookingId',booking.id)
+                                localStorage?.setItem('bookingId', booking.id);
                                 setCurrentView('messages');
                                 setMessagesViewStep('chat');
                                 setSelectedBooking(null);

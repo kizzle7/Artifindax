@@ -13,27 +13,79 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     const [input, setInput] = useState('');
     const [connected, setConnected] = useState(false);
     const [load, setLoad] = useState(false);
+    const [latestMessages, setLatestMessages] = useState({});
+    const latestMessagesRef = React.useRef({});
     const stompClientRef = React.useRef(null);
     const fileInputRef = React.useRef(null);
 
-    const bookingId = localStorage?.getItem("bookingId");
+    const activeBookingId = currentChat?.bookingId || localStorage?.getItem("bookingId");
     const currentUserId = userProfile?.id || sessionStorage?.getItem('artID');
 
     useEffect(() => {
+        if (stompClientRef.current) {
+            stompClientRef.current.deactivate();
+        }
+
+        if (messagesViewStep === 'chat' && activeBookingId) {
+            connectWebSocket(activeBookingId);
+        }
+
         return () => {
             if (stompClientRef.current) {
                 stompClientRef.current.deactivate();
             }
         };
-    }, []);
+    }, [messagesViewStep, activeBookingId]);
 
+    // Grouping & Latest Message Background Fetch
     useEffect(() => {
-        connectWebSocket();
+        if (messagesViewStep !== 'list') return;
 
-    }, [])
+        const artisanMap = new Map();
+        bookingsData.filter(b => b.artisan).forEach(b => {
+            const artisanId = b.artisan?.id || b.artisanName;
+            const existing = artisanMap.get(artisanId);
+            if (!existing || new Date(b.createdOn) > new Date(existing.createdOn)) {
+                artisanMap.set(artisanId, b);
+            }
+        });
 
-    const connectWebSocket = () => {
-        if (!bookingId) {
+        const uniqueBookings = Array.from(artisanMap.values());
+        const neededBookings = uniqueBookings.filter(b => !latestMessagesRef.current[b.id] && latestMessagesRef.current[b.id] !== 'fetching');
+
+        if (neededBookings.length > 0) {
+            neededBookings.forEach(b => { latestMessagesRef.current[b.id] = 'fetching'; });
+
+            const fetchLatest = async () => {
+                const updates = {};
+                for (const b of neededBookings) {
+                    try {
+                        const result = await chatService.getChats(b.id);
+                        const chatArray = Array.isArray(result) ? result : Object.entries(result).filter(([key]) => key !== "status").map(([_, value]) => value);
+
+                        if (chatArray && chatArray.length > 0) {
+                            const lastMsg = chatArray[chatArray.length - 1];
+                            const isIncoming = lastMsg.sender?.id && String(lastMsg.sender.id) !== String(currentUserId);
+                            const text = lastMsg.messageType === 'MEDIA' ? '📷 Photo' : lastMsg.content;
+                            const readArray = JSON.parse(localStorage.getItem('readMessages') || '[]');
+                            const isUnread = isIncoming && !readArray.includes(lastMsg.id);
+                            updates[b.id] = { text, unread: isUnread ? 1 : 0, lastMsgId: lastMsg.id, hasMessages: true };
+                        } else {
+                            updates[b.id] = { text: '', unread: 0, lastMsgId: null, hasMessages: false };
+                        }
+                    } catch (e) {
+                        updates[b.id] = { text: '', unread: 0, lastMsgId: null, hasMessages: false };
+                    }
+                    latestMessagesRef.current[b.id] = updates[b.id];
+                }
+                setLatestMessages(prev => ({ ...prev, ...updates }));
+            };
+            fetchLatest();
+        }
+    }, [bookingsData, messagesViewStep]);
+
+    const connectWebSocket = (id) => {
+        if (!id) {
             console.error("Booking ID missing for WebSocket connection");
             setLoad(false);
             return;
@@ -50,8 +102,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
             onConnect: () => {
                 console.log("✅ Connected to WebSocket");
                 setConnected(true);
-                getChats()
-                stompClient.subscribe(`/topic/chat/${bookingId}`, (message) => {
+                getChats(id);
+                stompClient.subscribe(`/topic/chat/${id}`, (message) => {
                     const chatMessage = JSON.parse(message.body);
                     console.log("📥 Received Message:", chatMessage);
                     setChatMessages((prev) => [...prev, chatMessage]);
@@ -82,10 +134,10 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
         stompClientRef.current = stompClient;
     };
 
-    const getChats = async () => {
+    const getChats = async (id) => {
         setLoad(true)
         try {
-            const result = await chatService.getChats(bookingId);
+            const result = await chatService.getChats(id);
             if (result) {
                 setLoad(false);
                 // The snippet showed Object.entries filter/map, adjusting to match
@@ -104,7 +156,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
 
     const handleSendMessage = async (content, type = 'TEXT') => {
         const chatMessage = {
-            bookingId: bookingId,
+            bookingId: activeBookingId,
             messageType: type,
             content: content,
             userToken: localStorage.getItem('artifinda_token') || sessionStorage.getItem('token')
@@ -145,11 +197,91 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
 
 
 
+    // Skeleton component for chat list loading state - matches bookings card style
+    const ChatListSkeleton = () => (
+        <div className="space-y-3 animate-pulse">
+            {[...Array(5)].map((_, i) => (
+                <div key={i} className="bg-white border border-gray-50 rounded-[14px] p-4 flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-slate-100 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                        <div className="flex justify-between">
+                            <div className="h-3.5 w-28 bg-slate-200 rounded" />
+                            <div className="h-2.5 w-10 bg-slate-100 rounded" />
+                        </div>
+                        <div className="h-2.5 w-44 bg-slate-100 rounded" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
+    // Skeleton component for chat messages - matches bookings card style
+    const ChatMessagesSkeleton = () => (
+        <div className="space-y-3 animate-pulse">
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-56 h-12" />
+            </div>
+            <div className="flex items-start gap-3 flex-row-reverse">
+                <div className="bg-blue-100 border border-blue-100 rounded-[14px] p-4 w-44 h-12" />
+            </div>
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-64 h-16" />
+            </div>
+            <div className="flex items-start gap-3 flex-row-reverse">
+                <div className="bg-blue-100 border border-blue-100 rounded-[14px] p-4 w-48 h-12" />
+            </div>
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-40 h-10" />
+            </div>
+            <div className="flex items-start gap-3 flex-row-reverse">
+                <div className="bg-blue-100 border border-blue-100 rounded-[14px] p-4 w-48 h-12" />
+            </div>
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-40 h-10" />
+            </div>
+            <div className="flex items-start gap-3 flex-row-reverse">
+                <div className="bg-blue-100 border border-blue-100 rounded-[14px] p-4 w-48 h-12" />
+            </div>
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-40 h-10" />
+            </div>
+        </div>
+    );
+
     const renderList = () => {
-        // Build dynamic list of conversations based on bookings
-        const chatList = bookingsData.filter(b => b.artisan).map(b => {
+        // Group bookings by artisan to prevent duplicate chats
+        const artisanMap = new Map();
+        bookingsData.filter(b => b.artisan).forEach(b => {
+            const artisanId = b.artisan?.id || b.artisanName;
+            const existing = artisanMap.get(artisanId);
+            if (!existing || new Date(b.createdOn) > new Date(existing.createdOn)) {
+                artisanMap.set(artisanId, b);
+            }
+        });
+
+        // Build dynamic list of distinct conversations
+        const uniqueBookings = Array.from(artisanMap.values());
+        // isListLoading is true if bookings haven't loaded OR any booking hasn't been fetched yet
+        const isListLoading = bookingsData.length === 0 || uniqueBookings.some(b => {
+            const ref = latestMessagesRef.current[b.id];
+            return !ref || ref === 'fetching';
+        });
+
+        const chatList = uniqueBookings.map(b => {
             const artisanName = b.artisan?.appUser ? `${b.artisan.appUser.firstName || ''} ${b.artisan.appUser.lastName || ''}`.trim() : (b.artisanName || 'Artisan');
             const avatar = b.artisan?.appUser?.profilePicture || b.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(artisanName)}&background=1E4E82&color=fff&size=150`;
+            const msgData = latestMessagesRef.current[b.id] === 'fetching' ? null : (latestMessagesRef.current[b.id] || latestMessages[b.id]);
+            if (msgData && msgData.hasMessages === false) return null;
+            const lastMessageText = msgData?.text || '';
+            const unreadCount = msgData?.unread || 0;
+            const lastMsgId = msgData?.lastMsgId || null;
+            const stillLoading = !msgData;
+
             return {
                 id: b.id,
                 bookingId: b.id,
@@ -157,16 +289,20 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                 avatar: avatar,
                 location: b.customerAddress?.address?.address || b.location,
                 phoneNumber: b.artisan?.appUser?.phoneNumber || b.artisan?.phoneNumber || '',
-                lastMessage: b.bookingNote ? (b.bookingNote.includes('\n\n') ? b.bookingNote.split('\n\n')[0] : b.bookingNote) : 'View chat',
-                time: new Date(b.bookingDate || b.createdAt || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' }),
-                unread: 0,
-                hasInvoice: false
+                lastMessage: lastMessageText,
+                time: new Date(b.createdOn || b.bookingDate || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+                unread: unreadCount,
+                lastMsgId: lastMsgId,
+                hasInvoice: false,
+                stillLoading
             };
-        });
+        }).filter(Boolean);
 
+        const hasAnyConfirmed = chatList.some(m => !m.stillLoading);
         const filteredMessages = chatList.filter(m =>
-            m.artisan.toLowerCase().includes(searchMessages.toLowerCase()) ||
-            m.lastMessage.toLowerCase().includes(searchMessages.toLowerCase())
+            !m.stillLoading &&
+            (m.artisan.toLowerCase().includes(searchMessages.toLowerCase()) ||
+                m.lastMessage.toLowerCase().includes(searchMessages.toLowerCase()))
         );
 
         return (
@@ -179,29 +315,66 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                     <input type="text" placeholder="Search" value={searchMessages} onChange={(e) => setSearchMessages(e.target.value)} className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-100 bg-white focus:outline-none focus:border-[#1E4E82]/30 text-gray-700 font-bold text-sm shadow-sm" />
                 </div>
                 <div className="space-y-1">
-                    {filteredMessages.map((msg) => (
-                        <div key={msg.id} onClick={() => {
-                            setCurrentChat(msg);
-                            setChatMessages([]);
-                            setMessagesViewStep('chat');
-                        }} className="flex items-center gap-3 p-3.5 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 rounded-xl">
-                            <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden shrink-0 shadow-inner"><img src={msg.avatar} alt="" className="w-full h-full object-cover" /></div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-0.5">
-                                    <h4 className="font-bold text-[#0f172a] truncate text-sm">{msg.artisan}</h4>
-                                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{msg.time}</span>
-                                </div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2 overflow-hidden">
-                                        {msg.hasInvoice && <span className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-50 border border-gray-100 rounded text-[7px] font-black text-gray-500 uppercase shrink-0"><CreditCard size={8} /> invoice</span>}
-                                        <p className="text-xs text-gray-400 truncate font-bold">{msg.lastMessage}</p>
+                    {isListLoading && !hasAnyConfirmed
+                        ? <ChatListSkeleton />
+                        : filteredMessages.length === 0
+                            ? <div className="text-center py-10 text-gray-300 font-black uppercase tracking-widest text-[8px]">No conversations found</div>
+                            : filteredMessages.map((msg) => (
+                                <div key={msg.id} onClick={() => {
+                                    if (msg.lastMsgId) {
+                                        const readArray = JSON.parse(localStorage.getItem('readMessages') || '[]');
+                                        if (!readArray.includes(msg.lastMsgId)) {
+                                            localStorage.setItem('readMessages', JSON.stringify([...readArray, msg.lastMsgId]));
+                                            setLatestMessages(prev => ({
+                                                ...prev,
+                                                [msg.bookingId]: { ...prev[msg.bookingId], unread: 0 }
+                                            }));
+                                            latestMessagesRef.current[msg.bookingId] = { ...latestMessagesRef.current[msg.bookingId], unread: 0 };
+                                        }
+                                    }
+                                    setCurrentChat(msg);
+                                    setChatMessages([]);
+                                    setMessagesViewStep('chat');
+                                }} className="flex items-center gap-3 p-3.5 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 rounded-xl">
+                                    <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden shrink-0 shadow-inner"><img src={msg.avatar} alt="" className="w-full h-full object-cover" /></div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center justify-between mb-0.5">
+                                            <h4 className="font-bold text-[#0f172a] truncate text-sm">{msg.artisan}</h4>
+                                            <span className={`text-[10px] uppercase tracking-widest ${msg.unread > 0 ? 'text-[#1E4E82] font-black' : 'text-gray-400 font-bold'}`}>{msg.time}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <div className="flex items-center gap-2 overflow-hidden">
+                                                {msg.hasInvoice && <span className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-50 border border-gray-100 rounded text-[7px] font-black text-gray-500 uppercase shrink-0"><CreditCard size={8} /> invoice</span>}
+                                                <p className={`text-xs truncate ${msg.unread > 0 ? 'text-[#0f172a] font-black' : 'text-gray-400 font-bold'}`}>{msg.lastMessage}</p>
+                                            </div>
+                                            {msg.unread > 0 && <span className="w-4 h-4 bg-[#1E4E82] text-white text-[8px] font-black rounded-full flex items-center justify-center shrink-0"><div className="w-2 h-2 bg-white rounded-full" /></span>}
+                                        </div>
                                     </div>
-                                    {msg.unread > 0 && <span className="w-4 h-4 bg-[#1E4E82] text-white text-[8px] font-black rounded-full flex items-center justify-center shrink-0">{msg.unread}</span>}
+                                </div>
+                            ))}
+                    {filteredMessages.length === 0 && (
+                        <div className="flex flex-col items-center text-center py-16 px-6">
+                            <div className="w-full max-w-xs mb-8 flex justify-center scale-90">
+                                <div className="relative w-64 h-40">
+                                    {/* Abstract Chat Illustration */}
+                                    <div className="absolute left-1/2 -translate-x-1/2 top-0 w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center border-4 border-white shadow-sm rotate-3">
+                                        <MessageSquare size={40} className="text-[#1E4E82]/20" strokeWidth={1.5} />
+                                    </div>
+                                    <div className="absolute left-1/2 -translate-x-1/2 bottom-4 w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center border-4 border-white shadow-sm -rotate-6 ml-10">
+                                        <Plus size={24} className="text-[#1E4E82]/10" strokeWidth={3} />
+                                    </div>
+                                    <div className="absolute inset-x-0 bottom-0 flex justify-center">
+                                        <div className="w-32 h-2 bg-slate-100/50 rounded-full blur-sm" />
+                                    </div>
                                 </div>
                             </div>
+                            <h2 className="text-xl font-black text-[#0f172a] mb-2 tracking-tight uppercase">No Conversations Found</h2>
+                            <p className="text-slate-400 font-bold mb-8 max-w-[240px] leading-relaxed text-xs">Your inbox is currently empty. Start a conversation with an artisan to see your messages here!</p>
+                            <button onClick={() => setCurrentView('search')} className="w-full max-w-xs py-4.5 bg-[#1E4E82] text-white rounded-[20px] font-black text-sm shadow-xl active:scale-95 transition-all">
+                                Find an Artisan
+                            </button>
                         </div>
-                    ))}
-                    {filteredMessages.length === 0 && <div className="text-center py-10 text-gray-300 font-black uppercase tracking-widest text-[8px]">No conversations found</div>}
+                    )}
                 </div>
             </div>
         );
@@ -256,10 +429,10 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
     );
 
     const renderChat = () => (
-        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0 overflow-x-hidden relative">
-            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-20 lg:h-16 items-center justify-between border-b border-gray-50">
+        <div className="flex-1 lg:ml-[280px] bg-[#F8FAFC] min-h-screen flex flex-col pt-16 lg:pt-0 overflow-x-hidden relative">
+            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-[#F8FAFC] z-40 px-6 h-20 lg:h-16 items-center justify-between border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                    <button onClick={() => setCurrentView('bookings')} className="p-2 -ml-2 text-[#0f172a] cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                    <button onClick={() => setMessagesViewStep('list')} className="p-2 -ml-2 text-[#0f172a] cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm cursor-pointer"><img src={currentChat?.avatar} alt="" className="w-full h-full object-cover" /></div>
                     <div className="min-w-0 cursor-pointer">
                         <h4 className="font-bold text-[#0f172a] -mb-1 truncate text-base">
@@ -293,12 +466,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                 </div> */}
             </div>
             <div className="flex-1 p-6 space-y-8 overflow-y-auto pb-32 scroll-smooth">
-                {load && chatMessages?.length === 0 && (
-                    <div className="flex flex-col items-center justify-center py-10 opacity-50">
-                        <div className="w-8 h-8 border-2 border-[#1E4E82] border-t-transparent rounded-full animate-spin mb-4"></div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-[#1E4E82]">Loading messages...</p>
-                    </div>
-                )}
+                {load && chatMessages?.length === 0 && <ChatMessagesSkeleton />}
                 {!load &&
                     <div>
                         {chatMessages.map((msg, idx) => {
@@ -500,16 +668,17 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
 
     console.log(chatMessages)
 
+    if (messagesViewStep === 'list') return renderList();
     if (messagesViewStep === 'chat') return renderChat();
-    // if (messagesViewStep === 'report') return renderReport();
-    // if (messagesViewStep === 'report_other') return renderReportOther();
-    // if (messagesViewStep === 'feedback') return renderFeedback();
-    // if (messagesViewStep === 'invoice_detail') return renderInvoiceDetail();
-    // if (messagesViewStep === 'payment') return renderPaymentMethod();
-    // if (messagesViewStep === 'select_card') return renderSelectCard();
-    // if (messagesViewStep === 'bank_transfer') return renderBankTransfer();
-    // if (messagesViewStep === 'success') return renderSuccess();
-    // if (messagesViewStep === 'receipt') return renderReceipt();
+    if (messagesViewStep === 'report') return renderReport();
+    if (messagesViewStep === 'report_other') return renderReportOther();
+    if (messagesViewStep === 'feedback') return renderFeedback();
+    if (messagesViewStep === 'invoice_detail') return renderInvoiceDetail();
+    if (messagesViewStep === 'payment') return renderPaymentMethod();
+    if (messagesViewStep === 'select_card') return renderSelectCard();
+    if (messagesViewStep === 'bank_transfer') return renderBankTransfer();
+    if (messagesViewStep === 'success') return renderSuccess();
+    if (messagesViewStep === 'receipt') return renderReceipt();
     return null;
 };
 

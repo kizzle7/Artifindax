@@ -15,7 +15,7 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
     const filteredBookings = bookingsData.filter(b => getStatusGroup(b.bookingStatus || b.status) === bookingTab);
 
     return (
-        <div className="flex-1 overflow-x-hidden relative flex flex-col">
+        <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 overflow-x-hidden relative flex flex-col">
             <h1 className="hidden lg:block text-base font-black text-[#0f172a] mb-4 uppercase tracking-[0.05em]">Bookings</h1>
             <div className="flex items-center gap-5 border-b border-gray-50 mb-4 overflow-x-auto scrollbar-hide">
                 {['ongoing', 'completed', 'canceled'].map(tab => (
@@ -90,8 +90,27 @@ const BookingsView = ({ bookingsData, bookingTab, setBookingTab, setSelectedBook
                             );
                         })}
                         {filteredBookings.length === 0 && (
-                            <div className="text-center py-8 bg-slate-50/20 rounded-[20px] border border-dashed border-slate-100 flex flex-col items-center justify-center">
-                                <p className="text-gray-300 font-extrabold uppercase tracking-widest text-[7px]">No {bookingTab} bookings</p>
+                            <div className="flex flex-col items-center text-center py-12 px-6">
+                                <div className="w-full max-w-xs mb-8 flex justify-center scale-90">
+                                    <div className="relative w-64 h-40">
+                                        <div className="absolute left-1/2 -translate-x-1/2 top-0 w-14 h-32 bg-slate-100 rounded-full flex flex-col items-center justify-between p-1.5 pt-4">
+                                            <div className="w-2 h-16 bg-slate-200 rounded-full" />
+                                            <div className="w-8 h-8 bg-slate-100 rounded-full border-2 border-white" />
+                                        </div>
+                                        <div className="absolute inset-0 flex items-center justify-center pt-8">
+                                            <div className="flex gap-3 items-end">
+                                                <div className="w-8 h-16 bg-slate-200 rounded-t-lg opacity-40" />
+                                                <div className="w-8 h-24 bg-slate-300 rounded-t-lg opacity-40" />
+                                                <div className="w-8 h-20 bg-slate-200 rounded-t-lg opacity-40" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <h2 className="text-xl font-black text-[#0f172a] mb-2 tracking-tight uppercase">No {bookingTab} bookings</h2>
+                                <p className="text-slate-400 font-bold mb-8 max-w-[240px] leading-relaxed text-xs">You haven't made any {bookingTab} bookings yet. Start exploring available services!</p>
+                                <button onClick={() => setCurrentView('search')} className="w-full max-w-xs py-4.5 bg-[#1E4E82] text-white rounded-[20px] font-black text-sm shadow-xl active:scale-95 transition-all">
+                                    Book a Service Now
+                                </button>
                             </div>
                         )}
                     </>

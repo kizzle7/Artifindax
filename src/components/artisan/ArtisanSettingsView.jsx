@@ -37,7 +37,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             console.log('[Settings] File Upload Response:', response);
             // Handle various possible response shapes (object with url, array, etc.)
             const imageUrl = response.data?.url || response.url || response.secure_url || (Array.isArray(response.data) ? response.data[0]?.url : null) || (Array.isArray(response) ? response[0]?.url : null);
-
+            
             if (imageUrl) {
                 setVerificationFile(imageUrl);
                 setUpdateMessage('Verification document uploaded!');
@@ -162,6 +162,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
     const renderProfile = () => (
         <div className="pt-24 lg:pt-4 pb-10 flex flex-col items-center">
             <div className="w-full max-w-4xl text-left mt-4 lg:mt-0 mb-10 px-5 lg:px-0">
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Profile</h2>
                 <p className="text-gray-500 font-bold text-sm">Update your personal information</p>
             </div>
             <div className="flex justify-center mb-10">
@@ -232,7 +233,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         if (settingsStep === 'password_success') return renderSuccess("You're all Set!", "Your password has been changed successfully");
         if (settingsStep === 'password_otp') return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl">
-                <h2 className="text-xl lg:text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Verify your phone number</h2>
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Verify your phone number</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">We've sent a 4-digit verification code to your phone number. Please enter it below to continue.</p>
                 <div className="flex justify-center gap-4 mb-8">{[1, 2, 3, 4].map(i => <div key={i} className="w-14 h-14 lg:w-16 lg:h-16 rounded-[20px] bg-white border-2 border-slate-100" />)}</div>
                 <div className="text-center mb-12"><p className="text-xs font-bold text-gray-400">Didn't get code? <span className="text-[#1E4E82] ml-1">Resend 2:59</span></p></div>
@@ -241,7 +242,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         );
         if (settingsStep === 'password_reset') return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl">
-                <h2 className="text-xl lg:text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Reset your Password</h2>
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Reset your Password</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter your new password below. Make sure it's strong and secure</p>
                 <div className="space-y-6 flex-1">
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">New Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
@@ -252,7 +253,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         );
         return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl flex flex-col h-[calc(100vh-80px)] lg:h-auto">
-
+                <h2 className="text-2xl font-black text-[#0f172a] mb-8 mt-4 lg:mt-0 hidden lg:block">Change Password</h2>
                 <div className="space-y-6 flex-1">
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Email / Phone</label><input type="email" defaultValue={userProfile.email} className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold" /></div>
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Old Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
@@ -266,7 +267,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         if (settingsStep === 'pin_success') return renderSuccess("You're all Set!", "Your login pin has been changed successfully");
         if (settingsStep === 'pin_new') return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl">
-                <h2 className="text-xl lg:text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0">Set a new 6-Digit PIN</h2>
+                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Set a new 6-Digit PIN</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter new pin below</p>
                 <div className="flex justify-center gap-2 lg:gap-3 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-12 h-14 lg:w-14 lg:h-16 rounded-2xl bg-white border-2 border-slate-100" />)}</div>
                 <button onClick={() => setSettingsStep('pin_success')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Continue</button>
@@ -275,7 +276,8 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl h-[calc(100vh-80px)] lg:h-auto flex flex-col">
                 <div className="flex-1">
-                    <p className="text-gray-500 font-bold text-sm mb-12 mt-4 lg:mt-0">Enter current pin below</p>
+                    <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Change Login PIN</h2>
+                    <p className="text-gray-500 font-bold text-sm mb-12">Enter current pin below</p>
                     <div className="flex justify-center gap-2 lg:gap-3 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-12 h-14 lg:w-14 lg:h-16 rounded-2xl bg-white border-2 border-slate-100" />)}</div>
                 </div>
                 <button onClick={() => setSettingsStep('pin_new')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Continue</button>
@@ -289,7 +291,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
     const handleAddAddressRequest = async () => {
         const addressLabel = watch('addressContact')?.label || tempAddress;
         console.log('[Settings] Attempting to add address:', { addressLabel, locationInfo, verificationFile });
-
+        
         if (!addressLabel) {
             setUpdateMessage('Please enter an address');
             return;
@@ -323,16 +325,16 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         if (settingsSubStep === 'success') return (
             <div className="pt-24 lg:pt-6 pb-10 flex flex-col items-center justify-center text-center max-w-md mx-auto px-5 lg:px-0">
                 <div className="w-full aspect-square bg-white rounded-[40px] mb-10 flex items-center justify-center relative overflow-hidden">
-                    <img
-                        src="https://img.freepik.com/premium-vector/successful-management-concept-business-meeting-discussion-flat-illustration_1013341-118.jpg"
-                        alt="Success"
-                        className="w-full h-80 object-contain"
+                    <img 
+                        src="https://img.freepik.com/premium-vector/successful-management-concept-business-meeting-discussion-flat-illustration_1013341-118.jpg" 
+                        alt="Success" 
+                        className="w-full h-80 object-contain" 
                     />
                 </div>
                 <h2 className="text-2xl font-black text-[#0f172a] mb-2">Your Request Has Been Sent!</h2>
                 <p className="text-gray-500 font-bold mb-12 text-sm leading-relaxed px-4">
-                    {selectedAddressForRemoval
-                        ? `You have requested to remove "${selectedAddressForRemoval.address}". We'll review and send you an update soon.`
+                    {selectedAddressForRemoval 
+                        ? `You have requested to remove "${selectedAddressForRemoval.address}". We'll review and send you an update soon.` 
                         : "We've sent your request to add your address. We'll review your details and send you an update soon."
                     }
                 </p>
@@ -353,17 +355,17 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     <label className="text-xs font-bold text-gray-500 mb-4 block ml-1 uppercase tracking-wider">Address</label>
                     <div className="relative group z-30">
                         {settingsSubStep === 'remove' ? (
-                            <input
-                                type="text"
-                                readOnly
-                                value={selectedAddressForRemoval?.address}
-                                className="w-full p-5 rounded-[12px] border-2 border-slate-200 outline-none font-bold text-[#0f172a] bg-slate-50"
+                            <input 
+                                type="text" 
+                                readOnly 
+                                value={selectedAddressForRemoval?.address} 
+                                className="w-full p-5 rounded-[12px] border-2 border-slate-200 outline-none font-bold text-[#0f172a] bg-slate-50" 
                             />
                         ) : (
-                            <Location
-                                control={control}
-                                watch={watch}
-                                errors={errors}
+                            <Location 
+                                control={control} 
+                                watch={watch} 
+                                errors={errors} 
                                 setValue={setValue}
                                 setLocationInfo={setLocationInfo}
                             />
@@ -402,8 +404,8 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
 
                 <div className="flex flex-col items-center mt-12 gap-3">
                     {updateMessage && <p className="text-xs text-red-500 font-bold mb-2 animate-bounce">{updateMessage}</p>}
-                    <button
-                        onClick={settingsSubStep === 'add' ? handleAddAddressRequest : () => setSettingsSubStep('success')}
+                    <button 
+                        onClick={settingsSubStep === 'add' ? handleAddAddressRequest : () => setSettingsSubStep('success')} 
                         disabled={isUpdating || isUploadingFile || (settingsSubStep === 'add' && !verificationFile)}
                         className="w-full max-w-sm py-5 bg-[#1E4E82] text-white font-black rounded-[12px] shadow-xl transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
                     >
@@ -432,10 +434,10 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
 
                     {/* Other Addresses List */}
                     <div className="space-y-3 pt-6">
-                        {userProfile.addresses.filter(a => a.type !== 'Home' && !a.isDefault).map((addr) => (
+                         {userProfile.addresses.filter(a => a.type !== 'Home' && !a.isDefault).map((addr) => (
                             <div key={addr.id} className="w-full p-5 rounded-[12px] border-2 border-slate-100 flex items-center justify-between group hover:border-slate-200 transition-all bg-white">
                                 <span className="font-bold text-[#0f172a] text-sm truncate pr-4">{addr.address}</span>
-                                <button
+                                <button 
                                     onClick={() => { setSelectedAddressForRemoval(addr); setSettingsSubStep('remove'); }}
                                     className="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 group-hover:border-red-400 group-hover:text-red-400 transition-all shrink-0 active:scale-90"
                                 >
@@ -443,17 +445,17 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                                     <div className="w-2.5 h-[2px] bg-current rounded-full" />
                                 </button>
                             </div>
-                        ))}
+                         ))}
 
-                        {/* Add Button */}
-                        <button
+                         {/* Add Button */}
+                         <button 
                             onClick={() => { setTempAddress(''); setSettingsSubStep('add'); }}
                             className="w-full p-5 rounded-[12px] border-2 border-slate-100 flex items-center justify-center bg-white hover:bg-slate-50 transition-all active:scale-95 group"
-                        >
+                         >
                             <div className="w-8 h-8 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 group-hover:border-[#1E4E82] group-hover:text-[#1E4E82] transition-all">
                                 <Plus size={20} strokeWidth={2.5} />
                             </div>
-                        </button>
+                         </button>
                     </div>
                 </div>
             </div>
@@ -465,6 +467,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         return (
             <div className="pt-24 lg:pt-4 pb-12 text-left">
                 <div className="mb-8 mt-4 lg:mt-0 px-5 lg:px-0">
+                    <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">FAQs</h2>
                     <p className="text-gray-500 font-bold text-sm">Find answers to commonly asked questions.</p>
                 </div>
                 <div className="flex border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar px-5 lg:px-0">
@@ -504,7 +507,8 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
 
     const renderContact = () => (
         <div className="pt-24 lg:pt-4 pb-10 px-5 lg:px-0">
-            <p className="text-gray-500 font-bold text-sm mb-12 mt-4 lg:mt-0">We'd love to hear from you. Reach out through any of these channels.</p>
+            <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Contact Us</h2>
+            <p className="text-gray-500 font-bold text-sm mb-12">We'd love to hear from you. Reach out through any of these channels.</p>
             <div className="space-y-4">
                 {[
                     { icon: Mail, label: 'Email', value: 'support@artifinda.com', color: 'bg-blue-50 text-blue-500' },
@@ -528,6 +532,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
 
     const renderAbout = () => (
         <div className="pt-24 lg:pt-4 pb-10 px-5 lg:px-0">
+            <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block px-4">About Artifinda</h2>
             <div className="flex flex-col items-center mb-12 mt-8 lg:mt-0">
                 <div className="w-24 h-24 bg-[#1E4E82] rounded-[32px] flex items-center justify-center mb-6 shadow-xl shadow-[#1E4E82]/20">
                     <img src={logo} alt="Artifinda" className="h-10 brightness-0 invert" />
@@ -547,7 +552,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
     );
 
     return (
-        <div className="w-full px-5 lg:px-4 flex flex-col overflow-y-auto no-scrollbar">
+        <div className="max-w-6xl mx-auto w-full px-5 lg:px-4 flex flex-col pt-2 lg:pt-6 bg-[#F8FAFC] min-h-screen overflow-y-auto no-scrollbar">
             {settingsStep !== 'main' && settingsStep !== 'subscriptions' && (
                 <div className="hidden lg:flex items-center gap-3 mb-4">
                     <button onClick={() => {

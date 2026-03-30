@@ -488,8 +488,20 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
                             </div>
                         </div>
                     )) : (
-                        <div className="bg-white border border-dashed border-gray-200 rounded-[24px] p-12 text-center text-gray-400 font-bold">
-                            No subscription history found
+                        <div className="bg-white border border-dashed border-slate-200 rounded-[32px] p-12 text-center flex flex-col items-center">
+                            <div className="w-full max-w-xs mb-6 flex justify-center scale-90">
+                                <div className="relative w-48 h-32">
+                                    {/* Abstract Receipt/Wallet Illustration */}
+                                    <div className="absolute left-1/2 -translate-x-1/2 top-4 w-16 h-20 bg-slate-50 rounded-lg flex flex-col items-center justify-between p-2 pt-4 border-2 border-white shadow-sm -rotate-6">
+                                        <div className="w-8 h-1.5 bg-slate-100 rounded-full" />
+                                        <div className="w-6 h-1 bg-slate-100 rounded-full" />
+                                        <div className="w-4 h-4 bg-slate-100 rounded-full" />
+                                    </div>
+                                    <div className="absolute left-1/2 -translate-x-1/2 top-6 w-16 h-20 bg-blue-50/50 rounded-lg border-2 border-white shadow-sm rotate-6" />
+                                </div>
+                            </div>
+                            <h4 className="text-[11px] font-black text-[#0f172a] mb-1 uppercase tracking-widest">No History Found</h4>
+                            <p className="text-slate-400 font-bold max-w-[200px] leading-relaxed text-[10px]">You haven't made any subscription or boost payments yet. Your receipts will appear here!</p>
                         </div>
                     )}
                 </div>

@@ -175,7 +175,7 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                                     toast.error('Phone number not available');
                                 }
                             }} className="w-9 h-9 bg-slate-50 border border-slate-100 text-[#0f172a] rounded-full flex items-center justify-center shadow-sm cursor-pointer"><Phone size={16} /></button>
-                            <button className="w-9 h-9 bg-slate-50 border border-slate-100 text-[#0f172a] rounded-full flex items-center justify-center shadow-sm cursor-pointer"><MessageSquare size={16} /></button>
+                            <button onClick={() => toast('Please complete your booking request to start messaging', { icon: '💬' })} className="w-9 h-9 bg-slate-50 border border-slate-100 text-[#0f172a] rounded-full flex items-center justify-center shadow-sm cursor-pointer"><MessageSquare size={16} /></button>
                         </div>
                     </div>
 

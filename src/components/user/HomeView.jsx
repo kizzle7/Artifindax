@@ -7,7 +7,7 @@ import DashboardSkeleton from '../ui/DashboardSkeleton';
 const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topArtisans, loadingTopRated, setIsMenuOpen, isMenuOpen, handleCategoryClick, popularServices, setSearchQuery, loadingPopular }) => {
     const repeatedBanners = [...BANNERS, ...BANNERS, ...BANNERS];
     return (
-        <div className="flex-1 transition-all duration-300">
+        <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 transition-all duration-300">
             <div className="hidden lg:flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center cursor-pointer">
@@ -94,7 +94,24 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
                                 </div>
                             ))
                         ) : (
-                            <div className="text-center py-10 text-gray-300 font-black uppercase tracking-widest text-[8px]">No top artisans found in your area</div>
+                        <div className="flex flex-col items-center text-center py-12 px-6 bg-white rounded-[24px] border border-dashed border-slate-100">
+                            <div className="w-full max-w-xs mb-6 flex justify-center scale-90">
+                                <div className="relative w-48 h-32">
+                                    {/* Abstract Star/Award Illustration */}
+                                    <div className="absolute left-1/2 -translate-x-1/2 top-4 w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center border-4 border-white shadow-sm ring-8 ring-yellow-50/30">
+                                        <Star size={32} className="text-yellow-400 fill-yellow-400" />
+                                    </div>
+                                    <div className="absolute left-1/4 top-0 w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center border-2 border-white shadow-sm -rotate-12">
+                                        <MapPin size={16} className="text-[#1E4E82]/30" />
+                                    </div>
+                                    <div className="absolute right-1/4 bottom-4 w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center border-2 border-white shadow-sm rotate-12">
+                                        <div className="w-4 h-1 bg-slate-200 rounded-full" />
+                                    </div>
+                                </div>
+                            </div>
+                            <h4 className="text-[11px] font-black text-[#0f172a] mb-1 uppercase tracking-widest">No Top Artisans Nearby</h4>
+                            <p className="text-slate-400 font-bold max-w-[200px] leading-relaxed text-[10px]">We couldn't find any top-rated artisans in your current area just yet. Try searching for specific services!</p>
+                        </div>
                         )}
                     </>
                 )}

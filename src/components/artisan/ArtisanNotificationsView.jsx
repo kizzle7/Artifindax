@@ -45,6 +45,11 @@ const ArtisanNotificationsView = ({ notificationsViewStep, setNotificationsViewS
                             <div className="w-2 h-16 bg-slate-200 rounded-full" />
                             <div className="w-8 h-8 bg-slate-100 rounded-full border-2 border-white" />
                         </div>
+                        <div className="absolute inset-x-0 bottom-0 flex items-end justify-center gap-2 opacity-20 px-8">
+                            <div className="w-full h-8 bg-slate-200 rounded-t-lg" />
+                            <div className="w-full h-12 bg-slate-300 rounded-t-lg" />
+                            <div className="w-full h-10 bg-slate-200 rounded-t-lg" />
+                        </div>
                     </div>
                 </div>
                 <h2 className="text-xl lg:text-2xl font-black text-[#0f172a] mb-2 tracking-tight">No Notifications yet!</h2>

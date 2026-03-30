@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronRight, AlertCircle, Calendar, Clock, MapPin, Phone, MessageSquare, Mail, Plus } from 'lucide-react';
 import DashboardSkeleton from '../ui/DashboardSkeleton';
 
-const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, onCall, onMessage, setCurrentView, activeTab, setActiveTab }) => {
+const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, setCurrentView, activeTab, setActiveTab }) => {
     const tabs = ['New', 'Ongoing', 'Completed', 'Canceled'];
 
     const filteredBookings = (bookingsData || []).filter(b => {
@@ -117,7 +117,7 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                                 <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-slate-50 shadow-inner">
-                                             <img
+                                            <img
                                                 src={booking.customer?.profilePicture || booking.customer?.appUser?.profilePicture || booking.customer?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || booking.customer?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || booking.customer?.lastName || ''))}&background=1E4E82&color=fff&size=100`}
                                                 onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((booking.customer?.appUser?.firstName || booking.customer?.firstName || 'C') + ' ' + (booking.customer?.appUser?.lastName || booking.customer?.lastName || ''))}&background=1E4E82&color=fff&size=100`; }}
                                                 alt="" className="w-full h-full object-cover" />
@@ -125,18 +125,8 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                                         <span className="font-bold text-slate-700 text-sm">{booking.customer?.appUser ? `${booking.customer.appUser.firstName} ${booking.customer.appUser.lastName}` : (booking.customer?.name || 'Customer')}</span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); onCall(booking); }}
-                                            className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors cursor-pointer active:scale-90"
-                                        >
-                                            <Phone size={14} />
-                                        </button>
-                                        <button 
-                                            onClick={(e) => { e.stopPropagation(); onMessage(booking); }}
-                                            className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors cursor-pointer active:scale-90"
-                                        >
-                                            <MessageSquare size={14} />
-                                        </button>
+                                        <button className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors"><Phone size={14} /></button>
+                                        <button onClick={() => { if (onMessageClick) onMessageClick(booking); }} className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors"><MessageSquare size={14} /></button>
                                     </div>
                                 </div>
 
@@ -145,7 +135,7 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                         );
                     })
                 ) : (
-                    <div className="flex flex-col items-center text-center p-6">
+                    <div className="flex flex-col items-center text-center py-12 px-6">
                         <div className="w-full max-w-xs mb-8 flex justify-center scale-90">
                             <div className="relative w-64 h-40">
                                 <div className="absolute left-1/2 -translate-x-1/2 top-0 w-14 h-32 bg-slate-100 rounded-full flex flex-col items-center justify-between p-1.5 pt-4">
@@ -161,10 +151,10 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                                 </div>
                             </div>
                         </div>
-                        <h2 className="text-2xl font-black text-[#0f172a] mb-2 tracking-tight">No Bookings yet!</h2>
-                        <p className="text-slate-400 font-bold mb-8 max-w-[240px] leading-relaxed text-sm">You can view and manage your bookings on this page</p>
+                        <h2 className="text-xl font-black text-[#0f172a] mb-2 tracking-tight uppercase">No {activeTab} Bookings</h2>
+                        <p className="text-slate-400 font-bold mb-8 max-w-[240px] leading-relaxed text-xs">You don't have any bookings in this category yet. Keep up the good work!</p>
                         <button onClick={() => setCurrentView('dashboard')} className="w-full max-w-xs py-4.5 bg-[#1E4E82] text-white rounded-[20px] font-black text-sm shadow-xl active:scale-95 transition-all">
-                            Book a Service Now
+                            Back to Dashboard
                         </button>
                     </div>
                 )}

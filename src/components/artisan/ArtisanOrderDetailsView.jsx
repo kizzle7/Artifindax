@@ -14,7 +14,7 @@ export const getDetailStatusBadge = (status) => {
     }
 };
 
-const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAccept, onCall, onMessage }) => {
+const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAccept, onMessageClick }) => {
     if (!booking) return null;
 
     const getActionButtons = (status) => {
@@ -47,7 +47,7 @@ const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAcce
     };
 
     return (
-        <div className="animate-in slide-in-from-right-4 duration-500">
+        <div className="animate-in slide-in-from-right-4 duration-500 pb-10">
             {/* Desktop Header */}
             <div className="hidden lg:flex items-center justify-between mb-8 pb-4">
                 <div className="flex items-center gap-4">
@@ -70,18 +70,8 @@ const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAcce
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button 
-                        onClick={() => onCall(booking)}
-                        className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"
-                    >
-                        <Phone size={16} />
-                    </button>
-                    <button 
-                        onClick={() => onMessage(booking)}
-                        className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"
-                    >
-                        <MessageSquare size={16} />
-                    </button>
+                    <button className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all"><Phone size={16} /></button>
+                    <button onClick={() => { if(onMessageClick) onMessageClick(booking); }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all"><MessageSquare size={16} /></button>
                 </div>
             </div>
 

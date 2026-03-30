@@ -10,6 +10,7 @@ const MobileMenu = ({ isMenuOpen, setIsMenuOpen, currentView, setCurrentView, se
                     {[
                         { id: 'home', icon: Home, label: 'HOME' },
                         { id: 'bookings', icon: Briefcase, label: 'BOOKINGS' },
+                        { id: 'messages', icon: MessageCircle, label: 'MESSAGES' },
                         { id: 'notifications', icon: Bell, label: 'NOTIFICATIONS' },
                         { id: 'settings', icon: Settings, label: 'SETTINGS' },
                     ].map((item) => (

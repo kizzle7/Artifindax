@@ -66,7 +66,7 @@ const DashboardSkeleton = ({ type = 'home' }) => {
 
     if (type === 'bookings') {
         return (
-            <div className="space-y-4 animate-pulse">
+            <div className="w-full space-y-4 animate-pulse">
                 <div className="h-8 w-32 bg-slate-200 rounded-lg mb-6 hidden lg:block" />
                 
                 {/* Tabs Skeleton */}
@@ -78,7 +78,7 @@ const DashboardSkeleton = ({ type = 'home' }) => {
 
                 {/* Booking Cards Skeleton */}
                 {[...Array(3)].map((_, i) => (
-                    <div key={i} className="bg-white border border-slate-100 rounded-[24px] p-5 space-y-4 shadow-sm">
+                    <div key={i} className="w-full bg-white border border-slate-100 rounded-[24px] p-5 space-y-4 shadow-sm">
                         <div className="flex justify-between">
                             <div className="space-y-2">
                                 <div className="h-3 w-16 bg-slate-100 rounded" />
@@ -197,8 +197,7 @@ const DashboardSkeleton = ({ type = 'home' }) => {
 
     if (type === 'user-bookings') {
         return (
-            <div className="flex-1 p-4 lg:ml-[240px] pt-16 lg:pt-10 animate-pulse space-y-6">
-                <div className="h-4 w-24 bg-slate-200 rounded hidden lg:block" />
+            <div className="w-full animate-pulse space-y-4">
                 <div className="flex gap-5 border-b border-gray-50 pb-2">
                     {[...Array(3)].map((_, i) => (
                         <div key={i} className="h-3 w-16 bg-slate-100 rounded" />
@@ -206,7 +205,7 @@ const DashboardSkeleton = ({ type = 'home' }) => {
                 </div>
                 <div className="space-y-3">
                     {[...Array(4)].map((_, i) => (
-                        <div key={i} className="bg-white border border-gray-50 rounded-[14px] p-4 space-y-3 h-32">
+                        <div key={i} className="w-full bg-white border border-gray-50 rounded-[14px] p-4 space-y-3 h-32">
                             <div className="flex justify-between">
                                 <div className="h-3 w-12 bg-slate-50 rounded" />
                                 <div className="w-4 h-4 bg-slate-50 rounded-full" />

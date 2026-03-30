@@ -37,11 +37,7 @@ export const BOOKINGS = [
     { id: 4, artisan: 'Janet Oge', artisanRole: 'Electrician', artisanRating: 4.8, status: 'canceled', service: 'AC Repair', date: '24th June, 2025', time: '12:00pm', idTag: '#001345', price: 7900 },
 ];
 
-export const MESSAGES = [
-    { id: 1, artisan: 'Chinedu Eze', lastMessage: 'Good day ma! I have left the old scre...', time: '12:00 PM', unread: 1, hasInvoice: false, location: 'Ikorodu, Lagos', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150' },
-    { id: 2, artisan: 'Chinedu Eze', lastMessage: 'Invoice sent for the AC Repair', time: '12:00 PM', unread: 1, hasInvoice: true, location: 'Ikorodu, Lagos', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150' },
-    { id: 3, artisan: 'Janet Oge', lastMessage: 'I will be there by 10am tomorrow', time: 'Yesterday', unread: 0, hasInvoice: false, location: 'Maitama, Abuja', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150' },
-];
+
 
 export const NOTIFICATIONS = [
     { id: 1, title: 'Booking Confirmed', description: 'Ifeanyi Okonkwo has confirmed your plumbing service for 2:00 PM today.', time: '2:45pm', date: 'today', dot: true, type: 'confirmed' },

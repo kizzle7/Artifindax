@@ -1,28 +1,294 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Search, MapPin, CreditCard, Camera, Mic, MoreVertical, Phone, Flag, Ban, X, CheckCircle2, Share2, Download, Calendar, Clock } from 'lucide-react';
-import { MESSAGES } from '../../constants/artisanData';
+import { ChevronLeft, Search, MapPin, CreditCard, Camera, Mic, MoreVertical, Phone, Flag, Ban, X, CheckCircle2, Share2, Download, Calendar, Clock, Send, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Client } from "@stomp/stompjs";
+import chatService from '../../services/chatService';
+import API_CONFIG from '../../config/apiConfig';
 
-const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setCurrentChat, chatMessages, setChatMessages, searchMessages, setSearchMessages, zoomedImage, setZoomedImage, showMenuModal, setShowMenuModal, selectedReportOption, setSelectedReportOption, setCurrentView, onCall }) => {
-    const [isRecording, setIsRecording] = useState(false);
-    const [recordingTime, setRecordingTime] = useState(0);
+const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setCurrentChat, chatMessages, setChatMessages, searchMessages, setSearchMessages, zoomedImage, setZoomedImage, showMenuModal, setShowMenuModal, selectedReportOption, setSelectedReportOption, setCurrentView, bookingsData = [], userProfile }) => {
+    const [input, setInput] = useState('');
+    const [connected, setConnected] = useState(false);
+    const [load, setLoad] = useState(false);
+    const stompClientRef = React.useRef(null);
+    const fileInputRef = React.useRef(null);
+    const [latestMessages, setLatestMessages] = useState({});
+    const latestMessagesRef = React.useRef({});
+
+    const activeBookingId = currentChat?.bookingId || localStorage?.getItem("bookingId");
+    const currentUserId = userProfile?.id || sessionStorage?.getItem('artID');
 
     useEffect(() => {
-        let interval;
-        if (isRecording) {
-            interval = setInterval(() => {
-                setRecordingTime(prev => (prev < 9 ? prev + 1 : 0));
-            }, 1000);
-        } else {
-            setRecordingTime(0);
+        if (stompClientRef.current) {
+            stompClientRef.current.deactivate();
         }
-        return () => clearInterval(interval);
-    }, [isRecording]);
+
+        if (messagesViewStep === 'chat' && activeBookingId) {
+            connectWebSocket(activeBookingId);
+        }
+
+        return () => {
+            if (stompClientRef.current) {
+                stompClientRef.current.deactivate();
+            }
+        };
+    }, [messagesViewStep, activeBookingId]);
+
+    // Grouping & Latest Message Background Fetch
+    useEffect(() => {
+        if (messagesViewStep !== 'list') return;
+
+        const customerMap = new Map();
+        bookingsData.filter(b => b.customer).forEach(b => {
+            const customerId = b.customer?.id || b.customer?.name;
+            const existing = customerMap.get(customerId);
+            if (!existing || new Date(b.createdOn) > new Date(existing.createdOn)) {
+                customerMap.set(customerId, b);
+            }
+        });
+
+        const uniqueBookings = Array.from(customerMap.values());
+        const neededBookings = uniqueBookings.filter(b => !latestMessagesRef.current[b.id] && latestMessagesRef.current[b.id] !== 'fetching');
+
+        if (neededBookings.length > 0) {
+            neededBookings.forEach(b => { latestMessagesRef.current[b.id] = 'fetching'; });
+
+            const fetchLatest = async () => {
+                const updates = {};
+                for (const b of neededBookings) {
+                    try {
+                        const result = await chatService.getChats(b.id);
+                        const chatArray = Array.isArray(result) ? result : Object.entries(result).filter(([key]) => key !== "status").map(([_, value]) => value);
+
+                        if (chatArray && chatArray.length > 0) {
+                            const lastMsg = chatArray[chatArray.length - 1];
+                            const text = lastMsg.messageType === 'MEDIA' ? '📷 Photo' : lastMsg.content;
+                            updates[b.id] = { text, unread: 0, lastMsgId: lastMsg.id, hasMessages: true };
+                        } else {
+                            updates[b.id] = { text: '', unread: 0, lastMsgId: null, hasMessages: false };
+                        }
+                    } catch (e) {
+                        updates[b.id] = { text: '', unread: 0, lastMsgId: null, hasMessages: false };
+                    }
+                    latestMessagesRef.current[b.id] = updates[b.id];
+                }
+                setLatestMessages(prev => ({ ...prev, ...updates }));
+            };
+            fetchLatest();
+        }
+    }, [bookingsData, messagesViewStep]);
+
+    const connectWebSocket = (id) => {
+        if (!id) {
+            console.error("Booking ID missing for WebSocket connection");
+            setLoad(false);
+            return;
+        }
+
+        let wsUrl = API_CONFIG.WEBSOCKET_URL.replace(/^http/, 'ws');
+        if (!wsUrl.endsWith('/websocket')) {
+            wsUrl = wsUrl.endsWith('/') ? `${wsUrl}websocket` : `${wsUrl}/websocket`;
+        }
+        const stompClient = new Client({
+            brokerURL: wsUrl,
+            debug: (msg) => console.log("🔵 STOMP Debug:", msg),
+            reconnectDelay: 5000,
+            onConnect: () => {
+                console.log("✅ Connected to WebSocket");
+                setConnected(true);
+                getChats(id);
+                stompClient.subscribe(`/topic/chat/${id}`, (message) => {
+                    const chatMessage = JSON.parse(message.body);
+                    console.log("📥 Received Message:", chatMessage);
+                    setChatMessages((prev) => [...prev, chatMessage]);
+                });
+            },
+            onDisconnect: () => {
+                setLoad(false);
+                console.log("❌ Disconnected from WebSocket");
+                setConnected(false);
+            },
+            onStompError: (frame) => {
+                console.error("Broker reported error: " + frame.headers["message"]);
+                console.error("Additional details: " + frame.body);
+                setLoad(false);
+            },
+            onWebSocketError: (event) => {
+                console.error("WebSocket connection error:", event);
+                setLoad(false);
+            },
+            onWebSocketClose: () => {
+                console.log("WebSocket connection closed");
+                setConnected(false);
+                setLoad(false);
+            }
+        });
+
+        stompClient.activate();
+        stompClientRef.current = stompClient;
+    };
+
+    const getChats = async (id) => {
+        setLoad(true)
+        try {
+            const result = await chatService.getChats(id);
+            if (result) {
+                setLoad(false);
+                const chatArray = Array.isArray(result) ? result :
+                    Object.entries(result)
+                        .filter(([key]) => key !== "status")
+                        .map(([_, value]) => value);
+
+                setChatMessages(chatArray);
+            }
+        } catch (err) {
+            console.error("Error fetching chats:", err);
+            setLoad(false);
+        }
+    };
+
+    const handleSendMessage = async (content, type = 'TEXT') => {
+        const chatMessage = {
+            bookingId: activeBookingId,
+            messageType: type,
+            content: content,
+            userToken: localStorage.getItem('artifinda_token') || sessionStorage.getItem('token')
+        };
+
+        if (stompClientRef.current && connected) {
+            stompClientRef.current.publish({
+                destination: "/app/send",
+                body: JSON.stringify(chatMessage),
+            });
+        }
+    };
+
+    const handleMediaUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const toastId = toast.loading("Uploading media...");
+        try {
+            const formData = new FormData();
+            formData.append("files", file);
+
+            const response = await chatService.uploadFile(formData);
+            const fileUrl = response[0];
+
+            await handleSendMessage(fileUrl, 'MEDIA');
+            toast.success("Media sent", { id: toastId });
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast.error("Failed to upload media", { id: toastId });
+        }
+    };
+
+    // Skeleton component for chat list loading state - matches bookings card style
+    const ChatListSkeleton = () => (
+        <div className="space-y-3 animate-pulse">
+            {[...Array(5)].map((_, i) => (
+                <div key={i} className="bg-white border border-gray-50 rounded-[14px] p-4 flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-slate-100 shrink-0" />
+                    <div className="flex-1 space-y-2">
+                        <div className="flex justify-between">
+                            <div className="h-3.5 w-28 bg-slate-200 rounded" />
+                            <div className="h-2.5 w-10 bg-slate-100 rounded" />
+                        </div>
+                        <div className="h-2.5 w-44 bg-slate-100 rounded" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    );
+
+    // Skeleton component for chat messages - matches bookings card style
+    const ChatMessagesSkeleton = () => (
+        <div className="space-y-3 animate-pulse">
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-56 h-12" />
+            </div>
+            <div className="flex items-start gap-3 flex-row-reverse">
+                <div className="bg-blue-100 border border-blue-100 rounded-[14px] p-4 w-44 h-12" />
+            </div>
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-64 h-16" />
+            </div>
+            <div className="flex items-start gap-3 flex-row-reverse">
+                <div className="bg-blue-100 border border-blue-100 rounded-[14px] p-4 w-48 h-12" />
+            </div>
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-40 h-10" />
+            </div>
+            <div className="flex items-start gap-3 flex-row-reverse">
+                <div className="bg-blue-100 border border-blue-100 rounded-[14px] p-4 w-48 h-12" />
+            </div>
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-40 h-10" />
+            </div>
+            <div className="flex items-start gap-3 flex-row-reverse">
+                <div className="bg-blue-100 border border-blue-100 rounded-[14px] p-4 w-48 h-12" />
+            </div>
+            <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-100 shrink-0 mt-1" />
+                <div className="bg-gray-100 border border-gray-50 rounded-[14px] p-4 w-40 h-10" />
+            </div>
+        </div>
+    );
 
     const renderList = () => {
-        const filteredMessages = MESSAGES.filter(m =>
-            m.customer.toLowerCase().includes(searchMessages.toLowerCase()) ||
-            m.lastMessage.toLowerCase().includes(searchMessages.toLowerCase())
+        // Group bookings by customer to prevent duplicate chats
+        const customerMap = new Map();
+        bookingsData.filter(b => b.customer).forEach(b => {
+            const customerId = b.customer?.id || b.customer?.name;
+            const existing = customerMap.get(customerId);
+            if (!existing || new Date(b.createdOn) > new Date(existing.createdOn)) {
+                customerMap.set(customerId, b);
+            }
+        });
+
+        // Build dynamic list of distinct conversations
+        const uniqueBookings = Array.from(customerMap.values());
+        const isListLoading = bookingsData.length === 0 || uniqueBookings.some(b => {
+            const ref = latestMessagesRef.current[b.id];
+            return !ref || ref === 'fetching';
+        });
+
+        const chatList = uniqueBookings.map(b => {
+            const customerName = b.customer?.appUser ? `${b.customer.appUser.firstName || ''} ${b.customer.appUser.lastName || ''}`.trim() : (b.customer?.firstName ? `${b.customer.firstName} ${b.customer.lastName || ''}`.trim() : 'Customer');
+            const avatar = b.customer?.appUser?.profilePicture || b.customer?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(customerName)}&background=1E4E82&color=fff&size=150`;
+
+            const msgData = latestMessagesRef.current[b.id] === 'fetching' ? null : (latestMessagesRef.current[b.id] || latestMessages[b.id]);
+            if (msgData && msgData.hasMessages === false) return null;
+            const lastMessageText = msgData?.text || '';
+            const unreadCount = msgData?.unread || 0;
+            const lastMsgId = msgData?.lastMsgId || null;
+            const stillLoading = !msgData;
+
+            return {
+                id: b.id,
+                bookingId: b.id,
+                customer: customerName,
+                avatar: avatar,
+                location: b.customerAddress?.address?.address || b.address || 'Location unavailable',
+                phoneNumber: b.customer?.appUser?.phoneNumber || b.customer?.phoneNumber || '',
+                lastMessage: lastMessageText,
+                time: new Date(b.createdOn || b.bookingDate || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+                unread: unreadCount,
+                lastMsgId: lastMsgId,
+                hasInvoice: false,
+                stillLoading
+            };
+        }).filter(Boolean);
+
+        const hasAnyConfirmed = chatList.some(m => !m.stillLoading);
+        const filteredMessages = chatList.filter(m =>
+            !m.stillLoading &&
+            (m.customer.toLowerCase().includes(searchMessages.toLowerCase()) ||
+                m.lastMessage.toLowerCase().includes(searchMessages.toLowerCase()))
         );
         return (
             <div className="flex-1 bg-white min-h-screen pt-16 lg:pt-10 p-5 lg:p-8">
@@ -35,33 +301,50 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
                         className="w-full pl-11 pr-4 py-3 rounded-2xl border border-gray-100 bg-white focus:outline-none focus:border-[#1E4E82]/30 text-gray-700 font-bold text-sm shadow-sm" />
                 </div>
                 <div className="space-y-1">
-                    {filteredMessages.map((msg) => (
-                        <div key={msg.id} onClick={() => {
-                            setCurrentChat(msg);
-                            setChatMessages([
-                                { id: 1, type: 'text', content: 'Hello! I need an update on the progress.', sender: 'customer', time: '2:30pm' },
-                                ...(msg.hasInvoice ? [{ id: 2, type: 'invoice', content: 'IN00254', sender: 'artisan', time: '2:35pm' }] : []),
-                                { id: 3, type: 'text', content: 'I will be there in 30 mins to finish up.', sender: 'artisan', time: '2:40pm' }
-                            ]);
-                            setMessagesViewStep('chat');
-                        }} className="flex items-center gap-3 p-3.5 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 rounded-xl">
-                            <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden shrink-0 shadow-inner"><img src={msg.avatar} alt="" className="w-full h-full object-cover" /></div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between mb-0.5">
-                                    <h4 className="font-bold text-[#0f172a] truncate text-sm">{msg.customer}</h4>
-                                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{msg.time}</span>
-                                </div>
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2 overflow-hidden">
-                                        {msg.hasInvoice && <span className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-50 border border-gray-100 rounded text-[7px] font-black text-gray-500 uppercase shrink-0"><CreditCard size={8} /> invoice</span>}
-                                        <p className="text-xs text-gray-400 truncate font-bold">{msg.lastMessage}</p>
+                    {isListLoading && !hasAnyConfirmed
+                        ? <ChatListSkeleton />
+                        : filteredMessages.length === 0
+                            ? (
+                                <div className="flex flex-col items-center text-center py-16 px-6">
+                                    <div className="w-full max-w-xs mb-8 flex justify-center scale-90">
+                                        <div className="relative w-64 h-40">
+                                            {/* Abstract Chat Illustration */}
+                                            <div className="absolute left-1/2 -translate-x-1/2 top-0 w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center border-4 border-white shadow-sm rotate-3">
+                                                <MessageSquare size={40} className="text-[#1E4E82]/20" strokeWidth={1.5} />
+                                            </div>
+                                            <div className="absolute left-1/2 -translate-x-1/2 bottom-4 w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center border-4 border-white shadow-sm -rotate-6 ml-10">
+                                                <div className="w-10 h-10 bg-slate-200/40 rounded-full" />
+                                            </div>
+                                            <div className="absolute inset-x-0 bottom-0 flex justify-center">
+                                                <div className="w-32 h-2 bg-slate-100/50 rounded-full blur-sm" />
+                                            </div>
+                                        </div>
                                     </div>
-                                    {msg.unread > 0 && <span className="w-4 h-4 bg-[#1E4E82] text-white text-[8px] font-black rounded-full flex items-center justify-center shrink-0">{msg.unread}</span>}
+                                    <h2 className="text-xl font-black text-[#0f172a] mb-2 tracking-tight uppercase">No Conversations Found</h2>
+                                    <p className="text-slate-400 font-bold mb-8 max-w-[240px] leading-relaxed text-xs">You don't have any active conversations with customers yet. Messages from potential clients will appear here.</p>
+                                </div>
+                            )
+                            : filteredMessages.map((msg) => (<div key={msg.id} onClick={() => {
+                                setCurrentChat(msg);
+                                setChatMessages([]);
+                                setMessagesViewStep('chat');
+                            }} className="flex items-center gap-3 p-3.5 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 rounded-xl">
+                                <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden shrink-0 shadow-inner"><img src={msg.avatar} alt="" className="w-full h-full object-cover" /></div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center justify-between mb-0.5">
+                                        <h4 className="font-bold text-[#0f172a] truncate text-sm">{msg.customer}</h4>
+                                        <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{msg.time}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 overflow-hidden">
+                                            {msg.hasInvoice && <span className="flex items-center gap-1 px-1.5 py-0.5 bg-gray-50 border border-gray-100 rounded text-[7px] font-black text-gray-500 uppercase shrink-0"><CreditCard size={8} /> invoice</span>}
+                                            <p className="text-xs text-gray-400 truncate font-bold">{msg.lastMessage}</p>
+                                        </div>
+                                        {msg.unread > 0 && <span className="w-4 h-4 bg-[#1E4E82] text-white text-[8px] font-black rounded-full flex items-center justify-center shrink-0">{msg.unread}</span>}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                    {filteredMessages.length === 0 && <div className="text-center py-10 text-gray-300 font-black uppercase tracking-widest text-[8px]">No conversations found</div>}
+                            ))}
                 </div>
             </div>
         );
@@ -73,21 +356,28 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
                 <div className="flex items-center gap-3">
                     <button onClick={() => setMessagesViewStep('list')} className="p-2 -ml-2 text-[#0f172a] lg:hidden"><ChevronLeft size={24} strokeWidth={2.5} /></button>
                     <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm"><img src={currentChat?.avatar} alt="" className="w-full h-full object-cover" /></div>
-                    <div className="min-w-0">
-                        <h4 className="font-bold text-[#0f172a] -mb-1 truncate text-base">{currentChat?.customer}</h4>
+                    <div className="min-w-0 text-left cursor-pointer">
+                        <h4 className="font-bold text-[#0f172a] -mb-1 truncate text-base">
+                            {typeof currentChat?.customer === 'object'
+                                ? (currentChat.customer.appUser ? `${currentChat.customer.appUser.firstName} ${currentChat.customer.appUser.lastName}` : 'Customer')
+                                : (currentChat?.customer || 'Chat')}
+                        </h4>
                         <div className="flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-widest truncate"><MapPin size={8} /> {currentChat?.location}</div>
                     </div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                {/* <div className="flex items-center gap-1.5">
                     {currentChat?.hasInvoice && <button onClick={() => setMessagesViewStep('invoice_detail')} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors animate-pulse"><CreditCard size={20} strokeWidth={2.5} /></button>}
-                    <button 
-                        onClick={() => onCall(currentChat)}
-                        className="p-2 text-[#1E4E82] hover:bg-blue-50 rounded-full transition-colors cursor-pointer active:scale-90"
-                    >
-                        <Phone size={20} strokeWidth={2.5} />
-                    </button>
+                    <button onClick={() => {
+                        const phone = currentChat?.phoneNumber || currentChat?.customer?.phoneNumber || '';
+                        if (phone) {
+                            navigator.clipboard.writeText(phone);
+                            toast.success('Phone number copied');
+                        } else {
+                            toast.error('Phone number not available');
+                        }
+                    }} className="p-2 text-[#1E4E82] hover:bg-blue-50 rounded-full transition-colors cursor-pointer"><Phone size={20} strokeWidth={2.5} /></button>
                     <div className="relative">
-                        <button onClick={() => setShowMenuModal(!showMenuModal)} className="p-2 text-[#1E4E82] hover:bg-blue-50 rounded-full transition-colors"><MoreVertical size={20} strokeWidth={2.5} /></button>
+                        <button onClick={() => setShowMenuModal(!showMenuModal)} className="p-2 text-[#1E4E82] hover:bg-blue-50 rounded-full transition-colors cursor-pointer"><MoreVertical size={20} strokeWidth={2.5} /></button>
                         {showMenuModal && (
                             <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-3 z-50 overflow-hidden">
                                 <button onClick={() => { setShowMenuModal(false); setMessagesViewStep('report'); }} className="w-full px-6 py-3.5 flex items-center gap-3 text-sm font-bold text-[#0f172a] hover:bg-blue-50 transition-colors uppercase tracking-tight"><Flag size={18} className="text-blue-900 fill-blue-900" /> Report</button>
@@ -95,69 +385,55 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
                             </div>
                         )}
                     </div>
-                </div>
+                </div> */}
             </div>
 
             <div className="flex-1 p-6 space-y-8 overflow-y-auto pb-32 scroll-smooth">
-                <div className="flex justify-center"><span className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest bg-gray-50 px-4 py-1.5 rounded-full border border-gray-100">Today</span></div>
-                {chatMessages.map((msg, idx) => (
-                    <div key={idx} className={`flex flex-col ${msg.sender === 'artisan' ? 'items-end ml-auto' : 'items-start'} gap-1 max-w-[85%]`}>
-                        {msg.type === 'text' && (
-                            <div className={`${msg.sender === 'artisan' ? 'bg-[#1E4E82] text-white rounded-tr-none' : 'bg-[#F1F5F9] text-[#0f172a] rounded-tl-none'} p-4 font-medium text-base rounded-[24px] leading-relaxed shadow-sm`}>{msg.content}</div>
-                        )}
-                        {msg.type === 'image' && (
-                            <div onClick={() => setZoomedImage(msg.content)} className="rounded-[24px] overflow-hidden border-4 border-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform max-w-[240px]">
-                                <img src={msg.content} alt="Sent attachment" className="w-full h-full object-cover max-h-64" />
-                            </div>
-                        )}
-                        {msg.type === 'invoice' && (
-                            <div className="bg-[#F1F5F9] p-4 rounded-[24px] rounded-tl-none w-full sm:w-80 border border-gray-50">
-                                <div className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm ring-1 ring-black/[0.02]">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 bg-slate-50 rounded-xl text-slate-400"><CreditCard size={20} /></div>
-                                        <span className="font-extrabold text-[#0f172a]">{msg.content}</span>
-                                    </div>
-                                    <button onClick={() => setMessagesViewStep('invoice_detail')} className="px-3.5 py-2 bg-blue-50 text-[#1E4E82] text-[10px] font-black uppercase tracking-tighter rounded-xl transition-colors hover:bg-blue-100">View Details</button>
+                {load && chatMessages?.length === 0 && <ChatMessagesSkeleton />}
+                {!load &&
+                    <div>
+                        {chatMessages.map((msg, idx) => {
+                            const isMe = msg?.sender?.id === Number(currentUserId);
+                            const displayTime = msg.time || (msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '');
+                            const isText = msg.type === 'text' || msg.messageType === 'TEXT';
+                            const isMedia = msg.type === 'image' || msg.messageType === 'MEDIA';
+
+                            return (
+                                <div key={idx} className={`flex flex-col ${isMe ? 'items-end ml-auto' : 'items-start'} gap-1 max-w-[85%]`}>
+                                    {isText && <div className={`${isMe ? 'bg-[#1E4E82] text-white rounded-tr-none' : 'bg-[#F1F5F9] text-[#0f172a] rounded-tl-none'} p-4 font-medium text-base rounded-[24px] leading-relaxed shadow-sm break-words max-w-full text-left`}>{msg.content}</div>}
+                                    {isMedia && <div onClick={() => setZoomedImage(msg.content)} className="rounded-[24px] overflow-hidden border-4 border-white shadow-xl cursor-pointer hover:scale-[1.02] transition-transform max-w-[240px]"><img src={msg.content} alt="Sent attachment" className="w-full h-full object-cover max-h-64" /></div>}
+                                    {msg.type === 'invoice' && (
+                                        <div className="bg-[#F1F5F9] p-4 rounded-[24px] rounded-tl-none w-full sm:w-80 border border-gray-50">
+                                            <div className="bg-white rounded-2xl p-4 flex items-center justify-between shadow-sm">
+                                                <div className="flex items-center gap-3"><div className="p-2.5 bg-slate-50 rounded-xl text-slate-400"><CreditCard size={20} /></div><span className="font-extrabold text-[#0f172a]">{msg.content}</span></div>
+                                                <button onClick={() => setMessagesViewStep('invoice_detail')} className="px-3.5 py-2 bg-blue-50 text-[#1E4E82] text-[10px] font-black uppercase tracking-tighter rounded-xl transition-colors hover:bg-blue-100 cursor-pointer">View Details</button>
+                                            </div>
+                                        </div>
+                                    )}
+                                    {msg.type === 'rejected' && <div className="bg-red-50 border-2 border-red-100 p-4 rounded-[24px] rounded-tl-none flex items-center gap-3 text-red-600 font-bold text-sm"><AlertCircle size={20} /> Invoice Rejected</div>}
+                                    <div className="flex items-center gap-1.5 px-1 mt-1"><span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{displayTime}</span>{isMe && <CheckCircle2 size={12} className="text-blue-400" />}</div>
                                 </div>
-                            </div>
-                        )}
-                        <div className="flex items-center gap-1.5 px-1 mt-1">
-                            <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">{msg.time}</span>
-                            {msg.sender === 'artisan' && <CheckCircle2 size={12} className="text-blue-400" />}
-                        </div>
-                    </div>
-                ))}
+                            );
+                        })}
+                    </div>}
             </div>
 
             <div className="fixed bottom-0 lg:sticky lg:bottom-0 left-0 right-0 bg-white/80 backdrop-blur-md border-t border-gray-100 px-6 py-4 pb-10 lg:pb-6 z-40">
                 <div className="max-w-4xl mx-auto flex flex-col gap-2">
-                    {isRecording && (
-                        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center gap-4 bg-red-50 p-4 rounded-2xl border border-red-100 mb-2">
-                            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                            <span className="font-bold text-red-600 text-sm">Recording: 0:0{recordingTime}</span>
-                            <div className="flex-1 bg-red-200 h-1 rounded-full overflow-hidden"><motion.div className="bg-red-500 h-full" animate={{ width: ['0%', '100%'] }} transition={{ duration: 10, repeat: Infinity }} /></div>
-                            <button onClick={() => setIsRecording(false)} className="text-red-500 font-bold text-xs uppercase tracking-widest">Cancel</button>
-                        </motion.div>
-                    )}
                     <div className="flex items-center gap-4">
-                        <button onClick={() => {
-                            const newMsg = { id: Date.now(), type: 'image', content: 'https://images.unsplash.com/photo-1595113316349-9fa4ee24f884?auto=format&fit=crop&q=80&w=600', sender: 'artisan', time: '2:30pm' };
-                            setChatMessages(prev => [...prev, newMsg]);
-                        }} className="p-3 text-gray-400 hover:text-blue-900 bg-gray-50 rounded-full transition-colors active:scale-90"><Camera size={26} /></button>
-                        <div className="flex-1 relative">
-                            <input type="text" placeholder="Type a message..."
-                                className="w-full pl-6 pr-14 py-3.5 rounded-full border border-gray-100 bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 shadow-inner font-medium text-sm"
+                        <button onClick={() => fileInputRef.current?.click()} className="p-3 text-gray-400 hover:text-blue-900 bg-gray-50 rounded-full transition-colors active:scale-90 cursor-pointer"><Camera size={26} /></button>
+                        <input type="file" hidden ref={fileInputRef} accept="image/*,video/*" onChange={handleMediaUpload} />
+                        <div className="flex-1 relative border border-gray-100 bg-white rounded-full flex items-center pr-2">
+                            <input type="text" placeholder="Type a message..." className="w-full pl-6 pr-4 py-3.5 bg-transparent focus:outline-none focus:ring-0 font-medium text-sm"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
                                 onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && e.target.value.trim()) {
-                                        const newMsg = { id: Date.now(), type: 'text', content: e.target.value, sender: 'artisan', time: '2:30pm' };
-                                        setChatMessages(prev => [...prev, newMsg]);
-                                        e.target.value = '';
+                                    if (e.key === 'Enter' && input.trim()) {
+                                        handleSendMessage(input);
+                                        setInput('');
                                     }
                                 }} />
-                            <button className={`absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-full transition-all ${isRecording ? 'text-red-500 bg-red-50 scale-125' : 'text-[#1E4E82] hover:bg-blue-50'}`}
-                                onClick={() => { if (!isRecording) { setIsRecording(true); setRecordingTime(0); } else { setIsRecording(false); } }}>
-                                <Mic size={24} />
-                            </button>
+                            <button className="p-2 rounded-full transition-all cursor-pointer text-[#1E4E82] hover:bg-blue-50" onClick={() => { if (input.trim()) { handleSendMessage(input); setInput(''); } }}><Send size={20} /></button>
                         </div>
                     </div>
                 </div>

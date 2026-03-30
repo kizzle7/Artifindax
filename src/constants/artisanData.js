@@ -21,11 +21,7 @@ export const NOTIFICATIONS = [
     { id: 3, title: 'System Update', description: "We've improved our navigation system for better experience.", time: '9:00am', date: '2 days ago', dot: false, type: 'info' },
 ];
 
-export const MESSAGES = [
-    { id: 1, customer: 'Ayomide Falokun', lastMessage: 'Good day! I have some questions ab...', time: '12:00 PM', unread: 1, hasInvoice: false, location: 'Ikorodu, Lagos', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150' },
-    { id: 2, customer: 'John Doe', lastMessage: 'Invoice sent for the Electrical Wiring', time: '12:00 PM', unread: 0, hasInvoice: true, location: 'Allen Avenue, Ikeja', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150' },
-    { id: 3, customer: 'Sarah Smith', lastMessage: 'See you tomorrow at 10am', time: 'Yesterday', unread: 0, hasInvoice: false, location: 'Opebi Rd, Ikeja', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150' },
-];
+
 
 export const USER_PROFILE = {
     firstName: 'Chinedu',

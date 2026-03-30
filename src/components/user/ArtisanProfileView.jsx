@@ -105,7 +105,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                         }} className="flex-1 bg-[#1E4E82] text-white py-3.5 rounded-[12px] font-bold text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer">
                             <Phone size={18} /> Call
                         </button>
-                        <button className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100 cursor-pointer">
+                        <button onClick={() => toast('Please book this artisan to start chatting.', { icon: '💬' })} className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100 cursor-pointer">
                             <MessageSquare size={18} />
                         </button>
                         <button className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100 cursor-pointer">
