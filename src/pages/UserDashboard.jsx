@@ -521,6 +521,7 @@ const UserDashboard = () => {
                                     <HomeView
                                         userProfile={userProfile}
                                         setCurrentView={setCurrentView}
+                                        setSettingsStep={setSettingsStep}
                                         setNotificationsViewStep={setNotificationsViewStep}
                                         topArtisans={topArtisans}
                                         loadingTopRated={loadingTopRated}

@@ -4,13 +4,13 @@ import { MapPin, Bell, Search, Star, Info } from 'lucide-react';
 import { BANNERS } from '../../constants/userData';
 import DashboardSkeleton from '../ui/DashboardSkeleton';
 
-const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topArtisans, loadingTopRated, setIsMenuOpen, isMenuOpen, handleCategoryClick, popularServices, setSearchQuery, loadingPopular }) => {
+const HomeView = ({ userProfile, setCurrentView, setSettingsStep, setNotificationsViewStep, topArtisans, loadingTopRated, setIsMenuOpen, isMenuOpen, handleCategoryClick, popularServices, setSearchQuery, loadingPopular }) => {
     const repeatedBanners = [...BANNERS, ...BANNERS, ...BANNERS];
     return (
         <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 transition-all duration-300">
             <div className="hidden lg:flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center cursor-pointer">
+                <div onClick={() => { setCurrentView('settings'); setSettingsStep('profile'); }} className="flex items-center gap-3 cursor-pointer group">
+                    <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center transition-transform group-hover:scale-105">
                         {userProfile.profilePicture ? (
                             <img src={userProfile.profilePicture} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
@@ -20,7 +20,7 @@ const HomeView = ({ userProfile, setCurrentView, setNotificationsViewStep, topAr
                         )}
                     </div>
                     <div>
-                        <h2 className="text-base font-black text-[#0f172a] leading-tight">Hi, {userProfile.firstName}</h2>
+                        <h2 className="text-base font-black text-[#0f172a] leading-tight group-hover:text-[#1E4E82] transition-colors">Hi, {userProfile.firstName}</h2>
                         <p className="text-gray-400 text-[8px] flex items-center gap-1 font-black uppercase tracking-widest opacity-70"><MapPin size={8} /> {userProfile.addresses[0]?.address || 'Your Location'}</p>
                     </div>
                 </div>

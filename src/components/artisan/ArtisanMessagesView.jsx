@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Search, MapPin, CreditCard, Camera, Mic, MoreVertical, Phone, Flag, Ban, X, CheckCircle2, Share2, Download, Calendar, Clock, Send, AlertCircle } from 'lucide-react';
+import { ChevronLeft, Search, MapPin, CreditCard, Camera, Mic, MoreVertical, Phone, Flag, Ban, X, CheckCircle2, Share2, Download, Calendar, Clock, Send, AlertCircle, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Client } from "@stomp/stompjs";
 import chatService from '../../services/chatService';

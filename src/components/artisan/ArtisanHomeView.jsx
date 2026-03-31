@@ -8,15 +8,15 @@ import {
 import { earningsData, workStatsData } from '../../constants/artisanData';
 import UserIcon from './UserIcon';
 
-const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
+const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
     const isAvailable = userProfile.status === 'ACTIVE';
 
     return (
         <div className="space-y-6">
             {/* Header / Welcome Area */}
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center">
+                <div onClick={() => { setCurrentView('settings'); setSettingsStep('profile'); }} className="flex items-center gap-4 cursor-pointer group">
+                    <div className="w-12 h-12 bg-gray-300 rounded-full overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105">
                         {userProfile.profilePicture ? (
                             <img src={userProfile.profilePicture} alt="" className="w-full h-full object-cover" />
                         ) : (
@@ -26,8 +26,8 @@ const ArtisanHomeView = ({ setCurrentView, userProfile }) => {
                         )}
                     </div>
                     <div>
-                        <h1 className="hidden lg:block text-lg font-bold text-[#0f172a]">Hi, {userProfile.firstName}</h1>
-                        <h1 className="lg:hidden text-lg font-bold text-[#0f172a]">Hi, {userProfile.firstName}!</h1>
+                        <h1 className="hidden lg:block text-lg font-bold text-[#0f172a] group-hover:text-[#1E4E82] transition-colors">Hi, {userProfile.firstName}</h1>
+                        <h1 className="lg:hidden text-lg font-bold text-[#0f172a] group-hover:text-[#1E4E82] transition-colors">Hi, {userProfile.firstName}!</h1>
                         <p className="text-xs text-gray-500">{userProfile.addresses[0]?.address || 'Your Location'}</p>
                     </div>
                 </div>

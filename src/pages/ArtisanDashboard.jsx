@@ -307,7 +307,7 @@ const ArtisanDashboard = () => {
             case 'dashboard': 
                 return isInitialProfileLoading 
                     ? <DashboardSkeleton type="home" /> 
-                    : <ArtisanHomeView setCurrentView={setCurrentView} userProfile={userProfile} />;
+                    : <ArtisanHomeView setCurrentView={setCurrentView} setSettingsStep={setSettingsStep} userProfile={userProfile} />;
             case 'bookings':
                 return bookingsViewStep === 'list' ? (
                     <ArtisanBookingsView

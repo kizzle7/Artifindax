@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ChevronLeft, MapPin, Phone, CreditCard, MoreVertical, Flag, Ban, Camera, X,
-    CheckCircle2, AlertCircle, Search, Download, Share2, Copy, Plus, Send
+    CheckCircle2, AlertCircle, Search, Download, Share2, Copy, Plus, Send, MessageSquare
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Client } from "@stomp/stompjs";
