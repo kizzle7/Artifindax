@@ -21,10 +21,10 @@ const SessionManager = ({ children }) => {
         // Use a slight delay to ensure toast is seen or state is cleared
         toast.error('Session expired due to inactivity. Please login again.');
         
-        // Prevent infinite loops if already on login
-        if (window.location.pathname !== '/login') {
-            console.log('[SessionManager] Redirecting to login...');
-            window.location.href = window.location.origin + '/login';
+        // Prevent infinite loops if already on home
+        if (window.location.pathname !== '/') {
+            console.log('[SessionManager] Redirecting to home...');
+            window.location.href = window.location.origin + '/';
         }
     }, [navigate, location]);
 

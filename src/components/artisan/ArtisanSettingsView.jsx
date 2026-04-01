@@ -35,8 +35,26 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         try {
             const response = await fileService.upload(file);
             console.log('[Settings] File Upload Response:', response);
-            // Handle various possible response shapes (object with url, array, etc.)
-            const imageUrl = response.data?.url || response.url || response.secure_url || (Array.isArray(response.data) ? response.data[0]?.url : null) || (Array.isArray(response) ? response[0]?.url : null);
+            
+            let imageUrl = '';
+            // Robust parsing block
+            if (typeof response === 'string') {
+                imageUrl = response;
+            } else if (Array.isArray(response)) {
+                imageUrl = typeof response[0] === 'string' ? response[0] : (response[0]?.url || response[0]?.secure_url);
+            } else if (response && typeof response === 'object') {
+                if (response.url) imageUrl = response.url;
+                else if (response.secure_url) imageUrl = response.secure_url;
+                else if (response.data) {
+                    if (typeof response.data === 'string') imageUrl = response.data;
+                    else if (Array.isArray(response.data)) {
+                        imageUrl = typeof response.data[0] === 'string' ? response.data[0] : (response.data[0]?.url || response.data[0]?.secure_url);
+                    } else {
+                        imageUrl = response.data.url || response.data.secure_url;
+                    }
+                }
+            }
+
             
             if (imageUrl) {
                 setVerificationFile(imageUrl);
@@ -49,21 +67,53 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         }
     };
 
-    const [profilePic, setProfilePic] = React.useState(userProfile.profilePicture || null);
+    const [profilePic, setProfilePic] = React.useState(userProfile?.profilePicture || null);
+
+    React.useEffect(() => {
+        if (userProfile?.profilePicture) {
+            setProfilePic(userProfile.profilePicture);
+        }
+    }, [userProfile?.profilePicture]);
+
     const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         setUpdateMessage('Uploading profile picture...');
+        setIsUpdating(true);
         try {
             const response = await fileService.upload(file);
-            const imageUrl = response.data?.url || response.url || response.secure_url;
+            console.log('[Settings] Profile Pic Response:', response);
+            let imageUrl = '';
+            // Robust parsing block
+            if (typeof response === 'string') {
+                imageUrl = response;
+            } else if (Array.isArray(response)) {
+                imageUrl = typeof response[0] === 'string' ? response[0] : (response[0]?.url || response[0]?.secure_url);
+            } else if (response && typeof response === 'object') {
+                if (response.url) imageUrl = response.url;
+                else if (response.secure_url) imageUrl = response.secure_url;
+                else if (response.data) {
+                    if (typeof response.data === 'string') imageUrl = response.data;
+                    else if (Array.isArray(response.data)) {
+                        imageUrl = typeof response.data[0] === 'string' ? response.data[0] : (response.data[0]?.url || response.data[0]?.secure_url);
+                    } else {
+                        imageUrl = response.data.url || response.data.secure_url;
+                    }
+                }
+            }
+
             if (imageUrl) {
                 setProfilePic(imageUrl);
                 setUserProfile(prev => ({ ...prev, profilePicture: imageUrl }));
                 setUpdateMessage('Profile picture uploaded!');
+                setTimeout(() => setUpdateMessage(''), 3000);
+            } else {
+                setUpdateMessage('Failed to parse uploaded image. Please try again.');
             }
         } catch (err) {
             setUpdateMessage('Failed to upload profile picture.');
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -161,10 +211,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
 
     const renderProfile = () => (
         <div className="pt-24 lg:pt-4 pb-10 flex flex-col items-center">
-            <div className="w-full max-w-4xl text-left mt-4 lg:mt-0 mb-10 px-5 lg:px-0">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Profile</h2>
-                <p className="text-gray-500 font-bold text-sm">Update your personal information</p>
-            </div>
             <div className="flex justify-center mb-10">
                 <label className="relative cursor-pointer group">
                     <div className="w-28 h-28 rounded-full bg-slate-200 shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
@@ -177,6 +223,11 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                 </label>
             </div>
             <div className="w-full max-w-4xl space-y-5 pb-8 px-5 lg:px-0">
+                {updateMessage && (
+                    <div className={`text-center py-2 text-xs font-bold ${(updateMessage.toLowerCase().includes('success') || updateMessage.toLowerCase().includes('uploaded')) ? 'text-green-500' : 'text-red-500'}`}>
+                        {updateMessage}
+                    </div>
+                )}
                 {[
                     { label: 'Phone Number', type: 'tel', key: 'phone' },
                     { label: 'First Name', type: 'text', key: 'firstName' },
@@ -199,7 +250,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     </div>
                 ))}
                 {updateMessage && (
-                    <div className={`text-center py-2 text-xs font-bold ${updateMessage.includes('success') ? 'text-green-500' : 'text-red-500'}`}>
+                    <div className={`text-center py-2 text-xs font-bold ${(updateMessage.toLowerCase().includes('success') || updateMessage.toLowerCase().includes('uploaded')) ? 'text-green-500' : 'text-red-500'}`}>
                         {updateMessage}
                     </div>
                 )}
@@ -233,7 +284,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         if (settingsStep === 'password_success') return renderSuccess("You're all Set!", "Your password has been changed successfully");
         if (settingsStep === 'password_otp') return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Verify your phone number</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">We've sent a 4-digit verification code to your phone number. Please enter it below to continue.</p>
                 <div className="flex justify-center gap-4 mb-8">{[1, 2, 3, 4].map(i => <div key={i} className="w-14 h-14 lg:w-16 lg:h-16 rounded-[20px] bg-white border-2 border-slate-100" />)}</div>
                 <div className="text-center mb-12"><p className="text-xs font-bold text-gray-400">Didn't get code? <span className="text-[#1E4E82] ml-1">Resend 2:59</span></p></div>
@@ -242,7 +292,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         );
         if (settingsStep === 'password_reset') return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Reset your Password</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter your new password below. Make sure it's strong and secure</p>
                 <div className="space-y-6 flex-1">
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">New Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
@@ -253,7 +302,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         );
         return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl flex flex-col h-[calc(100vh-80px)] lg:h-auto">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-8 mt-4 lg:mt-0 hidden lg:block">Change Password</h2>
                 <div className="space-y-6 flex-1">
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Email / Phone</label><input type="email" defaultValue={userProfile.email} className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold" /></div>
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block ml-1">Old Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none focus:border-[#1E4E82]/30 font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
@@ -267,7 +315,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         if (settingsStep === 'pin_success') return renderSuccess("You're all Set!", "Your login pin has been changed successfully");
         if (settingsStep === 'pin_new') return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Set a new 6-Digit PIN</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter new pin below</p>
                 <div className="flex justify-center gap-2 lg:gap-3 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-12 h-14 lg:w-14 lg:h-16 rounded-2xl bg-white border-2 border-slate-100" />)}</div>
                 <button onClick={() => setSettingsStep('pin_success')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Continue</button>
@@ -276,7 +323,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         return (
             <div className="px-5 lg:px-0 pt-24 lg:pt-4 pb-10 max-w-2xl h-[calc(100vh-80px)] lg:h-auto flex flex-col">
                 <div className="flex-1">
-                    <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Change Login PIN</h2>
                     <p className="text-gray-500 font-bold text-sm mb-12">Enter current pin below</p>
                     <div className="flex justify-center gap-2 lg:gap-3 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-12 h-14 lg:w-14 lg:h-16 rounded-2xl bg-white border-2 border-slate-100" />)}</div>
                 </div>
@@ -467,7 +513,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         return (
             <div className="pt-24 lg:pt-4 pb-12 text-left">
                 <div className="mb-8 mt-4 lg:mt-0 px-5 lg:px-0">
-                    <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">FAQs</h2>
                     <p className="text-gray-500 font-bold text-sm">Find answers to commonly asked questions.</p>
                 </div>
                 <div className="flex border-b border-gray-100 mb-8 overflow-x-auto no-scrollbar px-5 lg:px-0">
@@ -507,7 +552,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
 
     const renderContact = () => (
         <div className="pt-24 lg:pt-4 pb-10 px-5 lg:px-0">
-            <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block">Contact Us</h2>
             <p className="text-gray-500 font-bold text-sm mb-12">We'd love to hear from you. Reach out through any of these channels.</p>
             <div className="space-y-4">
                 {[
@@ -532,7 +576,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
 
     const renderAbout = () => (
         <div className="pt-24 lg:pt-4 pb-10 px-5 lg:px-0">
-            <h2 className="text-2xl font-black text-[#0f172a] mb-2 mt-4 lg:mt-0 hidden lg:block px-4">About Artifinda</h2>
             <div className="flex flex-col items-center mb-12 mt-8 lg:mt-0">
                 <div className="w-24 h-24 bg-[#1E4E82] rounded-[32px] flex items-center justify-center mb-6 shadow-xl shadow-[#1E4E82]/20">
                     <img src={logo} alt="Artifinda" className="h-10 brightness-0 invert" />

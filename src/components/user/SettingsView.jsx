@@ -18,31 +18,54 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
 
     const handleLogout = () => { authService.clearToken(); window.location.href = '/'; };
 
-    const [profilePic, setProfilePic] = React.useState(userProfile.profilePicture || null);
+    const [profilePic, setProfilePic] = React.useState(userProfile?.profilePicture || null);
+
+    React.useEffect(() => {
+        if (userProfile?.profilePicture) {
+            setProfilePic(userProfile.profilePicture);
+        }
+    }, [userProfile?.profilePicture]);
+
     const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
         setUpdateMessage('Uploading profile picture...');
+        setIsUpdating(true);
         try {
             const response = await fileService.upload(file);
             console.log('[SettingsView] Profile Pic Response:', response);
 
             let imageUrl = '';
-            if (Array.isArray(response)) {
-                imageUrl = response[0];
-            } else if (typeof response === 'string') {
+            // Robust parsing block
+            if (typeof response === 'string') {
                 imageUrl = response;
-            } else {
-                imageUrl = response.data?.url || response.url || response.secure_url;
+            } else if (Array.isArray(response)) {
+                imageUrl = typeof response[0] === 'string' ? response[0] : (response[0]?.url || response[0]?.secure_url);
+            } else if (response && typeof response === 'object') {
+                if (response.url) imageUrl = response.url;
+                else if (response.secure_url) imageUrl = response.secure_url;
+                else if (response.data) {
+                    if (typeof response.data === 'string') imageUrl = response.data;
+                    else if (Array.isArray(response.data)) {
+                        imageUrl = typeof response.data[0] === 'string' ? response.data[0] : (response.data[0]?.url || response.data[0]?.secure_url);
+                    } else {
+                        imageUrl = response.data.url || response.data.secure_url;
+                    }
+                }
             }
 
             if (imageUrl) {
                 setProfilePic(imageUrl);
                 setUserProfile(prev => ({ ...prev, profilePicture: imageUrl }));
                 setUpdateMessage('Profile picture uploaded!');
+                setTimeout(() => setUpdateMessage(''), 3000);
+            } else {
+                setUpdateMessage('Failed to parse uploaded image. Please try again.');
             }
         } catch (err) {
             setUpdateMessage('Failed to upload profile picture.');
+        } finally {
+            setIsUpdating(false);
         }
     };
 
@@ -83,12 +106,22 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             console.log('[SettingsView] Address Doc Response:', response);
 
             let imageUrl = '';
-            if (Array.isArray(response)) {
-                imageUrl = response[0];
-            } else if (typeof response === 'string') {
+            // Robust parsing block
+            if (typeof response === 'string') {
                 imageUrl = response;
-            } else {
-                imageUrl = response.data?.url || response.url || response.secure_url;
+            } else if (Array.isArray(response)) {
+                imageUrl = typeof response[0] === 'string' ? response[0] : (response[0]?.url || response[0]?.secure_url);
+            } else if (response && typeof response === 'object') {
+                if (response.url) imageUrl = response.url;
+                else if (response.secure_url) imageUrl = response.secure_url;
+                else if (response.data) {
+                    if (typeof response.data === 'string') imageUrl = response.data;
+                    else if (Array.isArray(response.data)) {
+                        imageUrl = typeof response.data[0] === 'string' ? response.data[0] : (response.data[0]?.url || response.data[0]?.secure_url);
+                    } else {
+                        imageUrl = response.data.url || response.data.secure_url;
+                    }
+                }
             }
 
             if (imageUrl) {
@@ -214,6 +247,11 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 </label>
             </div>
             <div className="w-full max-w-4xl space-y-5 pb-8">
+                {updateMessage && (
+                    <div className={`text-center py-2 text-xs font-bold ${(updateMessage.toLowerCase().includes('success') || updateMessage.toLowerCase().includes('uploaded')) ? 'text-green-500' : 'text-red-500'}`}>
+                        {updateMessage}
+                    </div>
+                )}
                 {[
                     { label: 'Phone Number', type: 'tel', key: 'phone' }, { label: 'First Name', type: 'text', key: 'firstName' }, { label: 'Last Name', type: 'text', key: 'lastName' },
                     { label: 'Gender', type: 'text', key: 'gender' }, { label: 'Date of Birth', type: 'text', key: 'dob' }, { label: 'Email', type: 'email', key: 'email' }, { label: 'Address', type: 'text', key: 'address' },
@@ -228,7 +266,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                     </div>
                 ))}
                 {updateMessage && (
-                    <div className={`text-center py-2 text-xs font-bold ${updateMessage.includes('success') ? 'text-green-500' : 'text-red-500'}`}>
+                    <div className={`text-center py-2 text-xs font-bold ${(updateMessage.toLowerCase().includes('success') || updateMessage.toLowerCase().includes('uploaded')) ? 'text-green-500' : 'text-red-500'}`}>
                         {updateMessage}
                     </div>
                 )}
@@ -260,7 +298,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         if (settingsStep === 'password_success') return renderSuccess("You're all Set!", "Your password has been changed successfully");
         if (settingsStep === 'password_otp') return (
             <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Verify your phone number</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">We've sent a 4-digit verification code to your phone number. Please enter it below to continue.</p>
                 <div className="flex justify-center gap-4 mb-8">{[1, 2, 3, 4].map(i => <div key={i} className="w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}</div>
                 <div className="text-center mb-12"><p className="text-xs font-bold text-gray-400">Didn't get code? <span className="text-[#1E4E82]">Resend 2:59</span></p></div>
@@ -269,7 +306,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         );
         if (settingsStep === 'password_reset') return (
             <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Reset your Password</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter your new password below. Make sure it's strong and secure</p>
                 <div className="space-y-6">
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">Old Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
@@ -280,7 +316,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         );
         return (
             <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl flex flex-col">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-8 hidden lg:block">Change Password</h2>
                 <div className="space-y-6 flex-1">
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">Email</label><input type="email" defaultValue="artifinda@gmail.com" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold" /></div>
                     <div><label className="text-xs font-bold text-gray-500 mb-2 block">Old Password</label><div className="relative"><input type="password" placeholder="********" className="w-full p-4.5 rounded-[20px] border border-gray-200 outline-none font-bold pr-12" /><EyeOff size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" /></div></div>
@@ -294,7 +329,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         if (settingsStep === 'pin_success') return renderSuccess("You're all Set!", "Your login pin has been changed successfully");
         if (settingsStep === 'pin_new') return (
             <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Set a new 6-Digit PIN</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter new pin below</p>
                 <div className="flex justify-center gap-2 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-11 lg:w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}</div>
                 <button onClick={() => setSettingsStep('pin_success')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Continue</button>
@@ -302,7 +336,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         );
         return (
             <div className="px-5 lg:px-8 lg:pt-6 pb-10 max-w-2xl">
-                <h2 className="text-2xl font-black text-[#0f172a] mb-2 hidden lg:block">Change Login PIN</h2>
                 <p className="text-gray-500 font-bold text-sm mb-12">Enter current pin below</p>
                 <div className="flex justify-center gap-2 mb-12">{[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-11 lg:w-14 h-14 rounded-2xl bg-slate-100 border border-gray-100" />)}</div>
                 <button onClick={() => setSettingsStep('pin_new')} className="w-full py-5 bg-[#DDE6F5] text-[#1E4E82] font-black rounded-[24px] cursor-pointer">Continue</button>
@@ -314,7 +347,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         if (settingsSubStep === 'add') return (
             <div className="lg:pt-4 pb-10 max-w-2xl text-left">
                 <div className="mb-8 hidden lg:block">
-                    <h2 className="text-2xl font-black text-[#0f172a] mb-2">Help us locate you better</h2>
                     <p className="text-gray-500 font-bold text-sm">Please provide your address and a document for verification.</p>
                 </div>
                 <div className="space-y-6">

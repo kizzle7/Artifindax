@@ -47,13 +47,14 @@ api.interceptors.response.use(
         if (response && (response.status === 401 || response.status === 403)) {
             console.warn('[API] Unauthorized/Forbidden error, clearing session...', response.status);
             
-            // Clear local storage and redirect to login
+            // Clear local storage and redirect to home (landing page)
+            // Redirecting to / instead of /login avoids 403 Forbidden errors from the backend 
+            // if the server doesn't have a mapping for the /login frontend route.
             localStorage.removeItem('artifinda_token');
             localStorage.removeItem('artifinda_role');
             
-            // Only redirect if not already on the login page to avoid loops
-            if (!window.location.pathname.includes('/login')) {
-                window.location.replace('/login');
+            if (window.location.pathname !== '/') {
+                window.location.replace('/');
             }
         }
 
