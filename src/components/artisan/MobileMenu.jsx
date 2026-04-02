@@ -1,8 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Briefcase, MessageCircle, Settings } from 'lucide-react';
+import { Home, Briefcase, MessageCircle, Settings, LogOut } from 'lucide-react';
 
-const MobileMenu = ({ isMenuOpen, setIsMenuOpen, currentView, setCurrentView, setSelectedBooking, setBookingsViewStep, setNotificationsViewStep, setMessagesViewStep }) => (
+const MobileMenu = ({ isMenuOpen, setIsMenuOpen, currentView, setCurrentView, setSelectedBooking, setBookingsViewStep, setNotificationsViewStep, setMessagesViewStep, setShowLogoutModal }) => (
     <AnimatePresence>
         {isMenuOpen && (
             <motion.div
@@ -34,6 +34,17 @@ const MobileMenu = ({ isMenuOpen, setIsMenuOpen, currentView, setCurrentView, se
                             <span>{item.label}</span>
                         </button>
                     ))}
+                    <div className="w-full h-px bg-gray-100 my-4" />
+                    <button
+                        onClick={() => {
+                            setShowLogoutModal(true);
+                            setIsMenuOpen(false);
+                        }}
+                        className="flex items-center gap-3.5 px-6 py-3.5 rounded-2xl transition-all font-bold tracking-wider w-full justify-center text-sm text-red-500 hover:bg-red-50 cursor-pointer"
+                    >
+                        <LogOut size={20} />
+                        <span>LOGOUT</span>
+                    </button>
                 </nav>
             </motion.div>
         )}
