@@ -14,6 +14,8 @@ import categoryService from '../services/categoryService';
 import { useForm } from 'react-hook-form';
 import Location from '../components/form/Location';
 import fileService from '../services/fileService';
+import { setKey, fromLatLng } from 'react-geocode';
+import toast from 'react-hot-toast';
 
 // Fallback icons if API returns names we don't have
 const ICON_MAP = {
@@ -708,31 +710,91 @@ const OtpVerification = ({ otp, handleOtpChange, formatTime, timer, onVerify, on
     );
 };
 
-const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate }) => (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white max-w-md mx-auto">
-        <div className="fixed top-0 left-0 right-0 p-6 flex items-center justify-between z-10">
-            <button onClick={prevStep} className="p-2 rounded-full bg-gray-900 text-white"><ChevronLeft size={20} /></button>
-            <div className="flex flex-col gap-1.5">{[1, 2, 3].map(i => <div key={i} className="w-6 h-0.5 bg-gray-900" />)}</div>
+const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate, userType }) => {
+    const [isSavingLocation, setIsSavingLocation] = useState(false);
+
+    const handleSkip = async () => {
+        setIsSavingLocation(true);
+        const loadingToast = toast.loading("Detecting your location...");
+
+        const getUserCoords = () => new Promise((resolve) => {
+            if (!navigator.geolocation) return resolve(null);
+            navigator.geolocation.getCurrentPosition(
+                (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+                () => resolve(null),
+                { timeout: 5000 }
+            );
+        });
+
+        const coords = await getUserCoords();
+        let finalAddress = ""; 
+        let finalLat = 0;
+        let finalLng = 0;
+
+        if (coords) {
+            finalLat = coords.lat;
+            finalLng = coords.lng;
+            try {
+                const GEOCODE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+                setKey(GEOCODE_API_KEY);
+                const geoRes = await fromLatLng(finalLat, finalLng);
+                finalAddress = geoRes.results[0]?.formatted_address || finalAddress;
+            } catch (geoErr) {
+                console.warn("[SignUp] Reverse geocode failed on skip:", geoErr);
+            }
+        }
+
+        // Set default location
+        if (finalLat !== 0 && finalLng !== 0) {
+            localStorage.setItem('artifinda_location', JSON.stringify({ 
+                address: finalAddress || "Set Location", 
+                latitude: finalLat, 
+                longitude: finalLng 
+            }));
+            toast.success("Location captured!", { id: loadingToast });
+        } else {
+            toast.dismiss(loadingToast);
+        }
+        
+        setIsSavingLocation(false);
+        navigate(userType === 'artisan' ? '/artisan/dashboard' : '/dashboard');
+    };
+
+    return (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white max-w-md mx-auto">
+            <div className="fixed top-0 left-0 right-0 p-6 flex items-center justify-between z-10">
+                <button onClick={prevStep} className="p-2 rounded-full bg-gray-900 text-white"><ChevronLeft size={20} /></button>
+                <div className="flex flex-col gap-1.5">{[1, 2, 3].map(i => <div key={i} className="w-6 h-0.5 bg-gray-900" />)}</div>
+            </div>
+            <div className="w-full mb-8"><img src={successIllustration} alt="Account Created" className="w-[80%] mx-auto" /></div>
+            <h1 className="text-2xl font-extrabold text-[#0f172a] mb-4 text-center">Account Successfully Created</h1>
+            <p className="text-gray-600 text-center text-sm mb-10 px-4">To access the full experience, tell us a bit more about yourself. Verified users get faster service and better matches.</p>
+            <div className="w-full space-y-4">
+                <Button
+                    variant="primary"
+                    onClick={nextStep}
+                    style={{ backgroundColor: '#1E4E82' }}
+                    className="w-full py-3 rounded-xl text-lg font-bold transition-colors relative group hover:bg-[#163a61]"
+                >
+                    <span>Let's get to know you</span>
+                    <ArrowRight size={20} className="absolute right-8 transition-transform group-hover:translate-x-1" />
+                </Button>
+                <Button 
+                    variant="plain" 
+                    onClick={handleSkip} 
+                    disabled={isSavingLocation}
+                    className="w-full py-3 rounded-xl text-lg bg-[#D6E5F5] text-[#1E4E82] font-bold relative group flex items-center justify-center"
+                >
+                    {isSavingLocation ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#1E4E82]"></div>
+                    ) : (
+                        <span>Skip for now</span>
+                    )}
+                </Button>
+            </div>
         </div>
-        <div className="w-full mb-8"><img src={successIllustration} alt="Account Created" className="w-[80%] mx-auto" /></div>
-        <h1 className="text-2xl font-extrabold text-[#0f172a] mb-4 text-center">Account Successfully Created</h1>
-        <p className="text-gray-600 text-center text-sm mb-10 px-4">To access the full experience, tell us a bit more about yourself. Verified users get faster service and better matches.</p>
-        <div className="w-full space-y-4">
-            <Button
-                variant="primary"
-                onClick={nextStep}
-                style={{ backgroundColor: '#1E4E82' }}
-                className="w-full py-3 rounded-xl text-lg font-bold transition-colors relative group hover:bg-[#163a61]"
-            >
-                <span>Let's get to know you</span>
-                <ArrowRight size={20} className="absolute right-8 transition-transform group-hover:translate-x-1" />
-            </Button>
-            <Button variant="plain" onClick={() => navigate('/')} className="w-full py-3 rounded-xl text-lg bg-[#D6E5F5] text-[#1E4E82] font-bold relative group">
-                <span>Skip for now</span>
-            </Button>
-        </div>
-    </div>
-);
+    );
+};
 
 const FinalSuccess = ({ successIllustration, prevStep, navigate }) => (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white max-w-md mx-auto">
@@ -798,9 +860,26 @@ const SignUpPage = () => {
         }
     });
 
-    const initialRole = urlRole || 'user';
+    const initialRole = urlRole || localStorage.getItem('artifinda_signup_type') || 'user';
     const [userType, setUserType] = useState(initialRole);
-    const [step, setStep] = useState(1);
+    
+    // Resume step if available, but only if we have a role
+    const savedStep = localStorage.getItem('artifinda_signup_step');
+    const [step, setStep] = useState(savedStep ? parseInt(savedStep, 10) : 1);
+
+    // Persistence Effect
+    useEffect(() => {
+        if (step > 1) {
+            localStorage.setItem('artifinda_signup_step', step.toString());
+            localStorage.setItem('artifinda_signup_type', userType);
+        }
+    }, [step, userType]);
+
+    // Clear persistence on finish or reset
+    const clearOnboardingPersistence = () => {
+        localStorage.removeItem('artifinda_signup_step');
+        localStorage.removeItem('artifinda_signup_type');
+    };
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [otp, setOtp] = useState(['', '', '', '']);
@@ -1113,10 +1192,15 @@ const SignUpPage = () => {
             };
 
             if (userType === 'customer' || userType === 'user') {
-                await authService.submitCustomerOnboarding(basePayload);
-                authService.setRole('CUSTOMER');
-                authService.setLocation(basePayload.address, basePayload.latitude, basePayload.longitude);
-                setStep(13);
+                try {
+                    await authService.submitCustomerOnboarding(basePayload);
+                    clearOnboardingPersistence();
+                    authService.setRole('CUSTOMER');
+                    authService.setLocation(basePayload.address, basePayload.latitude, basePayload.longitude);
+                    setStep(13);
+                } catch (err) {
+                    setError(err.message || 'Onboarding submission failed.');
+                }
             } else {
                 // Transform availability to array format - Send all 7 days
                 const availabilityArray = Object.entries(artisanData.availability)
@@ -1158,11 +1242,15 @@ const SignUpPage = () => {
                     }
                 };
 
-                console.log("Submitting Artisan KYC Payload:", JSON.stringify(artisanPayload, null, 2));
-                await authService.submitArtisanOnboarding(artisanPayload);
-                authService.setRole('ARTISAN');
-                authService.setLocation(basePayload.address, basePayload.latitude, basePayload.longitude);
-                setStep(21);
+                try {
+                    await authService.submitArtisanOnboarding(artisanPayload);
+                    clearOnboardingPersistence();
+                    authService.setRole('ARTISAN');
+                    authService.setLocation(basePayload.address, basePayload.latitude, basePayload.longitude);
+                    setStep(21);
+                } catch (err) {
+                    setError(err.message || 'Onboarding submission failed.');
+                }
             }
         } catch (err) {
             setError(err.message || 'Onboarding submission failed.');

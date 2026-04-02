@@ -36,6 +36,7 @@ import OrderDetailsView from '../components/user/OrderDetailsView';
 import FilterModal from '../components/user/FilterModal';
 import LogoutModal from '../components/user/LogoutModal';
 import DashboardSkeleton from '../components/ui/DashboardSkeleton';
+import OnboardingReminder from '../components/ui/OnboardingReminder';
 import { useForm } from 'react-hook-form';
 
 const GEOCODE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -62,6 +63,8 @@ const UserDashboard = () => {
     const [cancelReason, setCancelReason] = useState('');
     const [cancelBookingId, setCancelBookingId] = useState(null);
     const [isCancelling, setIsCancelling] = useState(false);
+    const [isArtisanOnboarded, setIsArtisanOnboarded] = useState(true);
+    const [showOnboardingReminder, setShowOnboardingReminder] = useState(true);
     const [currentChat, setCurrentChat] = useState(null);
     const [chatMessages, setChatMessages] = useState([]);
     const [searchMessages, setSearchMessages] = useState('');
@@ -140,7 +143,7 @@ const UserDashboard = () => {
             const account = data.accounts?.find(acc => acc.accountType === 'CUSTOMER') || data.accounts?.[0];
 
             const apiAddresses = (account?.customerAddresses || account?.artisanAddresses || []);
-            const mappedAddresses = apiAddresses.map(addr => ({
+            let mappedAddresses = apiAddresses.map(addr => ({
                 id: addr.id,
                 address: addr.address.address,
                 latitude: addr.address.latitude,
@@ -148,6 +151,21 @@ const UserDashboard = () => {
                 isDefault: addr.id === account?.defaultAddressId || true,
                 status: addr.status
             }));
+
+            // If no addresses from API, check localStorage for the "skipped" location
+            if (mappedAddresses.length === 0) {
+                const savedLoc = authService.getLocation();
+                if (savedLoc && savedLoc.address) {
+                    mappedAddresses = [{
+                        id: 'temp-saved',
+                        address: savedLoc.address || "Set Location",
+                        latitude: savedLoc.latitude || 0,
+                        longitude: savedLoc.longitude || 0,
+                        isDefault: true,
+                        status: 'verified'
+                    }];
+                }
+            }
 
             setUserProfile(prev => ({
                 ...prev,
@@ -231,9 +249,9 @@ const UserDashboard = () => {
 
         // 4. Default Fallback
         return {
-            address: finalAddress || "52 oriola street ketu Lagos",
-            latitude: finalLat || 6.5916,
-            longitude: finalLng || 3.39621,
+            address: finalAddress || "Set Location",
+            latitude: finalLat || 0,
+            longitude: finalLng || 0,
         };
     };
 
@@ -660,6 +678,15 @@ const UserDashboard = () => {
                         </>
                     )}
                 </motion.div>
+            </AnimatePresence>
+            <AnimatePresence>
+                {showOnboardingReminder && userProfile?.identityVerificationStatus === 'PHONE_VERIFIED' && (
+                    <OnboardingReminder 
+                        status={userProfile.identityVerificationStatus}
+                        userType="CUSTOMER"
+                        onClose={() => setShowOnboardingReminder(false)}
+                    />
+                )}
             </AnimatePresence>
         </div>
     );

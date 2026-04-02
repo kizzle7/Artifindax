@@ -20,6 +20,11 @@ export default defineConfig({
         target: 'https://artifinda-test-aaf09bed12f5.herokuapp.com',
         changeOrigin: true,
         secure: false,
+        bypass: (req) => {
+          if (req.headers.accept?.indexOf('html') !== -1) {
+            return '/index.html';
+          }
+        }
       },
     },
   },

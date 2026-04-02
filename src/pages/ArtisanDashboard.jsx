@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import userService from '../services/userService';
 import authService from '../services/authService';
@@ -31,6 +32,7 @@ import LogoutModal from '../components/artisan/LogoutModal';
 import CancellationModal from '../components/artisan/CancellationModal';
 import ServiceCompletionModal from '../components/artisan/ServiceCompletionModal';
 import DashboardSkeleton from '../components/ui/DashboardSkeleton';
+import OnboardingReminder from '../components/ui/OnboardingReminder';
 
 const ArtisanDashboard = () => {
     const navigate = useNavigate();
@@ -71,6 +73,7 @@ const ArtisanDashboard = () => {
     const [settingsSubStep, setSettingsSubStep] = useState('list');
     const [subscriptionsStep, setSubscriptionsStep] = useState('overview');
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [showOnboardingReminder, setShowOnboardingReminder] = useState(true);
     const [userProfile, setUserProfile] = useState({
         firstName: '',
         lastName: '',
@@ -141,14 +144,29 @@ const ArtisanDashboard = () => {
                 const account = data.accounts?.find(acc => acc.accountType === 'ARTISAN') || data.accounts?.[0];
 
                 const apiAddresses = (account?.artisanAddresses || account?.customerAddresses || account?.addresses || []);
-                const mappedAddresses = apiAddresses.map(addr => ({
+                let mappedAddresses = apiAddresses.map(addr => ({
                     id: addr.id,
                     address: addr.address?.address || addr.address || '',
                     latitude: addr.address?.latitude,
                     longitude: addr.address?.longitude,
-                    isDefault: addr.id === account?.defaultAddressId || true,
+                    isDefault: addr.id === (account?.defaultAddressId),
                     status: addr.status
                 }));
+
+                // Fallback to localStorage if no addresses from API
+                if (mappedAddresses.length === 0) {
+                    const savedLoc = authService.getLocation();
+                    if (savedLoc && savedLoc.address) {
+                        mappedAddresses = [{
+                            id: 'temp-saved',
+                            address: savedLoc.address,
+                            latitude: savedLoc.latitude,
+                            longitude: savedLoc.longitude,
+                            isDefault: true,
+                            status: 'verified'
+                        }];
+                    }
+                }
 
                 const artisanSkill = account?.artisanCategorySkills?.[0];
                 const artisanCategory = artisanSkill?.artisanCategory;
@@ -156,8 +174,8 @@ const ArtisanDashboard = () => {
                 setUserProfile({
                     firstName: data.firstName || '',
                     lastName: data.lastName || '',
-                    phone: data.phoneNumber || '',
-                    gender: account?.gender || data.gender || '',
+                    phone: data.phoneNumber || account?.phone || '',
+                    gender: account?.gender || '',
                     dob: account?.dateOfBirth || '',
                     email: data.email || account?.email || '',
                     addresses: mappedAddresses,
@@ -572,6 +590,15 @@ const ArtisanDashboard = () => {
                     onLogout={handleLogout} 
                 />
             )}
+            <AnimatePresence>
+                {showOnboardingReminder && userProfile?.identityVerificationStatus === 'PHONE_VERIFIED' && (
+                    <OnboardingReminder 
+                        status={userProfile.identityVerificationStatus}
+                        userType="ARTISAN"
+                        onClose={() => setShowOnboardingReminder(false)}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 };

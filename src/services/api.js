@@ -45,16 +45,20 @@ api.interceptors.response.use(
         
         // Handle 401 (Unauthorized) or 403 (Forbidden)
         if (response && (response.status === 401 || response.status === 403)) {
-            console.warn('[API] Unauthorized/Forbidden error, clearing session...', response.status);
+            const errorData = response.data;
+            const message = errorData?.message || errorData?.error || (response.status === 403 ? 'Account restricted or locked' : 'Session expired');
             
-            // Clear local storage and redirect to home (landing page)
-            // Redirecting to / instead of /login avoids 403 Forbidden errors from the backend 
-            // if the server doesn't have a mapping for the /login frontend route.
+            console.warn('[API] Security error, clearing session...', { status: response.status, message });
+            
+            // Store error for the login page to display
+            localStorage.setItem('artifinda_last_error', message);
+            
+            // Clear identity
             localStorage.removeItem('artifinda_token');
             localStorage.removeItem('artifinda_role');
             
-            if (window.location.pathname !== '/') {
-                window.location.replace('/');
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+                window.location.replace('/login');
             }
         }
 

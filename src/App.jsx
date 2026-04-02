@@ -9,6 +9,7 @@ import UserDashboard from './pages/UserDashboard';
 import ArtisanDashboard from './pages/ArtisanDashboard';
 import PaymentVerifyPage from './pages/PaymentVerifyPage';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import GuestRoute from './components/auth/GuestRoute';
 import SessionManager from './components/auth/SessionManager';
 
 function App() {
@@ -35,11 +36,11 @@ function App() {
       />
       <SessionManager>
         <Routes>
-          <Route path="/" element={<LandingPage />} />
+          <Route path="/" element={<GuestRoute><LandingPage /></GuestRoute>} />
           <Route path="/about" element={<AboutPage />} />
-          <Route path="/signup/:role" element={<SignUpPage />} />
-          <Route path="/signup" element={<SignUpPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup/:role" element={<GuestRoute><SignUpPage /></GuestRoute>} />
+          <Route path="/signup" element={<GuestRoute><SignUpPage /></GuestRoute>} />
+          <Route path="/login" element={<GuestRoute><LoginPage /></GuestRoute>} />
           
           {/* Protected Routes */}
           <Route 
