@@ -680,7 +680,9 @@ const UserDashboard = () => {
                 </motion.div>
             </AnimatePresence>
             <AnimatePresence>
-                {showOnboardingReminder && userProfile?.identityVerificationStatus === 'PHONE_VERIFIED' && (
+                {showOnboardingReminder && 
+                 userProfile?.identityVerificationStatus === 'PHONE_VERIFIED' && 
+                 userProfile?.kycApprovalStatus === 'NOT_STARTED' && (
                     <OnboardingReminder 
                         status={userProfile.identityVerificationStatus}
                         userType="CUSTOMER"
