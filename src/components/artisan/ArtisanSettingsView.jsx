@@ -214,7 +214,12 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             <div className="flex justify-center mb-10">
                 <label className="relative cursor-pointer group">
                     <div className="w-28 h-28 rounded-full bg-slate-200 shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
-                        {profilePic ? <img src={profilePic} alt="Profile" className="w-full h-full object-cover" /> : <Camera size={32} className="text-gray-400" />}
+                        <img 
+                            src={profilePic || userProfile?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile?.firstName || 'A') + ' ' + (userProfile?.lastName || ''))}&background=1E4E82&color=fff&size=150`} 
+                            onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile?.firstName || 'A') + ' ' + (userProfile?.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
+                            alt="Profile" 
+                            className="w-full h-full object-cover" 
+                        />
                     </div>
                     <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#1E4E82] rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                         <Camera size={14} className="text-white" />

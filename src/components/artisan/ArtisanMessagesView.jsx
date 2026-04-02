@@ -329,7 +329,7 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
                                 setChatMessages([]);
                                 setMessagesViewStep('chat');
                             }} className="flex items-center gap-3 p-3.5 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 rounded-xl">
-                                <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden shrink-0 shadow-inner"><img src={msg.avatar} alt="" className="w-full h-full object-cover" /></div>
+                                <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden shrink-0 shadow-inner"><img src={msg.avatar} onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.customer || 'Customer')}&background=1E4E82&color=fff&size=150`; }} alt="" className="w-full h-full object-cover" /></div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center justify-between mb-0.5">
                                         <h4 className="font-bold text-[#0f172a] truncate text-sm">{msg.customer}</h4>
@@ -355,7 +355,7 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
             <div className="fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-20 lg:h-16 flex items-center justify-between border-b border-gray-50">
                 <div className="flex items-center gap-3">
                     <button onClick={() => setMessagesViewStep('list')} className="p-2 -ml-2 text-[#0f172a] lg:hidden"><ChevronLeft size={24} strokeWidth={2.5} /></button>
-                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm"><img src={currentChat?.avatar} alt="" className="w-full h-full object-cover" /></div>
+                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm"><img src={currentChat?.avatar} onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(typeof currentChat?.customer === 'string' ? currentChat.customer : 'Customer')}&background=1E4E82&color=fff&size=150`; }} alt="" className="w-full h-full object-cover" /></div>
                     <div className="min-w-0 text-left cursor-pointer">
                         <h4 className="font-bold text-[#0f172a] -mb-1 truncate text-base">
                             {typeof currentChat?.customer === 'object'

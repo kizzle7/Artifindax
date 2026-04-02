@@ -108,20 +108,23 @@ const SearchView = ({
                                                 className="bg-white border border-gray-100 rounded-[20px] p-4 flex flex-col lg:flex-row gap-4 lg:items-center justify-between shadow-sm hover:border-[#1E4E82]/20 transition-all cursor-pointer group active:scale-[0.99]">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-500 relative">
-                                                        <img src={artisan.image || artisan.profilePicture} alt="" className="w-full h-full object-cover" />
+                                                        <img 
+                                                            src={artisan.image || artisan.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan.firstName || 'A') + ' ' + (artisan.lastName || ''))}&background=1E4E82&color=fff&size=150`} 
+                                                            onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan.firstName || 'A') + ' ' + (artisan.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
+                                                            alt="" className="w-full h-full object-cover" />
                                                         {artisan.isVerified && <div className="absolute top-0.5 right-0.5 bg-[#1E4E82] text-white p-0.5 rounded-full border border-white"><CheckCircle2 size={8} strokeWidth={3} /></div>}
                                                     </div>
                                                     <div>
                                                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                                                             <h5 className="font-medium text-[14px] text-[#0f172a] tracking-tight">{artisan.firstName} {artisan.lastName}</h5>
-                                                            <span className={`text-[7px] font-medium px-1.5 py-0.5 rounded-sm uppercase tracking-tighter border ${artisan.status === 'ACTIVE' ? 'bg-[#1E4E82] text-white border-blue-900' : 'bg-orange-500 text-white border-orange-600'}`}>{artisan.status === 'ACTIVE' ? 'Verified' : 'Pending'}</span>
+                                                            <span className={`text-[7px] font-medium px-1.5 py-0.5 rounded-sm uppercase tracking-tighter border ${(artisan.status === 'ACTIVE' || artisan.appUser?.status === 'ACTIVE' || artisan.isVerified) ? 'bg-[#1E4E82] text-white border-blue-900' : 'bg-orange-500 text-white border-orange-600'}`}>{(artisan.status === 'ACTIVE' || artisan.appUser?.status === 'ACTIVE' || artisan.isVerified) ? 'Verified' : 'Pending'}</span>
                                                         </div>
                                                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] font-bold uppercase tracking-tight text-gray-400">
                                                             <span className="text-[#1E4E82]">
                                                                 {typeof (artisan.skillName) === 'object' ? artisan.skillName.name : (artisan.skillName || selectedSkill?.name)}
                                                             </span>
-                                                            <span className="flex items-center gap-1 text-gray-500"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || '4.5'}</span>
-                                                            <span className="flex items-center gap-1"><MapPin size={10} /> {artisan.distance || '2.4km away'}</span>
+                                                            <span className="flex items-center gap-1 text-gray-500"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || artisan.artisanRating || 'N/A'}</span>
+                                                            <span className="flex items-center gap-1"><MapPin size={10} /> {artisan.distance ? (typeof artisan.distance === 'string' && artisan.distance.includes('km') ? artisan.distance : `${artisan.distance}km away`) : 'Nearby'}</span>
                                                         </div>
                                                     </div>
                                                 </div>

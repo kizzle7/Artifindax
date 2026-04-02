@@ -68,11 +68,11 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                     <div className="h-32 lg:h-56 rounded-[20px] overflow-hidden shadow-sm bg-gradient-to-r from-slate-400 to-slate-200" />
                     <div className="absolute -bottom-16 left-8 lg:left-16">
                         <div className="w-32 h-32 rounded-full border-[6px] border-white overflow-hidden shadow-sm relative bg-[#1E4E82]">
-                            {artisan.profilePicture || artisan.image ? (
-                                <img src={artisan.profilePicture || artisan.image} alt="" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full" />
-                            )}
+                            <img 
+                                src={artisan.profilePicture || artisan.image || `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan.firstName || artisan.name || 'A') + ' ' + (artisan.lastName || ''))}&background=1E4E82&color=fff&size=150`}
+                                onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan.firstName || artisan.name || 'A') + ' ' + (artisan.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
+                                alt="" className="w-full h-full object-cover" 
+                            />
                             <div className="absolute top-4 right-4 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm" />
                         </div>
                     </div>
@@ -82,23 +82,24 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                 <div className="px-5 lg:px-16 space-y-6">
                     <div>
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <h1 className="text-2xl lg:text-3xl font-bold text-[#0f172a] tracking-tight">{artisan.firstName ? `${artisan.firstName} ${artisan.lastName}` : (artisan.name || 'Chinedu Eze')}</h1>
+                            <h1 className="text-2xl lg:text-3xl font-bold text-[#0f172a] tracking-tight">{artisan.firstName ? `${artisan.firstName} ${artisan.lastName}` : (artisan.name || 'Artisan')}</h1>
                             {(artisan.isVerified || artisan.status === 'ACTIVE') && <span className="bg-[#1E4E82] text-white px-2 py-0.5 rounded text-[10px] font-bold">verified</span>}
                         </div>
                         <p className="text-base font-bold text-[#0f172a] tracking-tight">{typeof (artisan.skillName) === 'object' ? artisan.skillName.name : (artisan.skillName || artisan.role || 'Service Partner')}</p>
                         <div className="flex items-center gap-4 mt-1 text-slate-500 font-semibold text-xs uppercase tracking-tight">
                             <span className="flex items-center gap-1"><MapPin size={12} className="text-slate-400" /> {artisan.distance || '2.1km'}</span>
-                            <span className="flex items-center gap-1"><Star size={12} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || '4.8'} (28 reviews)</span>
+                            <span className="flex items-center gap-1"><Star size={12} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || artisan.artisanRating || 'N/A'} {artisan.reviewCount ? `(${artisan.reviewCount} reviews)` : ''}</span>
                         </div>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="flex gap-4">
                         <button onClick={() => {
-                            const phone = artisan.appUser?.phoneNumber || artisan.phoneNumber || '';
+                            const phone = artisan.appUser?.phoneNumber || artisan.phoneNumber || artisan.phone || artisan.contactNumber || artisan.mobile || '';
+                            console.log('[ArtisanProfile] Phone lookup:', { appUser: artisan.appUser, phoneNumber: artisan.phoneNumber, phone: artisan.phone, fullArtisan: artisan });
                             if (phone) {
                                 navigator.clipboard.writeText(phone);
-                                toast.success('Phone number copied');
+                                toast.success(`Phone number copied: ${phone}`);
                             } else {
                                 toast.error('Phone number not available');
                             }
@@ -135,7 +136,7 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
 
                             <div>
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wide">Gender</h3>
-                                <p className="text-[15px] font-bold text-[#0f172a]">{artisan.gender || 'Male'}</p>
+                                <p className="text-[15px] font-bold text-[#0f172a]">{artisan.gender || 'Not specified'}</p>
                             </div>
 
                             <div>
@@ -163,11 +164,17 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
 
                             <div>
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-3 uppercase tracking-wide">Gallery</h3>
-                                <div className="grid grid-cols-4 gap-3 max-w-lg">
-                                    {[...Array(4)].map((_, i) => (
-                                        <div key={i} className="aspect-square bg-[#7A3E3E] rounded-md shadow-sm" />
-                                    ))}
-                                </div>
+                                {artisan.gallery && artisan.gallery.length > 0 ? (
+                                    <div className="grid grid-cols-4 gap-3 max-w-lg">
+                                        {artisan.gallery.map((img, i) => (
+                                            <div key={i} className="aspect-square rounded-md shadow-sm overflow-hidden">
+                                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-xs text-slate-400 font-bold">No gallery images yet</p>
+                                )}
                             </div>
 
                             <div>
@@ -207,37 +214,46 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
 
                             <div>
                                 <h3 className="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wide">Service mode</h3>
-                                <p className="text-base font-bold text-[#0f172a]">Home Service and Work Station</p>
+                                <p className="text-base font-bold text-[#0f172a]">{artisan.serviceMode || 'Home Service'}</p>
                             </div>
                         </div>
                     )}
                     {activeTab === 'Reviews' && (
                         <div className="space-y-3 animate-in fade-in duration-500 pt-2 pb-12">
-                            <h3 className="text-xs font-bold text-slate-500 mb-2">28 reviews</h3>
-                            {[...Array(7)].map((_, i) => (
-                                <div key={i} className="bg-slate-50 p-4 lg:py-5 lg:px-6 rounded-[12px] border border-slate-100">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 bg-[#B5CAE4] rounded-full" />
-                                            <div>
-                                                <h5 className="font-bold text-xs text-[#0f172a]">Aisha B.</h5>
-                                                <div className="flex gap-0.5 mt-0.5">
-                                                    {[...Array(5)].map((_, idx) => (
-                                                        <Star key={idx} size={10} className={idx < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200 fill-slate-200'} />
-                                                    ))}
+                            {artisan.reviews && artisan.reviews.length > 0 ? (
+                                <>
+                                    <h3 className="text-xs font-bold text-slate-500 mb-2">{artisan.reviews.length} review{artisan.reviews.length !== 1 ? 's' : ''}</h3>
+                                    {artisan.reviews.map((review, i) => (
+                                        <div key={i} className="bg-slate-50 p-4 lg:py-5 lg:px-6 rounded-[12px] border border-slate-100">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <img 
+                                                        src={review.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.name || 'User')}&background=1E4E82&color=fff&size=100`}
+                                                        onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.name || 'User')}&background=1E4E82&color=fff&size=100`; }}
+                                                        alt="" className="w-10 h-10 rounded-full object-cover" 
+                                                    />
+                                                    <div>
+                                                        <h5 className="font-bold text-xs text-[#0f172a]">{review.name || 'Anonymous'}</h5>
+                                                        <div className="flex gap-0.5 mt-0.5">
+                                                            {[...Array(5)].map((_, idx) => (
+                                                                <Star key={idx} size={10} className={idx < (review.rating || 5) ? 'text-yellow-400 fill-yellow-400' : 'text-slate-200 fill-slate-200'} />
+                                                            ))}
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                                <span className="text-[9px] text-slate-400 font-bold">{review.date || ''}</span>
                                             </div>
+                                            <p className="text-[11px] text-[#0f172a] font-medium leading-relaxed">"{review.comment}"</p>
                                         </div>
-                                        <div className="text-right">
-                                            <p className="text-[9px] text-[#0f172a] font-bold">Ikeja, Lagos</p>
-                                            <span className="text-[9px] text-slate-400 font-bold">12/01/2025</span>
-                                        </div>
-                                    </div>
-                                    <p className="text-[11px] text-[#0f172a] font-medium leading-relaxed">
-                                        "Chinedu was amazing! He arrived right on time and fixed my, he was very professional and polite. Will definitely book him again"
-                                    </p>
+                                    ))}
+                                </>
+                            ) : (
+                                <div className="flex flex-col items-center text-center py-12">
+                                    <Star size={32} className="text-slate-200 mb-4" />
+                                    <h4 className="text-sm font-black text-[#0f172a] mb-1 uppercase tracking-widest">No Reviews Yet</h4>
+                                    <p className="text-slate-400 font-bold text-xs max-w-[200px]">Be the first to review this artisan after booking their service.</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     )}
                 </div>

@@ -336,7 +336,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                                     setChatMessages([]);
                                     setMessagesViewStep('chat');
                                 }} className="flex items-center gap-3 p-3.5 hover:bg-slate-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 rounded-xl">
-                                    <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden shrink-0 shadow-inner"><img src={msg.avatar} alt="" className="w-full h-full object-cover" /></div>
+                                    <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden shrink-0 shadow-inner"><img src={msg.avatar} onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(msg.artisan || 'User')}&background=1E4E82&color=fff&size=150`; }} alt="" className="w-full h-full object-cover" /></div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center justify-between mb-0.5">
                                             <h4 className="font-bold text-[#0f172a] truncate text-sm">{msg.artisan}</h4>
@@ -352,7 +352,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                                     </div>
                                 </div>
                             ))}
-                    {filteredMessages.length === 0 && (
+                    {filteredMessages.length === 0 && !isListLoading && (
                         <div className="flex flex-col items-center text-center py-16 px-6">
                             <div className="w-full max-w-xs mb-8 flex justify-center scale-90">
                                 <div className="relative w-64 h-40">
@@ -433,7 +433,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
             <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-[#F8FAFC] z-40 px-6 h-20 lg:h-16 items-center justify-between border-b border-gray-100">
                 <div className="flex items-center gap-3">
                     <button onClick={() => setMessagesViewStep('list')} className="p-2 -ml-2 text-[#0f172a] cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
-                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm cursor-pointer"><img src={currentChat?.avatar} alt="" className="w-full h-full object-cover" /></div>
+                    <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 shadow-sm cursor-pointer"><img src={currentChat?.avatar} onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(typeof currentChat?.artisan === 'string' ? currentChat.artisan : 'Artisan')}&background=1E4E82&color=fff&size=150`; }} alt="" className="w-full h-full object-cover" /></div>
                     <div className="min-w-0 cursor-pointer">
                         <h4 className="font-bold text-[#0f172a] -mb-1 truncate text-base">
                             {typeof currentChat?.artisan === 'object'

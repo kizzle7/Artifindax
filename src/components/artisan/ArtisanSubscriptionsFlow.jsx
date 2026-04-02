@@ -5,6 +5,8 @@ import { useSearchParams } from 'react-router-dom';
 import paymentService from '../../services/paymentService';
 import toast from 'react-hot-toast';
 import DashboardSkeleton from '../ui/DashboardSkeleton';
+import subscriptionSuccessImg from '../../assets/payment (2).png';
+import boostSuccessImg from '../../assets/boost-success.png';
 
 const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setStep }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -20,6 +22,8 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
     const [loading, setLoading] = useState(false);
     const [ussdPayment, setUssdPayment] = useState(null); // { code, reference }
     const [selectedBoost, setSelectedBoost] = useState(null); // { id, name, price, durationCode }
+    const [successPlanName, setSuccessPlanName] = useState(null);
+    const [successBoostName, setSuccessBoostName] = useState(null);
     const [successType, setSuccessType] = useState('subscription'); // subscription, boost
     const [isFetchingData, setIsFetchingData] = useState(true);
 
@@ -195,6 +199,22 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
 
             console.log(`[Subscription] Manual Verify result (${type}):`, response);
             toast.success(`${type.toLowerCase().includes('boost') ? 'Boost' : 'Subscription'} activated successfully!`, { id: loadingToast });
+            
+            // Set pending info for success message robustness
+            const resolvedName = target?.name || (typeof target === 'string' ? target : null);
+            
+            if (type.toLowerCase().includes('boost')) {
+                const name = resolvedName || 'Boost';
+                setSuccessBoostName(name);
+                sessionStorage.setItem('pendingBoostName', name);
+                sessionStorage.removeItem('pendingPlanName');
+            } else {
+                const name = resolvedName || 'Subscription';
+                setSuccessPlanName(name);
+                sessionStorage.setItem('pendingPlanName', name);
+                sessionStorage.removeItem('pendingBoostName');
+            }
+
             setSuccessType(type.includes('boost') ? 'boost' : 'subscription');
             setStep('success');
             // Refresh counts/tiers after verification
@@ -224,12 +244,20 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
                     }
 
                     toast.success('Payment verified successfully!');
+
+                    // Retrieve pending info for success message robustness
+                    const pendingPlan = sessionStorage.getItem('pendingPlanName');
+                    const pendingBoost = sessionStorage.getItem('pendingBoostName');
+                    if (pendingPlan) setSelectedPlan({ name: pendingPlan });
+                    if (pendingBoost) setSelectedBoost({ name: pendingBoost });
+
                     await fetchData();
                     setStep('success');
                     setSuccessType(paymentType);
                     // Remove reference and clear type
                     setSearchParams({}, { replace: true });
                     sessionStorage.removeItem('pendingPaymentType');
+                    // We keep pending names for a moment for the success screen
                 } catch (err) {
                     toast.error('Payment verification failed.');
                     console.error(err);
@@ -278,6 +306,8 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
 
             // Store payment type for verification fallback
             sessionStorage.setItem('pendingPaymentType', 'subscription');
+            sessionStorage.setItem('pendingPlanName', plan.name);
+            sessionStorage.removeItem('pendingBoostName');
 
             const response = await paymentService.initiateSubscription(payload);
             console.log('[Subscription] Init response:', response);
@@ -350,6 +380,8 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
 
             // Store payment type for verification fallback
             sessionStorage.setItem('pendingPaymentType', 'boost');
+            sessionStorage.setItem('pendingBoostName', boost.name);
+            sessionStorage.removeItem('pendingPlanName');
 
             const response = await paymentService.initiateBoost(payload);
             console.log('[Boost] Init response:', response);
@@ -689,10 +721,7 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
         >
             <div className="w-full max-w-sm mb-12">
                 <img
-                    src={successType === 'boost'
-                        ? "https://img.freepik.com/premium-vector/vector-design-rocket-with-modern-illustration-style-vector-design_1002636-66.jpg"
-                        : "https://img.freepik.com/premium-vector/online-payment-concept-character-successfully-paying-bill-using-mobile-banking_293060-1092.jpg"
-                    }
+                    src={successType === 'boost' ? boostSuccessImg : subscriptionSuccessImg}
                     alt="Success"
                     className="w-full h-80 object-contain"
                 />
@@ -701,20 +730,28 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
             <h2 className="text-2xl font-black text-[#0f172a] mb-2">Payment Successful</h2>
             <p className="text-gray-500 font-bold mb-12 max-w-md">
                 {successType === 'boost'
-                    ? `You've successfully boosted your ${userProfile?.artisanCategoryName || 'Artisan'} account for ${selectedBoost?.name || 'the next few days'}.`
-                    : `You've successfully subscribed to ${selectedPlan?.name || 'Starter'} plan under ${userProfile?.artisanCategoryName || 'Artisan category'}. Your badge and visibility are now updated.`
+                    ? `You've successfully boosted your ${userProfile?.artisanCategoryName || 'Artisan'} account for ${successBoostName || sessionStorage.getItem('pendingBoostName') || selectedBoost?.name || 'the next few days'}.`
+                    : `You've successfully subscribed to ${successPlanName || sessionStorage.getItem('pendingPlanName') || selectedPlan?.name || 'Starter'} plan under ${userProfile?.artisanCategoryName || 'Artisan category'}. Your badge and visibility are now updated.`
                 }
             </p>
 
             <div className="w-full max-w-sm space-y-4">
                 <button
-                    onClick={() => setStep('overview')}
+                    onClick={() => {
+                        sessionStorage.removeItem('pendingPlanName');
+                        sessionStorage.removeItem('pendingBoostName');
+                        setStep('overview');
+                    }}
                     className="w-full py-5 border-2 border-slate-200 text-[#1E4E82] font-black rounded-[24px] hover:bg-slate-50 transition-colors active:scale-95"
                 >
                     View My Subscriptions
                 </button>
                 <button
-                    onClick={onBack}
+                    onClick={() => {
+                        sessionStorage.removeItem('pendingPlanName');
+                        sessionStorage.removeItem('pendingBoostName');
+                        onBack();
+                    }}
                     className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-xl active:scale-95 transition-transform"
                 >
                     Go to Dashboard

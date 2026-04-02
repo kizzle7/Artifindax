@@ -155,19 +155,19 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                             </div>
                             <div>
                                 <div className="flex items-center gap-1.5 mb-0.5">
-                                    <h5 className="font-bold text-sm text-[#0f172a]">{artisan?.firstName ? `${artisan.firstName} ${artisan.lastName}` : (artisan?.name || 'Chinedu Eze')}</h5>
-                                    <span className="bg-[#1E4E82] text-white px-1.5 py-0.5 rounded text-[8px] font-bold">Verified</span>
+                                    <h5 className="font-bold text-sm text-[#0f172a]">{artisan?.firstName ? `${artisan.firstName} ${artisan.lastName}` : (artisan?.name || 'Artisan')}</h5>
+                                    {(artisan?.status === 'ACTIVE' || artisan?.isVerified) && <span className="bg-[#1E4E82] text-white px-1.5 py-0.5 rounded text-[8px] font-bold">Verified</span>}
                                 </div>
                                 <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                                    <span>{artisan?.skillName || artisan?.role || 'Plumber'}</span>
-                                    <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan?.rating || '4.8'}</span>
-                                    <span className="flex items-center gap-1"><MapPin size={10} /> {artisan?.location || 'Ikorodu, Lagos'}</span>
+                                    <span>{typeof artisan?.skillName === 'object' ? artisan.skillName.name : (artisan?.skillName || artisan?.role || 'Service Partner')}</span>
+                                    <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan?.rating || artisan?.artisanRating || 'N/A'}</span>
+                                    <span className="flex items-center gap-1"><MapPin size={10} /> {artisan?.location || artisan?.distance || 'Nearby'}</span>
                                 </div>
                             </div>
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => {
-                                const phone = artisan?.phoneNumber || '';
+                                const phone = artisan?.appUser?.phoneNumber || artisan?.phoneNumber || artisan?.phone || '';
                                 if (phone) {
                                     navigator.clipboard.writeText(phone);
                                     toast.success('Phone number copied');

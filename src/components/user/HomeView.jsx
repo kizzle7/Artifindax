@@ -11,13 +11,11 @@ const HomeView = ({ userProfile, setCurrentView, setSettingsStep, setNotificatio
             <div className="hidden lg:flex items-center justify-between mb-4">
                 <div onClick={() => { setCurrentView('settings'); setSettingsStep('profile'); }} className="flex items-center gap-3 cursor-pointer group">
                     <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center transition-transform group-hover:scale-105">
-                        {userProfile.profilePicture ? (
-                            <img src={userProfile.profilePicture} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="bg-[#1E4E82] text-white w-full h-full flex items-center justify-center font-black text-xs">
-                                {userProfile.firstName?.charAt(0)}{userProfile.lastName?.charAt(0)}
-                            </div>
-                        )}
+                        <img 
+                            src={userProfile.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile.firstName || 'A') + ' ' + (userProfile.lastName || ''))}&background=1E4E82&color=fff&size=150`}
+                            onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile.firstName || 'A') + ' ' + (userProfile.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
+                            alt="Profile" className="w-full h-full object-cover" 
+                        />
                     </div>
                     <div>
                         <h2 className="text-base font-black text-[#0f172a] leading-tight group-hover:text-[#1E4E82] transition-colors">Hi, {userProfile.firstName}</h2>
