@@ -93,6 +93,7 @@ const UserDashboard = () => {
     const [settingsStep, setSettingsStep] = useState('main'); // 'main', 'profile', 'addresses', 'password', 'pin', 'faq', 'contact', 'about', 'password_success', 'pin_success'
     const [settingsSubStep, setSettingsSubStep] = useState('list'); // 'list', 'add'
     const [showLogoutModal, setShowLogoutModal] = useState(false);
+    const [selectedAddressId, setSelectedAddressId] = useState(localStorage.getItem('artifinda_selected_address_id'));
 
     // Filtered services for the search view
     const filteredPopularServices = (popularServices || []).filter(service =>
@@ -171,10 +172,21 @@ const UserDashboard = () => {
     }, []);
 
     const getEffectiveLocation = async () => {
-        // 1. Check Profile Address
+        // 1. Check Selected Address Override
+        const selectedAddress = userProfile.addresses?.find(a => String(a.id) === String(selectedAddressId));
+        if (selectedAddress && selectedAddress.address && selectedAddress.latitude && selectedAddress.longitude) {
+            console.log("[Dashboard] Using Selected Address Override:", selectedAddress);
+            return {
+                address: selectedAddress.address,
+                latitude: selectedAddress.latitude,
+                longitude: selectedAddress.longitude
+            };
+        }
+
+        // 2. Check Profile Default Address
         const profileAddress = userProfile.addresses?.find(a => a.isDefault || a.status === 'ACTIVE' || a.status === 'verified') || userProfile.addresses?.[0];
         if (profileAddress && profileAddress.address && profileAddress.latitude && profileAddress.longitude) {
-            console.log("[Dashboard] Using Profile Address:", profileAddress);
+            console.log("[Dashboard] Using Profile Default Address:", profileAddress);
             return {
                 address: profileAddress.address,
                 latitude: profileAddress.latitude,
@@ -314,6 +326,14 @@ const UserDashboard = () => {
     const handleLogout = () => {
         authService.clearToken();
         navigate('/login');
+    };
+
+    const handleAddressChange = (addressId) => {
+        setSelectedAddressId(addressId);
+        localStorage.setItem('artifinda_selected_address_id', addressId);
+        // We'll trigger fetchTopRated in a useEffect or manually
+        setTimeout(() => fetchTopRated(), 0);
+        toast.success("Location updated!");
     };
 
     const handleCancelBooking = (bookingId) => {
@@ -531,6 +551,8 @@ const UserDashboard = () => {
                                         popularServices={popularServices}
                                         setSearchQuery={setSearchQuery}
                                         loadingPopular={loadingPopular}
+                                        onAddressChange={handleAddressChange}
+                                        selectedAddressId={selectedAddressId}
                                     />
                                 )
                             )}

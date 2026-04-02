@@ -1,16 +1,20 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { MapPin, Bell, Search, Star, Info } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MapPin, Bell, Search, Star, Info, X, Check, Plus } from 'lucide-react';
 import { BANNERS } from '../../constants/userData';
 import DashboardSkeleton from '../ui/DashboardSkeleton';
 
-const HomeView = ({ userProfile, setCurrentView, setSettingsStep, setNotificationsViewStep, topArtisans, loadingTopRated, setIsMenuOpen, isMenuOpen, handleCategoryClick, popularServices, setSearchQuery, loadingPopular }) => {
+const HomeView = ({ userProfile, setCurrentView, setSettingsStep, setNotificationsViewStep, topArtisans, loadingTopRated, setIsMenuOpen, isMenuOpen, handleCategoryClick, popularServices, setSearchQuery, loadingPopular, onAddressChange, selectedAddressId }) => {
+    const [showAddressModal, setShowAddressModal] = React.useState(false);
     const repeatedBanners = [...BANNERS, ...BANNERS, ...BANNERS];
+
+    const currentAddress = userProfile.addresses?.find(a => String(a.id) === String(selectedAddressId)) || userProfile.addresses?.[0];
+
     return (
         <div className="flex-1 p-4 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen pt-16 lg:pt-10 transition-all duration-300">
-            <div className="hidden lg:flex items-center justify-between mb-4">
-                <div onClick={() => { setCurrentView('settings'); setSettingsStep('profile'); }} className="flex items-center gap-3 cursor-pointer group">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center transition-transform group-hover:scale-105">
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3 group">
+                    <div onClick={() => { setCurrentView('settings'); setSettingsStep('profile'); }} className="w-10 h-10 rounded-full bg-slate-100 overflow-hidden ring-2 ring-white shadow-sm shrink-0 flex items-center justify-center transition-transform group-hover:scale-105 cursor-pointer">
                         <img 
                             src={userProfile.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile.firstName || 'A') + ' ' + (userProfile.lastName || ''))}&background=1E4E82&color=fff&size=150`}
                             onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile.firstName || 'A') + ' ' + (userProfile.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
@@ -18,14 +22,101 @@ const HomeView = ({ userProfile, setCurrentView, setSettingsStep, setNotificatio
                         />
                     </div>
                     <div>
-                        <h2 className="text-base font-black text-[#0f172a] leading-tight group-hover:text-[#1E4E82] transition-colors">Hi, {userProfile.firstName}</h2>
-                        <p className="text-gray-400 text-[8px] flex items-center gap-1 font-black uppercase tracking-widest opacity-70"><MapPin size={8} /> {userProfile.addresses[0]?.address || 'Your Location'}</p>
+                        <h2 className="text-base font-black text-[#0f172a] leading-tight group-hover:text-[#1E4E82] transition-colors cursor-pointer" onClick={() => { setCurrentView('settings'); setSettingsStep('profile'); }}>Hi, {userProfile.firstName}</h2>
+                        <div className="flex items-center gap-2">
+                            <p className="text-gray-400 text-[8px] flex items-center gap-1 font-black uppercase tracking-widest opacity-70 truncate max-w-[150px] lg:max-w-none">
+                                <MapPin size={8} /> {currentAddress?.address || 'Your Location'}
+                            </p>
+                            <button 
+                                onClick={() => setShowAddressModal(true)}
+                                className="text-[#1E4E82] text-[7px] font-black uppercase tracking-widest hover:underline cursor-pointer opacity-80 hover:opacity-100 shrink-0"
+                            >
+                                Change
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                     <button onClick={() => { setCurrentView('notifications'); setNotificationsViewStep('list'); }} className="p-2 bg-white rounded-xl shadow-sm relative transition-all active:scale-90 border border-gray-50 cursor-pointer"><Bell size={16} className="text-gray-600" /><span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full border border-white" /></button>
                 </div>
             </div>
+
+            {/* Address Selector Modal */}
+            <AnimatePresence>
+                {showAddressModal && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setShowAddressModal(false)}
+                            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        />
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                            className="relative w-full max-w-sm bg-white rounded-[32px] overflow-hidden shadow-2xl"
+                        >
+                            <div className="p-6">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-lg font-black text-[#0f172a] tracking-tight">Select Location</h3>
+                                    <button onClick={() => setShowAddressModal(false)} className="p-2 hover:bg-slate-50 rounded-full transition-colors">
+                                        <X size={20} className="text-slate-400" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {userProfile.addresses?.map((addr) => (
+                                        <button
+                                            key={addr.id}
+                                            onClick={() => {
+                                                onAddressChange(addr.id);
+                                                setShowAddressModal(false);
+                                            }}
+                                            className={`w-full text-left p-4 rounded-2xl border-2 transition-all group ${
+                                                (String(selectedAddressId) === String(addr.id) || (!selectedAddressId && addr.isDefault))
+                                                    ? 'border-[#1E4E82] bg-blue-50/50' 
+                                                    : 'border-slate-100 hover:border-slate-200 hover:bg-slate-50'
+                                            }`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className={`mt-0.5 p-2 rounded-xl shrink-0 ${(String(selectedAddressId) === String(addr.id) || (!selectedAddressId && addr.isDefault)) ? 'bg-[#1E4E82] text-white' : 'bg-slate-100 text-slate-400'}`}>
+                                                    <MapPin size={14} />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className={`text-[11px] font-black uppercase tracking-wider mb-1 ${
+                                                        (String(selectedAddressId) === String(addr.id) || (!selectedAddressId && addr.isDefault)) ? 'text-[#1E4E82]' : 'text-slate-400'
+                                                    }`}>
+                                                        {addr.isDefault ? 'Primary' : 'Address'}
+                                                    </p>
+                                                    <p className="text-xs font-bold text-slate-700 leading-relaxed truncate">{addr.address}</p>
+                                                </div>
+                                                {(String(selectedAddressId) === String(addr.id) || (!selectedAddressId && addr.isDefault)) && (
+                                                    <div className="w-5 h-5 bg-[#1E4E82] rounded-full flex items-center justify-center text-white shrink-0">
+                                                        <Check size={12} />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </button>
+                                    ))}
+                                    
+                                    <button 
+                                        onClick={() => {
+                                            setCurrentView('settings');
+                                            setSettingsStep('addresses');
+                                            setShowAddressModal(false);
+                                        }}
+                                        className="w-full py-4 px-4 rounded-2xl border-2 border-dashed border-slate-200 text-slate-400 font-bold text-xs hover:border-[#1E4E82]/30 hover:text-[#1E4E82] transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Plus size={16} /> Manage Addresses
+                                    </button>
+                                </div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
             <div className="relative mb-6 cursor-pointer" onClick={() => setCurrentView('search')}>
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={16} />
                 <input type="text" readOnly placeholder="Search for artisan or service" className="w-full bg-white pl-11 pr-4 py-3 rounded-2xl cursor-pointer border border-gray-100 focus:border-[#1E4E82]/20 transition-all text-gray-700 text-xs shadow-sm" />
