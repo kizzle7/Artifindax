@@ -8,6 +8,7 @@ import Location from '../form/Location';
 import authService from '../../services/authService';
 import userService from '../../services/userService';
 import fileService from '../../services/fileService';
+import kycService from '../../services/kycService';
 
 const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, setVisibleFaq, toggleFaq, setCurrentView, refreshProfile }) => {
     const { control, watch, setValue, formState: { errors } } = useForm({
@@ -96,7 +97,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         if (!file) return;
         setIsUploadingFile(true);
         setUpdateMessage('Uploading verification document...');
-        
+
         // Local preview
         const blobUrl = URL.createObjectURL(file);
         setAddressFilePreview(blobUrl);
@@ -240,11 +241,11 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             <div className="flex justify-center mb-10">
                 <label className="relative cursor-pointer group">
                     <div className="w-28 h-28 rounded-full bg-slate-200 shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
-                        <img 
-                            src={profilePic || userProfile?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile?.firstName || 'A') + ' ' + (userProfile?.lastName || ''))}&background=1E4E82&color=fff&size=150`} 
+                        <img
+                            src={profilePic || userProfile?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile?.firstName || 'A') + ' ' + (userProfile?.lastName || ''))}&background=1E4E82&color=fff&size=150`}
                             onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile?.firstName || 'A') + ' ' + (userProfile?.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
-                            alt="Profile" 
-                            className="w-full h-full object-cover" 
+                            alt="Profile"
+                            className="w-full h-full object-cover"
                         />
                     </div>
                     <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#1E4E82] rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform"><Camera size={14} className="text-white" /></div>
@@ -357,7 +358,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 <div className="space-y-6">
                     <div>
                         <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Search Address</label>
-                        <Location 
+                        <Location
                             control={control}
                             watch={watch}
                             errors={errors}
@@ -374,7 +375,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                             }}
                         />
                     </div>
-                    
+
                     {newAddress.address && (
                         <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                             <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Selected Address</label>
@@ -388,9 +389,9 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                     <div>
                         <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Upload Verification Document</label>
                         <p className="text-[10px] text-slate-400 font-bold mb-3 ml-1 uppercase tracking-tight">Utility bills, rent receipts, or government documents</p>
-                        
+
                         <div className="relative group">
-                            <div 
+                            <div
                                 className={`w-full border-2 border-dashed rounded-[28px] p-8 flex flex-col items-center justify-center text-center transition-all min-h-[160px] 
                                     ${addressFilePreview ? 'border-[#1E4E82] bg-blue-50/30' : 'border-slate-200 bg-slate-50/50 hover:bg-slate-50'}
                                     ${isUploadingFile ? 'opacity-50 pointer-events-none' : ''}`}
@@ -401,7 +402,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                                             <img src={addressFilePreview} alt="Preview" className="w-full h-full object-cover" />
                                         </div>
                                         <p className="text-xs font-bold text-[#1E4E82]">Document Attached</p>
-                                        <button 
+                                        <button
                                             onClick={(e) => { e.stopPropagation(); setAddressFilePreview(null); setNewAddress(prev => ({ ...prev, addressVerificationFile: '' })); }}
                                             className="mt-2 text-[10px] font-black uppercase text-red-500 hover:text-red-600"
                                         >
@@ -416,7 +417,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                                         <p className="text-xs font-bold text-slate-500">Tap to browse files</p>
                                     </>
                                 )}
-                                
+
                                 <input
                                     type="file"
                                     className="absolute inset-0 opacity-0 cursor-pointer"
@@ -424,7 +425,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                                     disabled={isUploadingFile}
                                 />
                             </div>
-                            
+
                             {isUploadingFile && (
                                 <div className="absolute inset-0 flex items-center justify-center bg-white/20 rounded-[28px] backdrop-blur-[1px]">
                                     <div className="w-6 h-6 border-2 border-[#1E4E82] border-t-transparent rounded-full animate-spin" />
@@ -465,6 +466,48 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                     <button onClick={() => setSettingsSubStep('add')} className="w-full h-24 mt-4 bg-white border border-[#D1E1F4] rounded-[16px] flex items-center justify-center gap-2 transition-all active:scale-[0.98] hover:bg-slate-50 shadow-sm">
                         <PlusCircle size={24} className="text-[#24639C]" /><span className="font-bold text-[#24639C] text-sm">Add New Address</span>
                     </button>
+                </div>
+            </div>
+        );
+    };
+
+    const renderKyc = () => {
+        // Specifically using kycApprovalStatus as the primary KYC indicator
+        const kycStatus = userProfile?.kycApprovalStatus || 'NOT_STARTED';
+        const getStatusColor = () => {
+            switch(kycStatus.toUpperCase()) {
+                case 'VERIFIED': 
+                case 'APPROVED': return 'text-green-500 bg-green-50 border-green-100';
+                case 'PENDING': return 'text-amber-500 bg-amber-50 border-amber-100';
+                case 'REJECTED': return 'text-red-500 bg-red-50 border-red-100';
+                default: return 'text-slate-400 bg-slate-50 border-slate-100';
+            }
+        };
+
+        const firstNameRaw = userProfile?.firstName || '';
+        const lastNameRaw = userProfile?.lastName || '';
+        
+        // Only show names that are not emails
+        const displayFirstName = (firstNameRaw && !firstNameRaw.includes('@')) ? firstNameRaw : '';
+        const displayLastName = (lastNameRaw && !lastNameRaw.includes('@')) ? lastNameRaw : '';
+        const hasValidName = displayFirstName || displayLastName;
+
+        return (
+            <div className="lg:pt-4 pb-12 text-left max-w-2xl">
+                {/* Status Card */}
+                <div className={`p-6 rounded-[24px] border-2 mb-8 transition-all ${getStatusColor()}`}>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-60">Name</p>
+                            <h3 className="text-lg font-black text-[#0f172a] transition-all">
+                                {hasValidName ? `${displayFirstName} ${displayLastName}`.trim() : 'User'}
+                            </h3>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-1 opacity-60">KYC Status</p>
+                            <span className="text-xs font-black uppercase tracking-widest">{kycStatus}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -571,6 +614,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 {(settingsStep === 'password' || settingsStep === 'password_otp' || settingsStep === 'password_reset' || settingsStep === 'password_success') && renderPasswordFlow()}
                 {(settingsStep === 'pin' || settingsStep === 'pin_new' || settingsStep === 'pin_success') && renderPinFlow()}
                 {settingsStep === 'addresses' && renderAddresses()}
+                {settingsStep === 'kyc' && renderKyc()}
                 {settingsStep === 'faq' && renderFaq()}
                 {settingsStep === 'contact' && renderContact()}
                 {settingsStep === 'about' && renderAbout()}
