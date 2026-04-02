@@ -93,6 +93,10 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                         </div>
                         <div className="flex gap-1.5">
                             <button onClick={() => {
+                                if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                    toast.error('Your account is not yet verified. Communication is restricted.');
+                                    return;
+                                }
                                 const phone = booking.artisan?.appUser?.phoneNumber || booking.artisan?.phoneNumber || '';
                                 if (phone) {
                                     navigator.clipboard.writeText(phone);
@@ -102,6 +106,10 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                                 }
                             }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"><Phone size={14} /></button>
                             <button onClick={() => {
+                                if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                    toast.error('Your account is not yet verified. Communication is restricted.');
+                                    return;
+                                }
                                 const artisanObj = booking.artisan;
                                 const name = artisanObj?.appUser
                                     ? `${artisanObj.appUser.firstName || ''} ${artisanObj.appUser.lastName || ''}`.trim()

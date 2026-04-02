@@ -321,6 +321,10 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                             ? <div className="text-center py-10 text-gray-300 font-black uppercase tracking-widest text-[8px]">No conversations found</div>
                             : filteredMessages.map((msg) => (
                                 <div key={msg.id} onClick={() => {
+                                    if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                        toast.error('Your account is not yet verified. Communication is restricted.');
+                                        return;
+                                    }
                                     if (msg.lastMsgId) {
                                         const readArray = JSON.parse(localStorage.getItem('readMessages') || '[]');
                                         if (!readArray.includes(msg.lastMsgId)) {

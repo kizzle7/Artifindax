@@ -95,6 +95,10 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                     {/* Action Buttons */}
                     <div className="flex gap-4">
                         <button onClick={() => {
+                            if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                toast.error('Your account is not yet verified. Communication is restricted.');
+                                return;
+                            }
                             const phone = artisan.appUser?.phoneNumber || artisan.phoneNumber || artisan.phone || artisan.contactNumber || artisan.mobile || '';
                             console.log('[ArtisanProfile] Phone lookup:', { appUser: artisan.appUser, phoneNumber: artisan.phoneNumber, phone: artisan.phone, fullArtisan: artisan });
                             if (phone) {
@@ -106,10 +110,23 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                         }} className="flex-1 bg-[#1E4E82] text-white py-3.5 rounded-[12px] font-bold text-sm flex items-center justify-center gap-2 shadow-sm cursor-pointer">
                             <Phone size={18} /> Call
                         </button>
-                        <button onClick={() => toast('Please book this artisan to start chatting.', { icon: '💬' })} className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100 cursor-pointer">
+                        <button onClick={() => {
+                            if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                toast.error('Your account is not yet verified. Communication is restricted.');
+                                return;
+                            }
+                            toast('Please book this artisan to start chatting.', { icon: '💬' });
+                        }} className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100 cursor-pointer">
                             <MessageSquare size={18} />
                         </button>
-                        <button className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100 cursor-pointer">
+                        <button onClick={() => {
+                            if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                toast.error('Your account is not yet verified. Communication is restricted.');
+                                return;
+                            }
+                            // Mail logic if any, currently just an icon
+                            toast.info('Mail feature coming soon.');
+                        }} className="p-3.5 bg-slate-50 text-[#0f172a] rounded-[12px] border border-slate-100 cursor-pointer">
                             <Mail size={18} />
                         </button>
                     </div>
@@ -261,13 +278,28 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                 <div className="fixed bottom-0 left-0 lg:left-[240px] right-0 p-4 lg:p-6 bg-white border-t border-slate-100 flex gap-4 z-50">
                     {!artisan.hideBookNow && (
                         <button
-                            onClick={() => setIsBookingFormOpen(true)}
+                            onClick={() => {
+                                if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                    toast.error('Your account is not yet verified. Please wait for admin approval to book artisans.');
+                                    return;
+                                }
+                                setIsBookingFormOpen(true);
+                            }}
                             className="flex-1 bg-[#1E4E82] text-white py-3.5 rounded-lg font-bold text-sm shadow-sm active:scale-[0.98] transition-all cursor-pointer"
                         >
                             Book Now
                         </button>
                     )}
-                    <button className="flex-1 bg-white text-[#1E4E82] py-3.5 rounded-lg font-bold text-sm border-2 border-[#1E4E82] active:scale-[0.98] transition-all cursor-pointer">
+                    <button 
+                        onClick={() => {
+                            if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                toast.error('Your account is not yet verified. Communication is restricted.');
+                                return;
+                            }
+                            toast('Please book this artisan to start chatting.', { icon: '💬' });
+                        }}
+                        className="flex-1 bg-white text-[#1E4E82] py-3.5 rounded-lg font-bold text-sm border-2 border-[#1E4E82] active:scale-[0.98] transition-all cursor-pointer"
+                    >
                         Message
                     </button>
                 </div>

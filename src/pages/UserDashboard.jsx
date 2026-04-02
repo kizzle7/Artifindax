@@ -551,6 +551,7 @@ const UserDashboard = () => {
                             setCurrentView={setCurrentView}
                             setMessagesViewStep={setMessagesViewStep}
                             setSelectedArtisan={setSelectedArtisan}
+                            userProfile={userProfile}
                         />
                     ) : (
                         <>
