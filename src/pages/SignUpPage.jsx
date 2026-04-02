@@ -714,48 +714,51 @@ const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate, use
     const [isSavingLocation, setIsSavingLocation] = useState(false);
 
     const handleSkip = async () => {
-        setIsSavingLocation(true);
         const loadingToast = toast.loading("Detecting your location...");
-
+        
         const getUserCoords = () => new Promise((resolve) => {
             if (!navigator.geolocation) return resolve(null);
             navigator.geolocation.getCurrentPosition(
                 (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
                 () => resolve(null),
-                { timeout: 5000 }
+                { timeout: 8000 }
             );
         });
 
         const coords = await getUserCoords();
-        let finalAddress = ""; 
+        let finalAddress = "Set Location"; 
         let finalLat = 0;
         let finalLng = 0;
 
-        if (coords) {
+        if (coords && window.google && window.google.maps) {
             finalLat = coords.lat;
             finalLng = coords.lng;
             try {
-                const GEOCODE_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-                setKey(GEOCODE_API_KEY);
-                const geoRes = await fromLatLng(finalLat, finalLng);
-                finalAddress = geoRes.results[0]?.formatted_address || finalAddress;
+                // Use Native Google Geocoder
+                const geocoder = new window.google.maps.Geocoder();
+                const response = await geocoder.geocode({ 
+                    location: { lat: finalLat, lng: finalLng } 
+                });
+                
+                if (response.results && response.results[0]) {
+                    finalAddress = response.results[0].formatted_address;
+                }
             } catch (geoErr) {
-                console.warn("[SignUp] Reverse geocode failed on skip:", geoErr);
+                console.warn("[SignUp] Native Geocode failed:", geoErr);
             }
         }
 
         // Set default location
-        if (finalLat !== 0 && finalLng !== 0) {
-            localStorage.setItem('artifinda_location', JSON.stringify({ 
-                address: finalAddress || "Set Location", 
-                latitude: finalLat, 
-                longitude: finalLng 
-            }));
-            toast.success("Location captured!", { id: loadingToast });
-        } else {
-            toast.dismiss(loadingToast);
-        }
+        localStorage.setItem('artifinda_location', JSON.stringify({ 
+            address: finalAddress, 
+            latitude: finalLat, 
+            longitude: finalLng 
+        }));
+
+        // Reset step to 5 (Email) for resuming later
+        localStorage.setItem('artifinda_signup_step', '5');
         
+        toast.success("Location set!", { id: loadingToast });
         setIsSavingLocation(false);
         navigate(userType === 'artisan' ? '/artisan/dashboard' : '/dashboard');
     };
@@ -1059,8 +1062,8 @@ const SignUpPage = () => {
     const prevStep = () => {
         if (step === 13) {
             setStep(11);
-        } else if (step === 1) {
-            navigate(-1);
+        } else if (step === 1 || step === 5 || step === 4) {
+            navigate('/login');
         } else {
             setStep(step - 1);
         }
@@ -1264,7 +1267,7 @@ const SignUpPage = () => {
             case 1: return <RegistrationForm navigate={navigate} nextStep={() => setStep(2)} showPassword={showPassword} setShowPassword={setShowPassword} showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} regData={regData} setRegData={setRegData} />;
             case 2: return <SetPinStep pin={pin} setPin={setPin} onNext={handleSignUp} onPrev={() => setStep(1)} loading={loading} error={error} />;
             case 3: return <OtpVerification otp={otp} handleOtpChange={handleOtpChange} formatTime={formatTime} timer={timer} onVerify={handleVerifyOtp} onResend={handleResendOtp} prevStep={() => setStep(2)} loading={loading} error={error} />;
-            case 4: return <AccountCreated successIllustration={successIllustration} prevStep={() => setStep(3)} nextStep={nextStep} navigate={navigate} />;
+            case 4: return <AccountCreated successIllustration={successIllustration} prevStep={() => navigate('/login')} nextStep={nextStep} navigate={navigate} />;
             case 5: return (
                 <OnboardingStep title="Set up your account" subtitle="Please enter your valid email address" onNext={nextStep} onPrev={prevStep} disabled={!validateEmail(formData.email)}>
                     <div className="relative">

@@ -253,7 +253,16 @@ const LoginPage = () => {
                             </Button>
 
                             <p className="text-center text-sm text-gray-600">
-                                Don't have an account? <Link to="/signup/user" className="text-[#1E4E82] font-bold hover:underline">Register</Link>
+                                Don't have an account? <Link 
+                                    to="/signup/user" 
+                                    onClick={() => {
+                                        localStorage.removeItem('artifinda_signup_step');
+                                        localStorage.removeItem('artifinda_signup_type');
+                                    }}
+                                    className="text-[#1E4E82] font-bold hover:underline"
+                                >
+                                    Register
+                                </Link>
                             </p>
                         </form>
                     </div>
