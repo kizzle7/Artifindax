@@ -473,11 +473,26 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     {/* Default Address Section */}
                     {userProfile.addresses.filter(a => a.type === 'Home' || a.isDefault).map((addr) => (
                         <div key={addr.id} className="space-y-3">
-                            <div className="bg-[#F1F5F9] border border-slate-200 rounded-[12px] p-6 relative">
-                                <span className="text-xs font-bold text-slate-400 block mb-3 uppercase tracking-wider">Default Address</span>
-                                <div className="flex justify-between items-center gap-4">
-                                    <p className="text-[#0f172a] font-black text-sm leading-relaxed">{addr.address}</p>
-                                    <button onClick={() => { setSettingsSubStep('add'); setTempAddress(addr.address); }} className="text-gray-400 font-bold text-xs hover:text-[#1E4E82] transition-colors shrink-0">Change</button>
+                            <div className="bg-[#EEF4FB] border border-[#D1E1F4] rounded-[16px] p-6 relative">
+                                <div className="flex items-center justify-between mb-3">
+                                    <span className="text-[10px] font-black text-[#24639C] uppercase tracking-[0.15em]">Default Address</span>
+                                    {['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(addr.status) ? (
+                                        <span className="text-[10px] font-black text-[#0F9E7B] bg-[#E3F9F1] px-2 py-1 rounded-lg uppercase tracking-wider">Verified</span>
+                                    ) : ['rejected', 'REJECTED'].includes(addr.status) ? (
+                                        <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg uppercase tracking-wider">Rejected</span>
+                                    ) : (
+                                        <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-lg uppercase tracking-wider">Pending</span>
+                                    )}
+                                </div>
+                                <div className="flex justify-between items-start gap-4">
+                                    <div className="flex-1">
+                                        <p className="text-[#0f172a] font-black text-xs leading-relaxed mb-2">{addr.address}</p>
+                                        <div className={`flex items-center gap-1.5 font-black text-[9px] ${['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(addr.status) ? 'text-[#0F9E7B]' : ['rejected', 'REJECTED'].includes(addr.status) ? 'text-red-500' : 'text-amber-500'}`}>
+                                            <MapPin size={12} />
+                                            <span>{['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(addr.status) ? 'Location verified' : ['rejected', 'REJECTED'].includes(addr.status) ? 'Verification rejected' : 'Verification pending'}</span>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => { setSettingsSubStep('add'); setTempAddress(addr.address); }} className="text-[#1E4E82] font-black text-[10px] uppercase tracking-widest hover:underline transition-all shrink-0 mt-1">Change</button>
                                 </div>
                             </div>
                         </div>
@@ -486,15 +501,33 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     {/* Other Addresses List */}
                     <div className="space-y-3 pt-6">
                          {userProfile.addresses.filter(a => a.type !== 'Home' && !a.isDefault).map((addr) => (
-                            <div key={addr.id} className="w-full p-5 rounded-[12px] border-2 border-slate-100 flex items-center justify-between group hover:border-slate-200 transition-all bg-white">
-                                <span className="font-bold text-[#0f172a] text-sm truncate pr-4">{addr.address}</span>
-                                <button 
-                                    onClick={() => { setSelectedAddressForRemoval(addr); setSettingsSubStep('remove'); }}
-                                    className="w-6 h-6 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 group-hover:border-red-400 group-hover:text-red-400 transition-all shrink-0 active:scale-90"
-                                >
-                                    <EyeOff size={14} className="hidden" /> {/* Using hidden to maintain size check if needed */}
-                                    <div className="w-2.5 h-[2px] bg-current rounded-full" />
-                                </button>
+                            <div key={addr.id} className="w-full p-5 rounded-[16px] border-2 border-slate-50 flex flex-col gap-3 group hover:border-[#1E4E82]/20 transition-all bg-white shadow-sm">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-slate-400"><Home size={14} /></div>
+                                        <span className="font-black text-[#0f172a] text-sm">Additional Address</span>
+                                    </div>
+                                    {['verified', 'APPROVED', 'verified'].includes(addr.status) ? (
+                                        <span className="text-[10px] font-black text-[#0F9E7B] bg-[#E3F9F1] px-2 py-1 rounded-lg uppercase tracking-wider">Verified</span>
+                                    ) : ['rejected', 'REJECTED'].includes(addr.status) ? (
+                                        <span className="text-[10px] font-black text-red-600 bg-red-50 px-2 py-1 rounded-lg uppercase tracking-wider">Rejected</span>
+                                    ) : (
+                                        <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-1 rounded-lg uppercase tracking-wider">Pending</span>
+                                    )}
+                                </div>
+                                <p className="text-gray-500 font-bold text-xs truncate">{addr.address}</p>
+                                <div className="flex items-center justify-between mt-1">
+                                    <div className={`flex items-center gap-1.5 font-black text-[9px] ${['verified', 'APPROVED', 'verified'].includes(addr.status) ? 'text-[#0F9E7B]' : ['rejected', 'REJECTED'].includes(addr.status) ? 'text-red-500' : 'text-amber-500'}`}>
+                                        <MapPin size={12} />
+                                        <span>{['verified', 'APPROVED', 'verified'].includes(addr.status) ? 'Location verified' : ['rejected', 'REJECTED'].includes(addr.status) ? 'Verification rejected' : 'Verification pending'}</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => { setSelectedAddressForRemoval(addr); setSettingsSubStep('remove'); }}
+                                        className="text-red-500 font-black text-[9px] uppercase tracking-widest hover:underline transition-all"
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
                             </div>
                          ))}
 

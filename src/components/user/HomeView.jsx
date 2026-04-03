@@ -24,8 +24,9 @@ const HomeView = ({ userProfile, setCurrentView, setSettingsStep, setNotificatio
                     <div>
                         <h2 className="text-base font-black text-[#0f172a] leading-tight group-hover:text-[#1E4E82] transition-colors cursor-pointer" onClick={() => { setCurrentView('settings'); setSettingsStep('profile'); }}>Hi, {userProfile.firstName}</h2>
                         <div className="flex items-center gap-2">
-                            <p className="text-gray-400 text-[8px] flex items-center gap-1 font-black uppercase tracking-widest opacity-70 truncate max-w-[150px] lg:max-w-none">
+                            <p className={`text-[8px] flex items-center gap-1 font-black uppercase tracking-widest opacity-70 truncate max-w-[150px] lg:max-w-none ${['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(currentAddress?.status) ? 'text-gray-400' : 'text-amber-500'}`}>
                                 <MapPin size={8} /> {currentAddress?.address || 'Your Location'}
+                                {!['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(currentAddress?.status) && currentAddress?.address && <span className="ml-1 text-[7px] bg-amber-50 px-1 rounded-sm tracking-tight font-black uppercase shadow-sm border border-amber-100">(Pending)</span>}
                             </p>
                             <button 
                                 onClick={() => setShowAddressModal(true)}
@@ -85,11 +86,16 @@ const HomeView = ({ userProfile, setCurrentView, setSettingsStep, setNotificatio
                                                     <MapPin size={14} />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className={`text-[11px] font-black uppercase tracking-wider mb-1 ${
-                                                        (String(selectedAddressId) === String(addr.id) || (!selectedAddressId && addr.isDefault)) ? 'text-[#1E4E82]' : 'text-slate-400'
-                                                    }`}>
-                                                        {addr.isDefault ? 'Primary' : 'Address'}
-                                                    </p>
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <p className={`text-[11px] font-black uppercase tracking-wider ${
+                                                            (String(selectedAddressId) === String(addr.id) || (!selectedAddressId && addr.isDefault)) ? 'text-[#1E4E82]' : 'text-slate-400'
+                                                        }`}>
+                                                            {addr.isDefault ? 'Primary' : 'Address'}
+                                                        </p>
+                                                        {!['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(addr.status) && (
+                                                            <span className="text-[7px] font-black text-amber-500 bg-amber-50 px-1.5 py-0.5 rounded-md uppercase tracking-tight border border-amber-100">Pending</span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-xs font-bold text-slate-700 leading-relaxed truncate">{addr.address}</p>
                                                 </div>
                                                 {(String(selectedAddressId) === String(addr.id) || (!selectedAddressId && addr.isDefault)) && (

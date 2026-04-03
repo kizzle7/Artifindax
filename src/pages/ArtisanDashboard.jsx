@@ -150,7 +150,7 @@ const ArtisanDashboard = () => {
                     latitude: addr.address?.latitude,
                     longitude: addr.address?.longitude,
                     isDefault: addr.id === (account?.defaultAddressId),
-                    status: addr.status
+                    status: addr.approvalStatus || addr.status || 'PENDING'
                 }));
 
                 // Fallback to localStorage if no addresses from API

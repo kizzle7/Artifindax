@@ -26,7 +26,12 @@ const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
                     <div>
                         <h1 className="hidden lg:block text-lg font-bold text-[#0f172a] group-hover:text-[#1E4E82] transition-colors">Hi, {userProfile.firstName}</h1>
                         <h1 className="lg:hidden text-lg font-bold text-[#0f172a] group-hover:text-[#1E4E82] transition-colors">Hi, {userProfile.firstName}!</h1>
-                        <p className="text-xs text-gray-500">{userProfile.addresses[0]?.address || 'Your Location'}</p>
+                        <p className={`text-xs flex items-center gap-1.5 ${['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(userProfile.addresses[0]?.status) ? 'text-gray-500' : 'text-amber-500 font-bold'}`}>
+                            {userProfile.addresses[0]?.address || 'Your Location'}
+                            {!['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(userProfile.addresses[0]?.status) && userProfile.addresses[0]?.address && (
+                                <span className="text-[9px] bg-amber-50 px-1.5 py-0.5 rounded-md uppercase tracking-tight font-black border border-amber-100">Pending</span>
+                            )}
+                        </p>
                     </div>
                 </div>
                 <div className="hidden lg:flex items-center gap-4">

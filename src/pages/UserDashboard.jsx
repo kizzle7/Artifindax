@@ -149,7 +149,7 @@ const UserDashboard = () => {
                 latitude: addr.address.latitude,
                 longitude: addr.address.longitude,
                 isDefault: addr.id === account?.defaultAddressId || true,
-                status: addr.status
+                status: addr.approvalStatus || addr.status || 'PENDING'
             }));
 
             // If no addresses from API, check localStorage for the "skipped" location

@@ -455,11 +455,20 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                         <div key={addr.id} className="p-6 bg-[#EEF4FB] border border-[#D1E1F4] rounded-[16px] shadow-sm">
                             <div className="flex items-center justify-between mb-3">
                                 <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-[#24639C] shrink-0"><Home size={20} /></div><h4 className="font-black text-[#24639C] text-sm">{addr.type === 'Home' ? 'Default Address' : addr.type}</h4></div>
-                                {addr.status === 'verified' && <span className="text-[10px] font-black text-[#0F9E7B] bg-[#E3F9F1] px-3 py-1.5 rounded-lg uppercase tracking-wider">Verified</span>}
+                                {['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(addr.status) ? (
+                                    <span className="text-[10px] font-black text-[#0F9E7B] bg-[#E3F9F1] px-3 py-1.5 rounded-lg uppercase tracking-wider">Verified</span>
+                                ) : ['rejected', 'REJECTED'].includes(addr.status) ? (
+                                    <span className="text-[10px] font-black text-red-600 bg-red-50 px-3 py-1.5 rounded-lg uppercase tracking-wider">Rejected</span>
+                                ) : (
+                                    <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-3 py-1.5 rounded-lg uppercase tracking-wider">Pending</span>
+                                )}
                             </div>
                             <div className="pl-13">
                                 <p className="text-gray-500 font-bold text-xs mt-1 mb-4 leading-relaxed">{addr.address}</p>
-                                <div className="flex items-center gap-2 text-[#0F9E7B] font-black text-[10px]"><MapPin size={14} /><span>Location verified</span></div>
+                                <div className={`flex items-center gap-2 font-black text-[10px] ${['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(addr.status) ? 'text-[#0F9E7B]' : ['rejected', 'REJECTED'].includes(addr.status) ? 'text-red-500' : 'text-amber-500'}`}>
+                                    <MapPin size={14} />
+                                    <span>{['verified', 'APPROVED', 'ACCEPTED', 'accepted'].includes(addr.status) ? 'Location verified' : ['rejected', 'REJECTED'].includes(addr.status) ? 'Verification rejected' : 'Verification pending'}</span>
+                                </div>
                             </div>
                         </div>
                     ))}
