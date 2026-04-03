@@ -6,6 +6,7 @@ import Button from '../components/ui/Button';
 import loginBg from '../assets/RP.png';
 import successIllustration from '../assets/Frame 1000004078.png';
 import authService from '../services/authService';
+import userService from '../services/userService';
 
 const LoginPage = () => {
     const navigate = useNavigate();
@@ -36,9 +37,17 @@ const LoginPage = () => {
     useEffect(() => {
         const token = authService.getToken();
         const role = authService.getRole();
+        const pendingStep = localStorage.getItem('artifinda_signup_step');
+        const storedUserType = localStorage.getItem('artifinda_signup_type');
+
         if (token) {
-            if (role === 'ARTISAN') navigate('/artisan/dashboard');
-            else navigate('/dashboard');
+            if (storedUserType === 'artisan' && pendingStep && parseInt(pendingStep, 10) < 21) {
+                navigate('/signup');
+            } else if (role === 'ARTISAN') {
+                navigate('/artisan/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         }
     }, [navigate]);
 
@@ -69,7 +78,27 @@ const LoginPage = () => {
                 deviceType: 'WEB'
             });
             const role = authService.getRole();
-            if (role === 'ARTISAN') {
+            let pendingStep = localStorage.getItem('artifinda_signup_step');
+            let storedUserType = localStorage.getItem('artifinda_signup_type');
+
+            if (role === 'ARTISAN' && (!storedUserType || !pendingStep)) {
+                try {
+                    const profileData = await userService.getProfile();
+                    const artisanAccount = profileData?.accounts?.find(a => a.accountType === 'ARTISAN');
+                    if (!artisanAccount || !artisanAccount.kycApprovalStatus || artisanAccount.kycApprovalStatus === 'NOT_STARTED') {
+                        localStorage.setItem('artifinda_signup_step', '5');
+                        localStorage.setItem('artifinda_signup_type', 'artisan');
+                        pendingStep = '5';
+                        storedUserType = 'artisan';
+                    }
+                } catch (e) {
+                    console.error('Failed to verify artisan profile completion during login', e);
+                }
+            }
+
+            if (storedUserType === 'artisan' && pendingStep && parseInt(pendingStep, 10) < 21) {
+                navigate('/signup');
+            } else if (role === 'ARTISAN') {
                 navigate('/artisan/dashboard');
             } else {
                 navigate('/dashboard');
@@ -121,7 +150,27 @@ const LoginPage = () => {
                 deviceType: 'WEB'
             });
             const role = authService.getRole();
-            if (role === 'ARTISAN') {
+            let pendingStep = localStorage.getItem('artifinda_signup_step');
+            let storedUserType = localStorage.getItem('artifinda_signup_type');
+
+            if (role === 'ARTISAN' && (!storedUserType || !pendingStep)) {
+                try {
+                    const profileData = await userService.getProfile();
+                    const artisanAccount = profileData?.accounts?.find(a => a.accountType === 'ARTISAN');
+                    if (!artisanAccount || !artisanAccount.kycApprovalStatus || artisanAccount.kycApprovalStatus === 'NOT_STARTED') {
+                        localStorage.setItem('artifinda_signup_step', '5');
+                        localStorage.setItem('artifinda_signup_type', 'artisan');
+                        pendingStep = '5';
+                        storedUserType = 'artisan';
+                    }
+                } catch (e) {
+                    console.error('Failed to verify artisan profile completion during login', e);
+                }
+            }
+
+            if (storedUserType === 'artisan' && pendingStep && parseInt(pendingStep, 10) < 21) {
+                navigate('/signup');
+            } else if (role === 'ARTISAN') {
                 navigate('/artisan/dashboard');
             } else {
                 navigate('/dashboard');

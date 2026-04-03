@@ -11,13 +11,19 @@ const GuestRoute = ({ children }) => {
     const role = authService.getRole()?.toUpperCase();
     const signupStep = localStorage.getItem('artifinda_signup_step');
 
-    // If there's a token AND an onboarding process is active, allow them to see the signup page
-    if (token && signupStep) {
-        console.log('[GuestRoute] Authenticated user in onboarding, allowing access');
-        return children;
-    }
+    const storedUserType = localStorage.getItem('artifinda_signup_type');
 
     if (token) {
+        // If an artisan has incomplete onboarding, force them to the signup flow
+        if (storedUserType === 'artisan' && signupStep && parseInt(signupStep, 10) < 21) {
+            // Only redirect if they aren't already on the signup route to prevent infinite loops
+            if (window.location.pathname.startsWith('/signup')) {
+                return children;
+            }
+            console.log('[GuestRoute] Authenticated artisan with incomplete onboarding, redirecting to signup');
+            return <Navigate to="/signup" replace />;
+        }
+
         console.log('[GuestRoute] Authenticated user detected, redirecting to dashboard');
         
         // Redirect to the appropriate dashboard based on role

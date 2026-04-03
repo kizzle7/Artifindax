@@ -606,6 +606,7 @@ const UserDashboard = () => {
                                     setCurrentView={setCurrentView}
                                     userProfile={userProfile}
                                     bookingsData={bookingsData}
+                                    loading={loadingBookings}
                                 />
                             )}
                             {currentView === 'notifications' && (

@@ -6,7 +6,7 @@ import { Client } from "@stomp/stompjs";
 import chatService from '../../services/chatService';
 import API_CONFIG from '../../config/apiConfig';
 
-const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setCurrentChat, chatMessages, setChatMessages, searchMessages, setSearchMessages, zoomedImage, setZoomedImage, showMenuModal, setShowMenuModal, selectedReportOption, setSelectedReportOption, setCurrentView, bookingsData = [], userProfile }) => {
+const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setCurrentChat, chatMessages, setChatMessages, searchMessages, setSearchMessages, zoomedImage, setZoomedImage, showMenuModal, setShowMenuModal, selectedReportOption, setSelectedReportOption, setCurrentView, bookingsData = [], userProfile, loading }) => {
     const [input, setInput] = useState('');
     const [connected, setConnected] = useState(false);
     const [load, setLoad] = useState(false);
@@ -252,7 +252,7 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
 
         // Build dynamic list of distinct conversations
         const uniqueBookings = Array.from(customerMap.values());
-        const isListLoading = bookingsData.length === 0 || uniqueBookings.some(b => {
+        const isListLoading = (loading && bookingsData.length === 0) || uniqueBookings.some(b => {
             const ref = latestMessagesRef.current[b.id];
             return !ref || ref === 'fetching';
         });

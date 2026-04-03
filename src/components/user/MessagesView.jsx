@@ -9,7 +9,7 @@ import { Client } from "@stomp/stompjs";
 import chatService from '../../services/chatService';
 import API_CONFIG from '../../config/apiConfig';
 
-const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setCurrentChat, chatMessages, setChatMessages, searchMessages, setSearchMessages, zoomedImage, setZoomedImage, showMenuModal, setShowMenuModal, selectedReportOption, setSelectedReportOption, setCurrentView, userProfile, bookingsData = [] }) => {
+const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setCurrentChat, chatMessages, setChatMessages, searchMessages, setSearchMessages, zoomedImage, setZoomedImage, showMenuModal, setShowMenuModal, selectedReportOption, setSelectedReportOption, setCurrentView, userProfile, bookingsData = [], loading }) => {
     const [input, setInput] = useState('');
     const [connected, setConnected] = useState(false);
     const [load, setLoad] = useState(false);
@@ -266,8 +266,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
 
         // Build dynamic list of distinct conversations
         const uniqueBookings = Array.from(artisanMap.values());
-        // isListLoading is true if bookings haven't loaded OR any booking hasn't been fetched yet
-        const isListLoading = bookingsData.length === 0 || uniqueBookings.some(b => {
+        // isListLoading is true if we are in the initial loading phase OR waiting for latest message fetches
+        const isListLoading = (loading && bookingsData.length === 0) || uniqueBookings.some(b => {
             const ref = latestMessagesRef.current[b.id];
             return !ref || ref === 'fetching';
         });
@@ -318,7 +318,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                     {isListLoading && !hasAnyConfirmed
                         ? <ChatListSkeleton />
                         : filteredMessages.length === 0
-                            ? <div className="text-center py-10 text-gray-300 font-black uppercase tracking-widest text-[8px]">No conversations found</div>
+                            ? null
                             : filteredMessages.map((msg) => (
                                 <div key={msg.id} onClick={() => {
                                     if (userProfile?.kycApprovalStatus !== 'APPROVED') {
@@ -373,10 +373,16 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                                 </div>
                             </div>
                             <h2 className="text-xl font-black text-[#0f172a] mb-2 tracking-tight uppercase">No Conversations Found</h2>
-                            <p className="text-slate-400 font-bold mb-8 max-w-[240px] leading-relaxed text-xs">Your inbox is currently empty. Start a conversation with an artisan to see your messages here!</p>
-                            <button onClick={() => setCurrentView('search')} className="w-full max-w-xs py-4.5 bg-[#1E4E82] text-white rounded-[20px] font-black text-sm shadow-xl active:scale-95 transition-all">
-                                Find an Artisan
-                            </button>
+                            {userProfile?.kycApprovalStatus !== 'APPROVED' ? (
+                                <p className="text-slate-400 font-bold mb-8 max-w-[240px] leading-relaxed text-xs">Please complete your onboarding to use this service.</p>
+                            ) : (
+                                <>
+                                    <p className="text-slate-400 font-bold mb-8 max-w-[240px] leading-relaxed text-xs">Your inbox is currently empty. Start a conversation with an artisan to see your messages here!</p>
+                                    <button onClick={() => setCurrentView('search')} className="w-full max-w-xs py-4.5 bg-[#1E4E82] text-white rounded-[20px] font-black text-sm shadow-xl active:scale-95 transition-all">
+                                        Find an Artisan
+                                    </button>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>

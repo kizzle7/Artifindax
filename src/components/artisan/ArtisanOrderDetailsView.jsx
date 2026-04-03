@@ -1,5 +1,6 @@
 import React from 'react';
 import { ChevronLeft, Phone, MessageSquare, Mail } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export const getDetailStatusBadge = (status) => {
     const s = (status || '').toUpperCase();
@@ -70,8 +71,16 @@ const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAcce
                     </div>
                 </div>
                 <div className="flex gap-2">
-                    <button className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all"><Phone size={16} /></button>
-                    <button onClick={() => { if(onMessageClick) onMessageClick(booking); }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all"><MessageSquare size={16} /></button>
+                    <button onClick={() => {
+                        const phone = booking.customer?.appUser?.phoneNumber || booking.customer?.phoneNumber || '';
+                        if (phone) {
+                            navigator.clipboard.writeText(phone);
+                            toast.success('Phone number copied');
+                        } else {
+                            toast.error('Phone number not available');
+                        }
+                    }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"><Phone size={16} /></button>
+                    <button onClick={() => { if(onMessageClick) onMessageClick(booking); }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"><MessageSquare size={16} /></button>
                 </div>
             </div>
 

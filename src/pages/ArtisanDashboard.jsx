@@ -461,6 +461,7 @@ const ArtisanDashboard = () => {
                         setCurrentView={setCurrentView}
                         bookingsData={bookingsData}
                         userProfile={userProfile}
+                        loading={loadingBookings}
                     />
                 );
             case 'notifications':

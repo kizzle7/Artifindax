@@ -11,6 +11,7 @@ import signupBg from '../assets/SIGNUP.png';
 import successIllustration from '../assets/Frame 1000004078.png';
 import authService from '../services/authService';
 import categoryService from '../services/categoryService';
+import userService from '../services/userService';
 import { useForm } from 'react-hook-form';
 import Location from '../components/form/Location';
 import fileService from '../services/fileService';
@@ -28,10 +29,12 @@ const getIcon = (iconName) => ICON_MAP[iconName] || Smartphone;
 
 const CategorySelection = ({ categories, selectedCategory, onSelect, onNext, onPrev, loading }) => (
     <div className="min-h-screen bg-white p-6 max-w-lg mx-auto flex flex-col pt-12 items-center text-center">
-        <div className="w-full mb-8">
-            <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
-                <ChevronLeft size={18} />
-            </button>
+        <div className="w-full mb-8 h-8 flex items-center">
+            {onPrev && (
+                <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
+                    <ChevronLeft size={18} />
+                </button>
+            )}
         </div>
         <h1 className="text-xl font-bold text-[#0f172a] mb-2 px-4">Set up your account</h1>
         <p className="text-sm text-gray-500 mb-8 px-4 leading-snug">Please select category your occupation is classified under</p>
@@ -75,10 +78,12 @@ const SkillMapping = ({ category, skills, selectedSkills, onToggle, onNext, onPr
 
     return (
         <div className="min-h-screen bg-white p-6 max-w-md mx-auto flex flex-col pt-12">
-            <div className="mb-8">
-                <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md">
-                    <ChevronLeft size={18} />
-                </button>
+            <div className="mb-8 h-8 flex items-center">
+                {onPrev && (
+                    <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md">
+                        <ChevronLeft size={18} />
+                    </button>
+                )}
             </div>
             <h1 className="text-xl font-bold text-[#0f172a] mb-2">Set up your account</h1>
             <p className="text-xs text-gray-500 mb-8">Select the skills that apply to you in this category</p>
@@ -247,10 +252,12 @@ const AvailabilitySelection = ({ artisanData, setArtisanData, onNext, onPrev }) 
 
     return (
         <div className="min-h-screen bg-white p-6 max-w-lg mx-auto flex flex-col pt-12">
-            <div className="w-full mb-8">
-                <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
-                    <ChevronLeft size={18} />
-                </button>
+            <div className="w-full mb-8 h-8 flex items-center">
+                {onPrev && (
+                    <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
+                        <ChevronLeft size={18} />
+                    </button>
+                )}
             </div>
             <h1 className="text-xl font-bold text-[#0f172a] mb-2 px-2">Set up your account</h1>
             <p className="text-xs text-gray-500 mb-8 px-2 leading-snug">Set your rate and available work hours</p>
@@ -356,10 +363,12 @@ const NextOfKin = ({ data, onChange, onNext, onPrev, loading, error }) => {
 
     return (
         <div className="min-h-screen bg-white p-6 max-w-md mx-auto flex flex-col pt-12">
-            <div className="mb-8">
-                <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
-                    <ChevronLeft size={18} />
-                </button>
+            <div className="w-full mb-8 h-8 flex items-center">
+                {onPrev && (
+                    <button type="button" onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
+                        <ChevronLeft size={18} />
+                    </button>
+                )}
             </div>
             <h1 className="text-xl font-bold text-[#0f172a] mb-2 px-2">Set up your account</h1>
             <p className="text-xs text-gray-500 mb-8 px-2">Tell us about your next of kin</p>
@@ -766,7 +775,9 @@ const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate, use
     return (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-white max-w-md mx-auto">
             <div className="fixed top-0 left-0 right-0 p-6 flex items-center justify-between z-10">
-                <button onClick={prevStep} className="p-2 rounded-full bg-gray-900 text-white"><ChevronLeft size={20} /></button>
+                {userType !== 'artisan' ? (
+                    <button onClick={prevStep} className="p-2 rounded-full bg-gray-900 text-white"><ChevronLeft size={20} /></button>
+                ) : <div />}
                 <div className="flex flex-col gap-1.5">{[1, 2, 3].map(i => <div key={i} className="w-6 h-0.5 bg-gray-900" />)}</div>
             </div>
             <div className="w-full mb-8"><img src={successIllustration} alt="Account Created" className="w-[80%] mx-auto" /></div>
@@ -782,18 +793,20 @@ const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate, use
                     <span>Let's get to know you</span>
                     <ArrowRight size={20} className="absolute right-8 transition-transform group-hover:translate-x-1" />
                 </Button>
-                <Button 
-                    variant="plain" 
-                    onClick={handleSkip} 
-                    disabled={isSavingLocation}
-                    className="w-full py-3 rounded-xl text-lg bg-[#D6E5F5] text-[#1E4E82] font-bold relative group flex items-center justify-center"
-                >
-                    {isSavingLocation ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#1E4E82]"></div>
-                    ) : (
-                        <span>Skip for now</span>
-                    )}
-                </Button>
+                {userType !== 'artisan' && (
+                    <Button 
+                        variant="plain" 
+                        onClick={handleSkip} 
+                        disabled={isSavingLocation}
+                        className="w-full py-3 rounded-xl text-lg bg-[#D6E5F5] text-[#1E4E82] font-bold relative group flex items-center justify-center"
+                    >
+                        {isSavingLocation ? (
+                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#1E4E82]"></div>
+                        ) : (
+                            <span>Skip for now</span>
+                        )}
+                    </Button>
+                )}
             </div>
         </div>
     );
@@ -824,10 +837,12 @@ const FinalSuccess = ({ successIllustration, prevStep, navigate }) => (
 // --- Onboarding Step Helper ---
 const OnboardingStep = ({ title, subtitle, children, onNext, onPrev, disabled, nextLabel = "Next", loading = false }) => (
     <div className="min-h-screen bg-white p-6 max-w-md mx-auto flex flex-col pt-12">
-        <div className="mb-8">
-            <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
-                <ChevronLeft size={18} />
-            </button>
+        <div className="mb-8 h-8 flex items-center">
+            {onPrev && (
+                <button onClick={onPrev} className="p-1.5 rounded-full bg-gray-900 text-white shadow-md hover:bg-black transition-colors">
+                    <ChevronLeft size={18} />
+                </button>
+            )}
         </div>
         <h1 className="text-xl font-bold text-[#0f172a] mb-2">{title}</h1>
         <p className="text-xs text-gray-500 mb-12">{subtitle}</p>
@@ -863,12 +878,25 @@ const SignUpPage = () => {
         }
     });
 
-    const initialRole = urlRole || localStorage.getItem('artifinda_signup_type') || 'user';
+    const storedUserType = localStorage.getItem('artifinda_signup_type');
+    const savedStep = localStorage.getItem('artifinda_signup_step');
+    
+    // If the URL specifies a role that contradicts the stored progress, start fresh
+    const mustStartFresh = urlRole && storedUserType && urlRole !== storedUserType;
+    
+    const initialRole = mustStartFresh ? urlRole : (urlRole || storedUserType || 'user');
     const [userType, setUserType] = useState(initialRole);
     
-    // Resume step if available, but only if we have a role
-    const savedStep = localStorage.getItem('artifinda_signup_step');
-    const [step, setStep] = useState(savedStep ? parseInt(savedStep, 10) : 1);
+    const [step, setStep] = useState((savedStep && !mustStartFresh) ? parseInt(savedStep, 10) : 1);
+
+    // Clear stale persistence and tokens if we had to start fresh
+    useEffect(() => {
+        if (mustStartFresh) {
+            localStorage.removeItem('artifinda_signup_step');
+            localStorage.removeItem('artifinda_signup_type');
+            authService.clearToken();
+        }
+    }, [mustStartFresh]);
 
     // Persistence Effect
     useEffect(() => {
@@ -947,6 +975,63 @@ const SignUpPage = () => {
         if (step === 3 && timer > 0) interval = setInterval(() => setTimer(prev => prev - 1), 1000);
         return () => clearInterval(interval);
     }, [step, timer]);
+
+    // Pre-populate form data when resuming onboarding from login
+    // (regData.phone would be empty in a resume session, but we have a token)
+    useEffect(() => {
+        const token = authService.getToken();
+        const isResuming = token && userType === 'artisan' && !regData.phone;
+        if (!isResuming) return;
+
+        const prefillFromProfile = async () => {
+            try {
+                const profile = await userService.getProfile();
+                const account = profile?.accounts?.find(a => a.accountType === 'ARTISAN') || profile?.accounts?.[0];
+                // Pre-fill regData.phone so the submission payload has a phoneNumber
+                setRegData(prev => ({
+                    ...prev,
+                    phone: profile.phoneNumber || prev.phone
+                }));
+                // Pre-fill formData with any existing profile fields
+                setFormData(prev => ({
+                    ...prev,
+                    email: prev.email || profile.email || account?.email || '',
+                    gender: prev.gender || account?.gender || '',
+                    dob: prev.dob || account?.dateOfBirth || '',
+                    address: prev.address || account?.artisanAddresses?.[0]?.address?.address || account?.addresses?.[0]?.address || '',
+                    latitude: prev.latitude || account?.artisanAddresses?.[0]?.address?.latitude || 0,
+                    longitude: prev.longitude || account?.artisanAddresses?.[0]?.address?.longitude || 0,
+                    profilePic: prev.profilePic || account?.profilePicture || profile.profilePicture || null,
+                }));
+            } catch (e) {
+                console.error('[SignUpPage] Failed to prefill profile on resume:', e);
+            }
+        };
+        prefillFromProfile();
+    }, [userType]); // only run once on mount
+
+    // Block browser back button from navigating to dashboard or wrong pages during signup
+    useEffect(() => {
+        // Push a dummy state so the browser back button has something to cancel
+        window.history.pushState(null, '', window.location.href);
+
+        const handlePopState = (e) => {
+            if (userType === 'artisan' && step >= 4) {
+                // Artisans must NOT be able to go back - trap them
+                window.history.pushState(null, '', window.location.href);
+            } else if (step <= 3 || step === 1) {
+                // For users in early registration or step 1, going back = go to login
+                navigate('/login');
+            } else {
+                // For other steps, handle within the app (go back one step)
+                window.history.pushState(null, '', window.location.href);
+                setStep(prev => Math.max(1, prev - 1));
+            }
+        };
+
+        window.addEventListener('popstate', handlePopState);
+        return () => window.removeEventListener('popstate', handlePopState);
+    }, [step, userType, navigate]);
 
     // Check for Google Maps availability periodically if not loaded
     useEffect(() => {
@@ -1062,8 +1147,20 @@ const SignUpPage = () => {
     const prevStep = () => {
         if (step === 13) {
             setStep(11);
-        } else if (step === 1 || step === 5 || step === 4) {
+        } else if (step === 14 && userType === 'artisan') {
+            setStep(12);
+        } else if (step === 1 || step === 4) {
             navigate('/login');
+        } else if (step === 5) {
+            if (userType === 'artisan') {
+                // If an artisan backs out of onboarding at the first step, log them out completely so they can access the rest of the site
+                authService.clearToken();
+                localStorage.removeItem('artifinda_signup_step');
+                localStorage.removeItem('artifinda_signup_type');
+                navigate('/');
+            } else {
+                navigate('/dashboard');
+            }
         } else {
             setStep(step - 1);
         }
@@ -1267,7 +1364,7 @@ const SignUpPage = () => {
             case 1: return <RegistrationForm navigate={navigate} nextStep={() => setStep(2)} showPassword={showPassword} setShowPassword={setShowPassword} showConfirmPassword={showConfirmPassword} setShowConfirmPassword={setShowConfirmPassword} regData={regData} setRegData={setRegData} />;
             case 2: return <SetPinStep pin={pin} setPin={setPin} onNext={handleSignUp} onPrev={() => setStep(1)} loading={loading} error={error} />;
             case 3: return <OtpVerification otp={otp} handleOtpChange={handleOtpChange} formatTime={formatTime} timer={timer} onVerify={handleVerifyOtp} onResend={handleResendOtp} prevStep={() => setStep(2)} loading={loading} error={error} />;
-            case 4: return <AccountCreated successIllustration={successIllustration} prevStep={() => navigate('/login')} nextStep={nextStep} navigate={navigate} />;
+            case 4: return <AccountCreated successIllustration={successIllustration} prevStep={() => navigate('/login')} nextStep={nextStep} navigate={navigate} userType={userType} />;
             case 5: return (
                 <OnboardingStep title="Set up your account" subtitle="Please enter your valid email address" onNext={nextStep} onPrev={prevStep} disabled={!validateEmail(formData.email)}>
                     <div className="relative">

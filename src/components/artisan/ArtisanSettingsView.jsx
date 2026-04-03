@@ -9,6 +9,7 @@ import LogoutModal from './LogoutModal';
 import logo from '../../assets/Artifinda logo 3.png';
 import userService from '../../services/userService';
 import fileService from '../../services/fileService';
+import toast from 'react-hot-toast';
 
 const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, subscriptionsStep, setSubscriptionsStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, toggleFaq, handleLogout }) => {
 
@@ -58,10 +59,10 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             
             if (imageUrl) {
                 setVerificationFile(imageUrl);
-                setUpdateMessage('Verification document uploaded!');
+                toast.success('Verification document uploaded!');
             }
         } catch (err) {
-            setUpdateMessage('Failed to upload document.');
+            toast.error('Failed to upload document.');
         } finally {
             setIsUploadingFile(false);
         }
@@ -78,7 +79,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
     const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        setUpdateMessage('Uploading profile picture...');
+        const uploadToast = toast.loading('Uploading profile picture...');
         setIsUpdating(true);
         try {
             const response = await fileService.upload(file);
@@ -105,24 +106,21 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             if (imageUrl) {
                 setProfilePic(imageUrl);
                 setUserProfile(prev => ({ ...prev, profilePicture: imageUrl }));
-                setUpdateMessage('Profile picture uploaded!');
-                setTimeout(() => setUpdateMessage(''), 3000);
+                toast.success('Profile picture uploaded!', { id: uploadToast });
             } else {
-                setUpdateMessage('Failed to parse uploaded image. Please try again.');
+                toast.error('Failed to parse uploaded image. Please try again.', { id: uploadToast });
             }
         } catch (err) {
-            setUpdateMessage('Failed to upload profile picture.');
+            toast.error('Failed to upload profile picture.', { id: uploadToast });
         } finally {
             setIsUpdating(false);
         }
     };
 
     const [isUpdating, setIsUpdating] = React.useState(false);
-    const [updateMessage, setUpdateMessage] = React.useState('');
 
     const handleUpdateProfile = async () => {
         setIsUpdating(true);
-        setUpdateMessage('');
         try {
             const payload = {
                 firstName: userProfile.firstName,
@@ -141,11 +139,10 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                 identityVerificationStatus: updatedData.identityVerificationStatus || userProfile.identityVerificationStatus,
             });
 
-            setUpdateMessage('Profile updated successfully!');
-            setTimeout(() => setUpdateMessage(''), 3000);
+            toast.success('Profile updated successfully!');
         } catch (err) {
             console.error("Failed to update artisan profile:", err);
-            setUpdateMessage('Failed to update profile. Please try again.');
+            toast.error('Failed to update profile. Please try again.');
         } finally {
             setIsUpdating(false);
         }
@@ -228,11 +225,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                 </label>
             </div>
             <div className="w-full max-w-4xl space-y-5 pb-8 px-5 lg:px-0">
-                {updateMessage && (
-                    <div className={`text-center py-2 text-xs font-bold ${(updateMessage.toLowerCase().includes('success') || updateMessage.toLowerCase().includes('uploaded')) ? 'text-green-500' : 'text-red-500'}`}>
-                        {updateMessage}
-                    </div>
-                )}
                 {[
                     { label: 'Phone Number', type: 'tel', key: 'phone' },
                     { label: 'First Name', type: 'text', key: 'firstName' },
@@ -254,11 +246,6 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                             }} className="w-full px-5 py-3 rounded-[20px] border border-gray-200 focus:border-[#1E4E82]/30 outline-none transition-colors font-bold" />
                     </div>
                 ))}
-                {updateMessage && (
-                    <div className={`text-center py-2 text-xs font-bold ${(updateMessage.toLowerCase().includes('success') || updateMessage.toLowerCase().includes('uploaded')) ? 'text-green-500' : 'text-red-500'}`}>
-                        {updateMessage}
-                    </div>
-                )}
                 <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 cursor-pointer">
                     {isUpdating ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -343,17 +330,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         const addressLabel = watch('addressContact')?.label || tempAddress;
         console.log('[Settings] Attempting to add address:', { addressLabel, locationInfo, verificationFile });
         
-        if (!addressLabel) {
-            setUpdateMessage('Please enter an address');
-            return;
-        }
-        if (!verificationFile) {
-            setUpdateMessage('Verification document is required');
-            return;
-        }
-
         setIsUpdating(true);
-        setUpdateMessage(null); // Clear previous errors
         try {
             const payload = {
                 address: addressLabel,
@@ -366,7 +343,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             setSettingsSubStep('success');
         } catch (err) {
             console.error('[Settings] Address Request Failed:', err);
-            setUpdateMessage(err?.message || 'Failed to send request');
+            toast.error(err?.message || 'Failed to send request');
         } finally {
             setIsUpdating(false);
         }
@@ -447,14 +424,12 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                                 <p className="text-sm font-bold text-gray-400">
                                     {verificationFile ? "Document Uploaded" : "Upload utility bill, rent receipt etc."}
                                 </p>
-                                {updateMessage && <p className="text-[10px] text-red-500 font-bold mt-2">{updateMessage}</p>}
                             </label>
                         </div>
                     )}
                 </div>
 
                 <div className="flex flex-col items-center mt-12 gap-3">
-                    {updateMessage && <p className="text-xs text-red-500 font-bold mb-2 animate-bounce">{updateMessage}</p>}
                     <button 
                         onClick={settingsSubStep === 'add' ? handleAddAddressRequest : () => setSettingsSubStep('success')} 
                         disabled={isUpdating || isUploadingFile || (settingsSubStep === 'add' && !verificationFile)}

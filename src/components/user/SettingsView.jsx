@@ -9,6 +9,7 @@ import authService from '../../services/authService';
 import userService from '../../services/userService';
 import fileService from '../../services/fileService';
 import kycService from '../../services/kycService';
+import toast from 'react-hot-toast';
 
 const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, showLogoutModal, setShowLogoutModal, userProfile, setUserProfile, faqCategory, setFaqCategory, visibleFaq, setVisibleFaq, toggleFaq, setCurrentView, refreshProfile }) => {
     const { control, watch, setValue, formState: { errors } } = useForm({
@@ -30,7 +31,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     const handleProfilePicChange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        setUpdateMessage('Uploading profile picture...');
+        const uploadToast = toast.loading('Uploading profile picture...');
         setIsUpdating(true);
         try {
             const response = await fileService.upload(file);
@@ -58,13 +59,12 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             if (imageUrl) {
                 setProfilePic(imageUrl);
                 setUserProfile(prev => ({ ...prev, profilePicture: imageUrl }));
-                setUpdateMessage('Profile picture uploaded!');
-                setTimeout(() => setUpdateMessage(''), 3000);
+                toast.success('Profile picture uploaded!', { id: uploadToast });
             } else {
-                setUpdateMessage('Failed to parse uploaded image. Please try again.');
+                toast.error('Failed to parse uploaded image. Please try again.', { id: uploadToast });
             }
         } catch (err) {
-            setUpdateMessage('Failed to upload profile picture.');
+            toast.error('Failed to upload profile picture.', { id: uploadToast });
         } finally {
             setIsUpdating(false);
         }
@@ -81,7 +81,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     const [isUploadingFile, setIsUploadingFile] = React.useState(false);
 
     const [isUpdating, setIsUpdating] = React.useState(false);
-    const [updateMessage, setUpdateMessage] = React.useState('');
 
     const handleLocationSelect = (loc) => {
         console.log("[Settings] Location Selected:", loc);
@@ -96,7 +95,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
     const handleFileUpload = async (file) => {
         if (!file) return;
         setIsUploadingFile(true);
-        setUpdateMessage('Uploading verification document...');
+        const uploadToast = toast.loading('Uploading verification document...');
 
         // Local preview
         const blobUrl = URL.createObjectURL(file);
@@ -127,24 +126,21 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
 
             if (imageUrl) {
                 setNewAddress(prev => ({ ...prev, addressVerificationFile: imageUrl }));
-                setUpdateMessage('Document uploaded!');
+                setAddressFilePreview(imageUrl);
+                toast.success('Document uploaded!', { id: uploadToast });
             }
         } catch (err) {
             console.error("Upload failed:", err);
-            setUpdateMessage('Failed to upload document.');
+            toast.error('Failed to upload document.', { id: uploadToast });
             setAddressFilePreview(null);
         } finally {
             setIsUploadingFile(false);
         }
     };
 
-    const handleUpdateProfile = async () => {
+    const handleUpdateProfile = async (data) => {
         setIsUpdating(true);
-        setUpdateMessage('');
         try {
-            // Prepare payload based on the endpoint structure provided by the user
-            // Note: The UI separates account-specific fields (gender, dob) but the endpoint expects them in 'accounts'
-            // For now, we'll try to update the main fields.
             const payload = {
                 firstName: userProfile.firstName,
                 lastName: userProfile.lastName,
@@ -156,22 +152,11 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             const updatedData = await userService.updateProfile(payload);
             if (refreshProfile) await refreshProfile();
 
-            // Map the returned data back to local state
-            const account = updatedData.accounts?.find(acc => acc.accountType === 'CUSTOMER') || updatedData.accounts?.[0];
-            setUserProfile({
-                ...userProfile,
-                firstName: updatedData.firstName || userProfile.firstName,
-                lastName: updatedData.lastName || userProfile.lastName,
-                phone: updatedData.phoneNumber || userProfile.phone,
-                status: updatedData.status || userProfile.status,
-                identityVerificationStatus: updatedData.identityVerificationStatus || userProfile.identityVerificationStatus,
-            });
-
-            setUpdateMessage('Profile updated successfully!');
-            setTimeout(() => setUpdateMessage(''), 3000);
+            setUserProfile({ ...userProfile, ...updatedData });
+            toast.success('Profile updated successfully!');
         } catch (err) {
             console.error("Failed to update profile:", err);
-            setUpdateMessage('Failed to update profile. Please try again.');
+            toast.error('Failed to update profile. Please try again.');
         } finally {
             setIsUpdating(false);
         }
@@ -179,28 +164,27 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
 
     const handleAddAddress = async () => {
         if (!newAddress.address) {
-            setUpdateMessage('Please provide an address.');
+            toast.error('Please provide an address.');
             return;
         }
         if (!newAddress.addressVerificationFile) {
-            setUpdateMessage('Please upload a verification document.');
+            toast.error('Please upload a verification document.');
             return;
         }
         setIsAddingAddress(true);
-        setUpdateMessage('');
+        const addAddressToast = toast.loading('Sending address request...');
         try {
             console.log("[Settings] Submitting Address Request:", newAddress);
-            await userService.addAddress(newAddress);
-            setUpdateMessage('Address request sent successfully!');
-            if (refreshProfile) await refreshProfile();
-            setSettingsSubStep('list');
+            await kycService.requestAddressVerification(newAddress);
+            toast.success('Address request sent successfully!', { id: addAddressToast });
             setNewAddress({ address: '', latitude: 0, longitude: 0, addressVerificationFile: '' });
             setAddressFilePreview(null);
-            setTimeout(() => setUpdateMessage(''), 3000);
+            setSettingsSubStep('list');
+            if (refreshProfile) refreshProfile();
         } catch (err) {
             console.error("Failed to add address:", err);
-            const backendMsg = err.response?.data?.message || 'Failed to add address. Please try again.';
-            setUpdateMessage(backendMsg);
+            const backendMsg = err.response?.data?.message || 'Failed to send request';
+            toast.error(backendMsg, { id: addAddressToast });
         } finally {
             setIsAddingAddress(false);
         }
@@ -253,11 +237,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                 </label>
             </div>
             <div className="w-full max-w-4xl space-y-5 pb-8">
-                {updateMessage && (
-                    <div className={`text-center py-2 text-xs font-bold ${(updateMessage.toLowerCase().includes('success') || updateMessage.toLowerCase().includes('uploaded')) ? 'text-green-500' : 'text-red-500'}`}>
-                        {updateMessage}
-                    </div>
-                )}
                 {[
                     { label: 'Phone Number', type: 'tel', key: 'phone' }, { label: 'First Name', type: 'text', key: 'firstName' }, { label: 'Last Name', type: 'text', key: 'lastName' },
                     { label: 'Gender', type: 'text', key: 'gender' }, { label: 'Date of Birth', type: 'text', key: 'dob' }, { label: 'Email', type: 'email', key: 'email' }, { label: 'Address', type: 'text', key: 'address' },
@@ -271,11 +250,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                             }} className="w-full px-5 py-3 rounded-[10px] border border-[#15191E] bg-[#F8FAFC] font-bold text-[#0f172a] outline-none transition-colors" />
                     </div>
                 ))}
-                {updateMessage && (
-                    <div className={`text-center py-2 text-xs font-bold ${(updateMessage.toLowerCase().includes('success') || updateMessage.toLowerCase().includes('uploaded')) ? 'text-green-500' : 'text-red-500'}`}>
-                        {updateMessage}
-                    </div>
-                )}
                 <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-4 bg-[#1E4E82] text-white font-black rounded-[10px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 cursor-pointer">
                     {isUpdating ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -434,11 +408,6 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                         </div>
                     </div>
                 </div>
-                {updateMessage && (
-                    <div className={`text-center py-2 text-xs font-bold ${updateMessage.includes('success') ? 'text-green-500' : 'text-red-500'}`}>
-                        {updateMessage}
-                    </div>
-                )}
                 <button
                     onClick={handleAddAddress}
                     disabled={isAddingAddress}
