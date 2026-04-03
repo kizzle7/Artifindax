@@ -4,6 +4,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import userService from '../services/userService';
 import authService from '../services/authService';
 import artisanService from '../services/artisanService';
+import paymentService from '../services/paymentService';
+import categoryService from '../services/categoryService';
 import toast from 'react-hot-toast';
 
 // Layout components
@@ -58,6 +60,9 @@ const ArtisanDashboard = () => {
     const [loadingBookings, setLoadingBookings] = useState(false);
     const [isSubmittingAction, setIsSubmittingAction] = useState(false);
     const [isInitialProfileLoading, setIsInitialProfileLoading] = useState(true);
+    const [totalSubscriptionSpent, setTotalSubscriptionSpent] = useState(0);
+    const [earningsChartData, setEarningsChartData] = useState([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
     // Messages State
     const [messagesViewStep, setMessagesViewStep] = useState('list');
@@ -119,20 +124,114 @@ const ArtisanDashboard = () => {
     }, [currentView, setSearchParams]);
 
     React.useEffect(() => {
-        if (currentView === 'bookings' || currentView === 'messages') {
+        // Fetch everything on mount or when returning to dashboard
+        if (currentView === 'dashboard' || currentView === 'bookings' || currentView === 'messages') {
             fetchBookings();
+            fetchPaymentStats();
         }
     }, [currentView]);
 
     const fetchBookings = async () => {
         setLoadingBookings(true);
         try {
-            const data = await artisanService.getBookings({ pageNumber: 1, pageSize: 10 });
+            const data = await artisanService.getBookings({ pageNumber: 1, pageSize: 100 }); // High limit for stats
             setBookingsData(data.records || []);
         } catch (err) {
             console.error("Failed to load artisan bookings:", err);
         } finally {
             setLoadingBookings(false);
+        }
+    };
+
+    const fetchPaymentStats = async () => {
+        setLoadingHistory(true);
+        try {
+            const historyData = await paymentService.getPaymentHistory(1, 100);
+            const records = Array.isArray(historyData)
+                ? historyData
+                : historyData?.records || historyData?.content || historyData?.data || [];
+            
+            const total = records.reduce((sum, r) => {
+                const status = (r.paymentStatus || r.status || '').toUpperCase();
+                if (['SUCCESS', 'COMPLETED', 'ACTIVE'].includes(status)) {
+                    let amountVal = r.amount ?? r.totalAmount ?? r.price ?? r.value ?? r.data?.amount ?? 0;
+                    if (r.amountKobo) amountVal = Number(r.amountKobo) / 100;
+                    return sum + Number(amountVal);
+                }
+                return sum;
+            }, 0);
+            
+            setTotalSubscriptionSpent(total);
+
+            // Generate chart data (Grouped by month/day)
+            // For MVP, we'll group by month and show the last 6 months
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const last6Months = [];
+            for (let i = 5; i >= 0; i--) {
+                const d = new Date();
+                d.setMonth(d.getMonth() - i);
+                last6Months.push({
+                    name: months[d.getMonth()],
+                    amount: 0,
+                    fullName: d.toLocaleString('default', { month: 'long' })
+                });
+            }
+
+            // Group by Day of Week for the main chart
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const last7Days = [];
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                last7Days.push({
+                    name: days[d.getDay()],
+                    total: 0,
+                    subscription: 0,
+                    boost: 0,
+                    fullDate: d.toLocaleDateString()
+                });
+            }
+
+            records.forEach(r => {
+                const status = (r.paymentStatus || r.status || '').toUpperCase();
+                if (['SUCCESS', 'COMPLETED', 'ACTIVE', 'accepted', 'ACCEPTED'].includes(status)) {
+                    let amountVal = r.amount ?? r.totalAmount ?? r.price ?? r.value ?? r.data?.amount ?? 0;
+                    if (r.amountKobo) amountVal = Number(r.amountKobo) / 100;
+                    
+                    const date = new Date(r.createdOn || r.updatedOn || new Date());
+                    const dayName = days[date.getDay()];
+                    const chartItem = last7Days.find(m => m.name === dayName);
+
+                    if (chartItem) {
+                        const amountNum = Number(amountVal);
+                        chartItem.total += amountNum;
+                        
+                        // Check if it's a boost vs subscription
+                        const isBoost = (r.paymentChannel || r.type || '').toUpperCase().includes('BOOST') || 
+                                      (r.description || '').toUpperCase().includes('BOOST');
+                        
+                        if (isBoost) {
+                            chartItem.boost += amountNum;
+                        } else {
+                            chartItem.subscription += amountNum;
+                        }
+                    }
+                }
+            });
+
+            // Map to the Jan/Feb/Mar naming convention to keep the design identical
+            const finalData = last7Days.map(d => ({
+                name: d.name,
+                jan: d.total,
+                feb: d.subscription,
+                mar: d.boost
+            }));
+
+            setEarningsChartData(finalData);
+        } catch (err) {
+            console.error("Failed to load payment stats:", err);
+        } finally {
+            setLoadingHistory(false);
         }
     };
 
@@ -168,24 +267,81 @@ const ArtisanDashboard = () => {
                     }
                 }
 
-                const artisanSkill = account?.artisanCategorySkills?.[0];
-                const artisanCategory = artisanSkill?.artisanCategory;
+                const artisanAccount = account;
+                const artisanCategorySkills = artisanAccount?.artisanCategorySkills || [];
+                
+                // Get all Category IDs we are associated with
+                const categoryLinks = artisanCategorySkills.map(as => as.artisanCategory).filter(Boolean);
+                
+                // Robust ID extraction
+                const artisanCategoryLinkId = artisanAccount?.artisanCategoryId || 
+                                           categoryLinks[0]?.id || 
+                                           artisanAccount?.id || // Some endpoints use account ID
+                                           null;
+                                           
+                const platformCategoryIds = [...new Set([
+                    artisanAccount?.categoryId,
+                    ...categoryLinks.map(ac => ac.category?.id)
+                ].filter(Boolean))];
+                
+                const primaryPlatformCategoryId = platformCategoryIds[0] || null;
+                const primaryCategoryName = categoryLinks[0]?.category?.name || 
+                                          artisanAccount?.categoryName || 
+                                          'Artisan';
+
+                // Map existing specific skills from profile
+                const artisanSkillsFromProfile = artisanCategorySkills
+                    .filter(as => as.artisanSkill) 
+                    .map(as => ({
+                        id: as.artisanSkill?.id || as.id,
+                        name: as.artisanSkill?.name || as.name,
+                        categoryId: as.artisanCategory?.category?.id,
+                        categoryName: as.artisanCategory?.category?.name || ''
+                    }))
+                    .filter(s => s.name);
+
+                let fetchedSkills = [...artisanSkillsFromProfile];
+                
+                // If profile doesn't have specific skills, fetch all for our platform categories
+                if (platformCategoryIds.length > 0 && fetchedSkills.length === 0) {
+                    try {
+                        const allFetched = await Promise.all(
+                            platformCategoryIds.map(catId => categoryService.getSkills(catId).catch(() => []))
+                        );
+                        
+                        allFetched.forEach((skillsData, index) => {
+                            const catId = platformCategoryIds[index];
+                            const skillsList = Array.isArray(skillsData) ? skillsData : (skillsData?.records || skillsData?.content || []);
+                            const mapped = skillsList.map(s => ({
+                                id: s.id,
+                                name: s.name,
+                                categoryId: catId,
+                                categoryName: s.artisanCategory?.name || ''
+                            }));
+                            fetchedSkills = [...fetchedSkills, ...mapped];
+                        });
+                    } catch (err) {
+                        console.error("Failed to fetch platform skills:", err);
+                    }
+                }
 
                 setUserProfile({
                     firstName: data.firstName || '',
                     lastName: data.lastName || '',
-                    phone: data.phoneNumber || account?.phone || '',
-                    gender: account?.gender || '',
-                    dob: account?.dateOfBirth || '',
-                    email: data.email || account?.email || '',
+                    phone: data.phoneNumber || artisanAccount?.phone || '',
+                    gender: artisanAccount?.gender || '',
+                    dob: artisanAccount?.dateOfBirth || '',
+                    email: data.email || artisanAccount?.email || '',
                     addresses: mappedAddresses,
-                    profilePicture: account?.profilePicture || data.profilePicture || '',
+                    profilePicture: artisanAccount?.profilePicture || data.profilePicture || '',
                     status: data.status || 'ACTIVE',
                     identityVerificationStatus: data.identityVerificationStatus || 'PHONE_VERIFIED',
-                    kycApprovalStatus: account?.kycApprovalStatus || 'NOT_STARTED',
-                    artisanCategoryId: artisanCategory?.id || null,
-                    artisanCategoryName: artisanCategory?.name || artisanCategory?.category?.name || 'Artisan',
-                    id: data.id || account?.id
+                    kycApprovalStatus: artisanAccount?.kycApprovalStatus || 'NOT_STARTED',
+                    artisanCategoryId: artisanCategoryLinkId, // THE LINK ID (e.g. 9)
+                    platformCategoryId: primaryPlatformCategoryId, // THE GLOBAL ID (e.g. 3)
+                    artisanCategoryName: primaryCategoryName,
+                    artisanSkills: fetchedSkills,
+                    id: data.id || artisanAccount?.id
                 });
             } catch (err) {
                 console.error("Failed to load artisan profile:", err);
@@ -194,6 +350,7 @@ const ArtisanDashboard = () => {
             }
         };
         fetchProfile();
+        fetchPaymentStats();
     }, []);
 
     const handleLogout = () => {
@@ -328,7 +485,15 @@ const ArtisanDashboard = () => {
             case 'dashboard': 
                 return isInitialProfileLoading 
                     ? <DashboardSkeleton type="home" /> 
-                    : <ArtisanHomeView setCurrentView={setCurrentView} setSettingsStep={setSettingsStep} userProfile={userProfile} />;
+                    : <ArtisanHomeView 
+                        setCurrentView={setCurrentView} 
+                        setSettingsStep={setSettingsStep} 
+                        userProfile={userProfile} 
+                        bookingsData={bookingsData}
+                        totalSubscriptionSpent={totalSubscriptionSpent}
+                        earningsChartData={earningsChartData}
+                        loadingStats={loadingBookings || loadingHistory}
+                      />;
             case 'bookings':
                 return bookingsViewStep === 'list' ? (
                     <ArtisanBookingsView

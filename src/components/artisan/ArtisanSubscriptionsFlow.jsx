@@ -189,7 +189,7 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
         fetchData();
     }, [fetchData]);
 
-    const handleVerify = async (ref, type = 'subscription') => {
+    const handleVerify = async (ref, type = 'subscription', targetName = null) => {
         setLoading(true);
         const loadingToast = toast.loading('Verifying transaction...');
         try {
@@ -201,7 +201,7 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
             toast.success(`${type.toLowerCase().includes('boost') ? 'Boost' : 'Subscription'} activated successfully!`, { id: loadingToast });
             
             // Set pending info for success message robustness
-            const resolvedName = target?.name || (typeof target === 'string' ? target : null);
+            const resolvedName = targetName || (type.toLowerCase().includes('boost') ? 'Boost' : 'Subscription');
             
             if (type.toLowerCase().includes('boost')) {
                 const name = resolvedName || 'Boost';
@@ -503,7 +503,7 @@ const ArtisanSubscriptionsFlow = ({ onBack, userProfile, step = 'overview', setS
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            handleVerify(item.reference, item.type);
+                                            handleVerify(item.reference, item.type, item.type);
                                         }}
                                         className="text-[10px] bg-[#1E4E82] text-white px-2 py-1 rounded-lg font-black active:scale-95 transition-transform"
                                     >

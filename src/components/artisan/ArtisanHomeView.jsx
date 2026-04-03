@@ -8,8 +8,56 @@ import {
 import { earningsData, workStatsData } from '../../constants/artisanData';
 import UserIcon from './UserIcon';
 
-const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
+const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile, bookingsData = [], totalSubscriptionSpent = 0, earningsChartData = [], loadingStats = false }) => {
     const isAvailable = userProfile.status === 'ACTIVE';
+    const [selectedSkillId, setSelectedSkillId] = useState('all');
+
+    // Filter bookings based on selected skill
+    const filteredBookings = bookingsData.filter(b => {
+        if (selectedSkillId === 'all') return true;
+        
+        const bArtisanSkillId = b.artisanCategorySkill?.artisanSkill?.id || b.artisanSkillId || b.skillId;
+        const bCategoryId = b.artisanCategorySkill?.artisanCategory?.category?.id || b.categoryId;
+        const bLinkId = b.artisanCategorySkill?.id;
+
+        // 1. Direct Skill Match (Platform Skill ID)
+        if (bArtisanSkillId && String(bArtisanSkillId) === String(selectedSkillId)) return true;
+        
+        // 2. Direct Link Match (Artisan's specific link ID)
+        if (bLinkId && String(bLinkId) === String(selectedSkillId)) return true;
+
+        // 3. Smart Fallback: If the booking is "General" (only has a category link)
+        // and we are filtering for a skill in that same category, show it.
+        if (!bArtisanSkillId && bCategoryId) {
+            const selectedSkill = (userProfile.artisanSkills || []).find(s => String(s.id) === String(selectedSkillId));
+            if (selectedSkill && String(bCategoryId) === String(selectedSkill.categoryId)) {
+                return true;
+            }
+        }
+        
+        return false;
+    });
+
+    const ongoingCount = filteredBookings.filter(b => {
+        const s = (b.bookingStatus || b.status || '').toUpperCase();
+        return ['ACCEPTED', 'ONGOING', 'IN_PROGRESS'].includes(s);
+    }).length;
+
+    const completedCount = filteredBookings.filter(b => {
+        const s = (b.bookingStatus || b.status || '').toUpperCase();
+        return ['COMPLETED', 'VERIFIED', 'APPROVED', 'FINISHED', 'COMPLETE'].includes(s);
+    }).length;
+
+    const cancelledCount = filteredBookings.filter(b => {
+        const s = (b.bookingStatus || b.status || '').toUpperCase();
+        return ['CANCELLED', 'CANCELED', 'REJECTED', 'DECLINED'].includes(s);
+    }).length;
+
+    const dynamicWorkStats = [
+        { name: 'Completed', value: completedCount || 0, color: '#0F9E7B' },
+        { name: 'Ongoing', value: ongoingCount || 0, color: '#1E4E82' },
+        { name: 'Cancelled', value: cancelledCount || 0, color: '#F43F5E' }
+    ];
 
     return (
         <div className="space-y-6">
@@ -55,31 +103,38 @@ const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
                 </button>
             </div>
 
-            {/* Balance Card */}
+            {/* Balance Card - Now "Total Subscriptions" */}
             <div className="bg-black text-white p-6 rounded-[24px] relative overflow-hidden">
                 <div className="flex justify-between items-start mb-4">
-                    <span className="text-xs opacity-70">Available Balance</span>
+                    <span className="text-xs opacity-70">Total Subscriptions</span>
                     <button className="p-1 rounded-full border border-white/20 cursor-pointer">
                         <ArrowUpRight size={16} />
                     </button>
                 </div>
                 <div className="flex justify-between items-end">
-                    <h2 className="text-3xl font-bold">₦125,000.00</h2>
-                    <button className="bg-white text-black px-6 py-2 rounded-xl text-sm font-bold cursor-pointer">
+                    <h2 className="text-3xl font-bold">₦{totalSubscriptionSpent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h2>
+                    {/* <button className="bg-white text-black px-6 py-2 rounded-xl text-sm font-bold cursor-pointer">
                         Withdraw
-                    </button>
+                    </button> */}
                 </div>
             </div>
 
-            {/* Category Filter & Stats */}
+            {/* Dynamic Filter & Stats */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-[#0f172a]">Category</h3>
+                    <h3 className="text-sm font-bold text-[#0f172a]">Bookings</h3>
                     <div className="relative">
-                        <select className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-1.5 pr-10 text-xs font-medium focus:outline-none">
-                            <option>Electrician</option>
+                        <select 
+                            value={selectedSkillId}
+                            onChange={(e) => setSelectedSkillId(e.target.value)}
+                            className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-1.5 pr-10 text-xs font-medium focus:outline-none cursor-pointer"
+                        >
+                            <option value="all">All Skills</option>
+                            {(userProfile.artisanSkills || []).map(skill => (
+                                <option key={skill.id} value={skill.id}>{skill.name}</option>
+                            ))}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={14} />
                     </div>
                 </div>
 
@@ -92,7 +147,7 @@ const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
                             <span className="text-[10px] font-bold text-gray-500 uppercase">Ongoing</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-2xl font-bold text-[#0f172a]">7</span>
+                            <span className="text-2xl font-bold text-[#0f172a]">{ongoingCount}</span>
                             <div className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 group-hover:text-black transition-colors">
                                 <ArrowUpRight size={14} />
                             </div>
@@ -107,7 +162,7 @@ const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
                             <span className="text-[10px] font-bold text-gray-500 uppercase">Completed</span>
                         </div>
                         <div className="flex items-center justify-between">
-                            <span className="text-2xl font-bold text-[#0f172a]">28</span>
+                            <span className="text-2xl font-bold text-[#0f172a]">{completedCount}</span>
                             <div className="w-6 h-6 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 group-hover:text-black transition-colors">
                                 <ArrowUpRight size={14} />
                             </div>
@@ -130,16 +185,16 @@ const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Total</p>
-                        <p className="text-sm font-bold">₦20,560.32</p>
+                        <p className="text-sm font-bold">₦{totalSubscriptionSpent.toLocaleString()}</p>
                     </div>
                     <div className="text-right">
-                        <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Average</p>
-                        <p className="text-sm font-bold">₦836.52</p>
+                        <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Investment</p>
+                        <p className="text-sm font-bold">Active</p>
                     </div>
                 </div>
                 <div className="h-[200px] w-full mt-4">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={earningsData}>
+                        <AreaChart data={earningsChartData}>
                             <defs>
                                 <linearGradient id="colorJan" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#38BDF8" stopOpacity={0.5} />
@@ -156,7 +211,7 @@ const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} dy={10} />
-                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} domain={[0, 100]} />
+                            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#94a3b8' }} />
                             <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
                             <Area type="monotone" dataKey="jan" stroke="#38BDF8" strokeWidth={1.5} fillOpacity={1} fill="url(#colorJan)" dot={{ r: 3, fill: '#fff', strokeWidth: 1.5 }} activeDot={{ r: 5 }} />
                             <Area type="monotone" dataKey="feb" stroke="#FB7185" strokeWidth={1.5} fillOpacity={1} fill="url(#colorFeb)" dot={{ r: 3, fill: '#fff', strokeWidth: 1.5 }} activeDot={{ r: 5 }} />
@@ -165,9 +220,9 @@ const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
                     </ResponsiveContainer>
                 </div>
                 <div className="flex justify-center gap-4 mt-4">
-                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-[#38BDF8]"></div><span className="text-[10px] text-gray-400 font-bold">Jan</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-[#FB7185]"></div><span className="text-[10px] text-gray-400 font-bold">Feb</span></div>
-                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-[#818CF8]"></div><span className="text-[10px] text-gray-400 font-bold">Mar</span></div>
+                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-[#38BDF8]"></div><span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Total</span></div>
+                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-[#FB7185]"></div><span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Subs</span></div>
+                    <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-[#818CF8]"></div><span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">Boosts</span></div>
                 </div>
             </div>
 
@@ -178,24 +233,29 @@ const ArtisanHomeView = ({ setCurrentView, setSettingsStep, userProfile }) => {
                     <div className="h-[240px] w-full relative">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
-                                <Pie data={workStatsData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
-                                    {workStatsData.map((entry, index) => (
+                                <Pie data={dynamicWorkStats} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={5} dataKey="value">
+                                    {dynamicWorkStats.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
                                 </Pie>
                                 <Tooltip />
                             </PieChart>
                         </ResponsiveContainer>
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none"></div>
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div className="text-center">
+                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Selected Jobs</p>
+                                <p className="text-2xl font-black text-[#0f172a]">{filteredBookings.length}</p>
+                            </div>
+                        </div>
                     </div>
                     <div className="w-full space-y-3 mt-4">
-                        {workStatsData.map((item, idx) => (
+                        {dynamicWorkStats.map((item, idx) => (
                             <div key={idx} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }}></div>
-                                    <span className="text-xs text-gray-600 font-medium">{item.name}</span>
+                                    <span className="text-xs text-gray-600 font-bold uppercase tracking-wider">{item.name}</span>
                                 </div>
-                                <span className="text-xs font-bold text-[#0f172a]">{item.value}</span>
+                                <span className="text-xs font-black text-[#0f172a]">{item.value}</span>
                             </div>
                         ))}
                     </div>
