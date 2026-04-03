@@ -724,7 +724,7 @@ const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate, use
 
     const handleSkip = async () => {
         const loadingToast = toast.loading("Detecting your location...");
-        
+
         const getUserCoords = () => new Promise((resolve) => {
             if (!navigator.geolocation) return resolve(null);
             navigator.geolocation.getCurrentPosition(
@@ -735,7 +735,7 @@ const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate, use
         });
 
         const coords = await getUserCoords();
-        let finalAddress = "Set Location"; 
+        let finalAddress = "Set Location";
         let finalLat = 0;
         let finalLng = 0;
 
@@ -745,10 +745,10 @@ const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate, use
             try {
                 // Use Native Google Geocoder
                 const geocoder = new window.google.maps.Geocoder();
-                const response = await geocoder.geocode({ 
-                    location: { lat: finalLat, lng: finalLng } 
+                const response = await geocoder.geocode({
+                    location: { lat: finalLat, lng: finalLng }
                 });
-                
+
                 if (response.results && response.results[0]) {
                     finalAddress = response.results[0].formatted_address;
                 }
@@ -758,15 +758,15 @@ const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate, use
         }
 
         // Set default location
-        localStorage.setItem('artifinda_location', JSON.stringify({ 
-            address: finalAddress, 
-            latitude: finalLat, 
-            longitude: finalLng 
+        localStorage.setItem('artifinda_location', JSON.stringify({
+            address: finalAddress,
+            latitude: finalLat,
+            longitude: finalLng
         }));
 
         // Reset step to 5 (Email) for resuming later
         localStorage.setItem('artifinda_signup_step', '5');
-        
+
         toast.success("Location set!", { id: loadingToast });
         setIsSavingLocation(false);
         navigate(userType === 'artisan' ? '/artisan/dashboard' : '/dashboard');
@@ -794,9 +794,9 @@ const AccountCreated = ({ successIllustration, prevStep, nextStep, navigate, use
                     <ArrowRight size={20} className="absolute right-8 transition-transform group-hover:translate-x-1" />
                 </Button>
                 {userType !== 'artisan' && (
-                    <Button 
-                        variant="plain" 
-                        onClick={handleSkip} 
+                    <Button
+                        variant="plain"
+                        onClick={handleSkip}
                         disabled={isSavingLocation}
                         className="w-full py-3 rounded-xl text-lg bg-[#D6E5F5] text-[#1E4E82] font-bold relative group flex items-center justify-center"
                     >
@@ -820,12 +820,12 @@ const FinalSuccess = ({ successIllustration, prevStep, navigate }) => (
         <div className="w-full mb-8"><img src={successIllustration} alt="All Set" className="w-[80%] mx-auto" /></div>
         <h1 className="text-2xl font-extrabold text-[#0f172a] mb-4 text-center">You're all Set!</h1>
         <p className="text-gray-600 text-center text-sm mb-10">Start browsing trusted artisans near you and request help anytime.</p>
-        <Button 
-            variant="primary" 
+        <Button
+            variant="primary"
             onClick={() => {
                 const role = authService.getRole();
                 navigate(role === 'ARTISAN' ? '/artisan/dashboard' : '/dashboard');
-            }} 
+            }}
             className="w-full py-3 rounded-xl text-lg font-bold transition-all relative group bg-[#1E4E82]"
         >
             <span>Go to Home page</span>
@@ -880,13 +880,13 @@ const SignUpPage = () => {
 
     const storedUserType = localStorage.getItem('artifinda_signup_type');
     const savedStep = localStorage.getItem('artifinda_signup_step');
-    
+
     // If the URL specifies a role that contradicts the stored progress, start fresh
     const mustStartFresh = urlRole && storedUserType && urlRole !== storedUserType;
-    
+
     const initialRole = mustStartFresh ? urlRole : (urlRole || storedUserType || 'user');
     const [userType, setUserType] = useState(initialRole);
-    
+
     const [step, setStep] = useState((savedStep && !mustStartFresh) ? parseInt(savedStep, 10) : 1);
 
     // Clear stale persistence and tokens if we had to start fresh
@@ -1100,7 +1100,7 @@ const SignUpPage = () => {
         try {
             const response = await fileService.upload(file);
             console.log(`[SignUpPage] ${field} Upload Response:`, response);
-            
+
             // Handle both object {url: '...'} and array ['...'] formats
             let imageUrl = '';
             if (Array.isArray(response)) {
@@ -1449,20 +1449,38 @@ const SignUpPage = () => {
                     </div>
                 </OnboardingStep>
             );
-            case 10: return (
-                <OnboardingStep title="Set up your account" subtitle="Please state your date of birth" onNext={nextStep} onPrev={prevStep} disabled={!formData.dob}>
-                    <input type="date" value={formData.dob} onChange={e => setFormData({ ...formData, dob: e.target.value })} className="w-full px-4 py-3 border border-gray-600 rounded-xl focus:outline-none text-sm" />
-                </OnboardingStep>
-            );
+            case 10: {
+                const today = new Date();
+                today.setDate(today.getDate() - 1);
+                const yesterday = today.toISOString().split('T')[0];
+                return (
+                    <OnboardingStep title="Set up your account" subtitle="Please state your date of birth" onNext={nextStep} onPrev={prevStep} disabled={!formData.dob}>
+                        <input type="date" value={formData.dob} max={yesterday} onChange={e => setFormData({ ...formData, dob: e.target.value })} className="w-full px-4 py-3 border border-gray-600 rounded-xl focus:outline-none text-sm" />
+                    </OnboardingStep>
+                );
+            }
             case 11: return (
                 <OnboardingStep title="Set up your account" subtitle={`Please upload an image of your ${formData.idType || 'ID'} for verification`} onNext={nextStep} onPrev={prevStep} disabled={!formData.idFile} loading={loading}>
-                    <label className="w-full cursor-pointer">
-                        <input type="file" className="hidden" onChange={(e) => handleFileUploadGeneric(e.target.files[0], 'idFile')} />
-                        <div className="w-full py-3 border border-gray-400 rounded-xl flex items-center justify-center gap-2 text-[#1e4e82] text-sm">
-                            {formData.idFile ? <div className="flex items-center gap-3 w-full px-4"><CheckCircle2 size={20} className="text-green-600" /><span className="text-[#0f172a] font-medium truncate">{formData.idFile}</span></div> : <><span>Upload</span><Upload size={18} /></>}
-                        </div>
-                    </label>
-                    {error && <p className="text-red-500 text-[10px] mt-1 text-center">{error}</p>}
+                    <div className="flex flex-col items-center justify-center pt-8">
+                        <label className="relative cursor-pointer group">
+                            <input type="file" className="hidden" onChange={(e) => handleFileUploadGeneric(e.target.files[0], 'idFile')} />
+                            <div className="w-64 h-40 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden border-4 border-white shadow-md">
+                                {formData.idFile ? (
+                                    <img src={formData.idFile} alt="ID Preview" className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full bg-[#cbd5e1] flex flex-col items-center justify-center gap-2">
+                                        <Upload size={40} className="text-[#64748b]" />
+                                        <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">Upload {formData.idType || 'ID'}</span>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="absolute bottom-2 right-4 p-3 bg-[#1e4e82] text-white rounded-full shadow-lg border-2 border-white transition-transform group-hover:scale-110">
+                                <Camera size={20} />
+                            </div>
+                        </label>
+                        {formData.idFile && <p className="text-[10px] text-green-600 font-bold mt-4 flex items-center gap-1 leading-none"><CheckCircle2 size={12} /> ID Uploaded Successfully</p>}
+                        {error && <p className="text-red-500 text-xs mt-4">{error}</p>}
+                    </div>
                 </OnboardingStep>
             );
             case 12: return (

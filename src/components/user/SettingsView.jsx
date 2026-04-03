@@ -239,17 +239,29 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
             <div className="w-full max-w-4xl space-y-5 pb-8">
                 {[
                     { label: 'Phone Number', type: 'tel', key: 'phone' }, { label: 'First Name', type: 'text', key: 'firstName' }, { label: 'Last Name', type: 'text', key: 'lastName' },
-                    { label: 'Gender', type: 'text', key: 'gender' }, { label: 'Date of Birth', type: 'text', key: 'dob' }, { label: 'Email', type: 'email', key: 'email' }, { label: 'Address', type: 'text', key: 'address' },
-                ].map((field, idx) => (
-                    <div key={idx}>
-                        <label className="text-xs font-bold text-gray-500 mb-2 block">{field.label}</label>
-                        <input type={field.type} value={field.key === 'address' ? (userProfile.addresses[0]?.address || '') : (userProfile[field.key] || '')}
-                            placeholder={field.label} onChange={(e) => {
-                                if (field.key === 'address') { const na = [...userProfile.addresses]; if (na[0]) na[0].address = e.target.value; setUserProfile({ ...userProfile, addresses: na }); }
-                                else setUserProfile({ ...userProfile, [field.key]: e.target.value });
-                            }} className="w-full px-5 py-3 rounded-[10px] border border-[#15191E] bg-[#F8FAFC] font-bold text-[#0f172a] outline-none transition-colors" />
-                    </div>
-                ))}
+                    { label: 'Gender', type: 'text', key: 'gender' }, { label: 'Date of Birth', type: 'date', key: 'dob' }, { label: 'Email', type: 'email', key: 'email' }, { label: 'Address', type: 'text', key: 'address' },
+                ].map((field, idx) => {
+                    const today = new Date();
+                    today.setDate(today.getDate() - 1);
+                    const yesterday = today.toISOString().split('T')[0];
+
+                    return (
+                        <div key={idx}>
+                            <label className="text-xs font-bold text-gray-500 mb-2 block">{field.label}</label>
+                            <input
+                                type={field.type}
+                                max={field.key === 'dob' ? yesterday : undefined}
+                                value={field.key === 'address' ? (userProfile.addresses[0]?.address || '') : (userProfile[field.key] || '')}
+                                placeholder={field.label}
+                                onChange={(e) => {
+                                    if (field.key === 'address') { const na = [...userProfile.addresses]; if (na[0]) na[0].address = e.target.value; setUserProfile({ ...userProfile, addresses: na }); }
+                                    else setUserProfile({ ...userProfile, [field.key]: e.target.value });
+                                }}
+                                className="w-full px-5 py-3 rounded-[10px] border border-[#15191E] bg-[#F8FAFC] font-bold text-[#0f172a] outline-none transition-colors"
+                            />
+                        </div>
+                    );
+                })}
                 <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-4 bg-[#1E4E82] text-white font-black rounded-[10px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 cursor-pointer">
                     {isUpdating ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -350,15 +362,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
                         />
                     </div>
 
-                    {newAddress.address && (
-                        <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                            <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Selected Address</label>
-                            <div className="w-full p-4.5 rounded-[20px] bg-[#1E4E82]/5 border border-[#1E4E82]/10 font-bold text-[#1E4E82] text-sm flex items-start gap-3">
-                                <MapPin size={18} className="shrink-0 mt-0.5" />
-                                <span>{newAddress.address}</span>
-                            </div>
-                        </div>
-                    )}
+
 
                     <div>
                         <label className="text-xs font-bold text-gray-500 mb-2 block ml-1 uppercase tracking-widest">Upload Verification Document</label>
@@ -453,8 +457,8 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
         // Specifically using kycApprovalStatus as the primary KYC indicator
         const kycStatus = userProfile?.kycApprovalStatus || 'NOT_STARTED';
         const getStatusColor = () => {
-            switch(kycStatus.toUpperCase()) {
-                case 'VERIFIED': 
+            switch (kycStatus.toUpperCase()) {
+                case 'VERIFIED':
                 case 'APPROVED': return 'text-green-500 bg-green-50 border-green-100';
                 case 'PENDING': return 'text-amber-500 bg-amber-50 border-amber-100';
                 case 'REJECTED': return 'text-red-500 bg-red-50 border-red-100';
@@ -464,7 +468,7 @@ const SettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, setSetti
 
         const firstNameRaw = userProfile?.firstName || '';
         const lastNameRaw = userProfile?.lastName || '';
-        
+
         // Only show names that are not emails
         const displayFirstName = (firstNameRaw && !firstNameRaw.includes('@')) ? firstNameRaw : '';
         const displayLastName = (lastNameRaw && !lastNameRaw.includes('@')) ? lastNameRaw : '';

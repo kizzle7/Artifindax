@@ -36,7 +36,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         try {
             const response = await fileService.upload(file);
             console.log('[Settings] File Upload Response:', response);
-            
+
             let imageUrl = '';
             // Robust parsing block
             if (typeof response === 'string') {
@@ -56,7 +56,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                 }
             }
 
-            
+
             if (imageUrl) {
                 setVerificationFile(imageUrl);
                 toast.success('Verification document uploaded!');
@@ -211,11 +211,11 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
             <div className="flex justify-center mb-10">
                 <label className="relative cursor-pointer group">
                     <div className="w-28 h-28 rounded-full bg-slate-200 shadow-lg border-4 border-white overflow-hidden flex items-center justify-center">
-                        <img 
-                            src={profilePic || userProfile?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile?.firstName || 'A') + ' ' + (userProfile?.lastName || ''))}&background=1E4E82&color=fff&size=150`} 
+                        <img
+                            src={profilePic || userProfile?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile?.firstName || 'A') + ' ' + (userProfile?.lastName || ''))}&background=1E4E82&color=fff&size=150`}
                             onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((userProfile?.firstName || 'A') + ' ' + (userProfile?.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
-                            alt="Profile" 
-                            className="w-full h-full object-cover" 
+                            alt="Profile"
+                            className="w-full h-full object-cover"
                         />
                     </div>
                     <div className="absolute bottom-0 right-0 w-8 h-8 bg-[#1E4E82] rounded-full flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
@@ -230,22 +230,34 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     { label: 'First Name', type: 'text', key: 'firstName' },
                     { label: 'Last Name', type: 'text', key: 'lastName' },
                     { label: 'Gender', type: 'text', key: 'gender' },
-                    { label: 'Date of Birth', type: 'text', key: 'dob' },
+                    { label: 'Date of Birth', type: 'date', key: 'dob' },
                     { label: 'Email', type: 'email', key: 'email' },
                     { label: 'Address', type: 'text', key: 'address' },
-                ].map((field, idx) => (
-                    <div key={idx}>
-                        <label className="text-xs font-bold text-gray-500 mb-2 block">{field.label}</label>
-                        <input type={field.type} value={field.key === 'address' ? (userProfile.addresses[0]?.address || '') : (userProfile[field.key] || '')}
-                            placeholder={field.label} onChange={(e) => {
-                                if (field.key === 'address') {
-                                    const newAddresses = [...userProfile.addresses];
-                                    if (newAddresses[0]) newAddresses[0].address = e.target.value;
-                                    setUserProfile({ ...userProfile, addresses: newAddresses });
-                                } else { setUserProfile({ ...userProfile, [field.key]: e.target.value }); }
-                            }} className="w-full px-5 py-3 rounded-[20px] border border-gray-200 focus:border-[#1E4E82]/30 outline-none transition-colors font-bold" />
-                    </div>
-                ))}
+                ].map((field, idx) => {
+                    const today = new Date();
+                    today.setDate(today.getDate() - 1);
+                    const yesterday = today.toISOString().split('T')[0];
+
+                    return (
+                        <div key={idx}>
+                            <label className="text-xs font-bold text-gray-500 mb-2 block">{field.label}</label>
+                            <input
+                                type={field.type}
+                                max={field.key === 'dob' ? yesterday : undefined}
+                                value={field.key === 'address' ? (userProfile.addresses[0]?.address || '') : (userProfile[field.key] || '')}
+                                placeholder={field.label}
+                                onChange={(e) => {
+                                    if (field.key === 'address') {
+                                        const newAddresses = [...userProfile.addresses];
+                                        if (newAddresses[0]) newAddresses[0].address = e.target.value;
+                                        setUserProfile({ ...userProfile, addresses: newAddresses });
+                                    } else { setUserProfile({ ...userProfile, [field.key]: e.target.value }); }
+                                }}
+                                className="w-full px-5 py-3 rounded-[20px] border border-gray-200 focus:border-[#1E4E82]/30 outline-none transition-colors font-bold"
+                            />
+                        </div>
+                    );
+                })}
                 <button onClick={handleUpdateProfile} disabled={isUpdating} className="w-full py-5 bg-[#1E4E82] text-white font-black rounded-[24px] shadow-lg flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 cursor-pointer">
                     {isUpdating ? 'Saving...' : 'Save Changes'}
                 </button>
@@ -329,7 +341,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
     const handleAddAddressRequest = async () => {
         const addressLabel = watch('addressContact')?.label || tempAddress;
         console.log('[Settings] Attempting to add address:', { addressLabel, locationInfo, verificationFile });
-        
+
         setIsUpdating(true);
         try {
             const payload = {
@@ -353,16 +365,16 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
         if (settingsSubStep === 'success') return (
             <div className="pt-24 lg:pt-6 pb-10 flex flex-col items-center justify-center text-center max-w-md mx-auto px-5 lg:px-0">
                 <div className="w-full aspect-square bg-white rounded-[40px] mb-10 flex items-center justify-center relative overflow-hidden">
-                    <img 
-                        src="https://img.freepik.com/premium-vector/successful-management-concept-business-meeting-discussion-flat-illustration_1013341-118.jpg" 
-                        alt="Success" 
-                        className="w-full h-80 object-contain" 
+                    <img
+                        src="https://img.freepik.com/premium-vector/successful-management-concept-business-meeting-discussion-flat-illustration_1013341-118.jpg"
+                        alt="Success"
+                        className="w-full h-80 object-contain"
                     />
                 </div>
                 <h2 className="text-2xl font-black text-[#0f172a] mb-2">Your Request Has Been Sent!</h2>
                 <p className="text-gray-500 font-bold mb-12 text-sm leading-relaxed px-4">
-                    {selectedAddressForRemoval 
-                        ? `You have requested to remove "${selectedAddressForRemoval.address}". We'll review and send you an update soon.` 
+                    {selectedAddressForRemoval
+                        ? `You have requested to remove "${selectedAddressForRemoval.address}". We'll review and send you an update soon.`
                         : "We've sent your request to add your address. We'll review your details and send you an update soon."
                     }
                 </p>
@@ -383,17 +395,17 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                     <label className="text-xs font-bold text-gray-500 mb-4 block ml-1 uppercase tracking-wider">Address</label>
                     <div className="relative group z-30">
                         {settingsSubStep === 'remove' ? (
-                            <input 
-                                type="text" 
-                                readOnly 
-                                value={selectedAddressForRemoval?.address} 
-                                className="w-full p-5 rounded-[12px] border-2 border-slate-200 outline-none font-bold text-[#0f172a] bg-slate-50" 
+                            <input
+                                type="text"
+                                readOnly
+                                value={selectedAddressForRemoval?.address}
+                                className="w-full p-5 rounded-[12px] border-2 border-slate-200 outline-none font-bold text-[#0f172a] bg-slate-50"
                             />
                         ) : (
-                            <Location 
-                                control={control} 
-                                watch={watch} 
-                                errors={errors} 
+                            <Location
+                                control={control}
+                                watch={watch}
+                                errors={errors}
                                 setValue={setValue}
                                 setLocationInfo={setLocationInfo}
                             />
@@ -430,8 +442,8 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                 </div>
 
                 <div className="flex flex-col items-center mt-12 gap-3">
-                    <button 
-                        onClick={settingsSubStep === 'add' ? handleAddAddressRequest : () => setSettingsSubStep('success')} 
+                    <button
+                        onClick={settingsSubStep === 'add' ? handleAddAddressRequest : () => setSettingsSubStep('success')}
                         disabled={isUpdating || isUploadingFile || (settingsSubStep === 'add' && !verificationFile)}
                         className="w-full max-w-sm py-5 bg-[#1E4E82] text-white font-black rounded-[12px] shadow-xl transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
                     >
@@ -475,7 +487,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
 
                     {/* Other Addresses List */}
                     <div className="space-y-3 pt-6">
-                         {userProfile.addresses.filter(a => a.type !== 'Home' && !a.isDefault).map((addr) => (
+                        {userProfile.addresses.filter(a => a.type !== 'Home' && !a.isDefault).map((addr) => (
                             <div key={addr.id} className="w-full p-5 rounded-[16px] border-2 border-slate-50 flex flex-col gap-3 group hover:border-[#1E4E82]/20 transition-all bg-white shadow-sm">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
@@ -496,7 +508,7 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                                         <MapPin size={12} />
                                         <span>{['verified', 'APPROVED', 'verified'].includes(addr.status) ? 'Location verified' : ['rejected', 'REJECTED'].includes(addr.status) ? 'Verification rejected' : 'Verification pending'}</span>
                                     </div>
-                                    <button 
+                                    <button
                                         onClick={() => { setSelectedAddressForRemoval(addr); setSettingsSubStep('remove'); }}
                                         className="text-red-500 font-black text-[9px] uppercase tracking-widest hover:underline transition-all"
                                     >
@@ -504,17 +516,17 @@ const ArtisanSettingsView = ({ settingsStep, setSettingsStep, settingsSubStep, s
                                     </button>
                                 </div>
                             </div>
-                         ))}
+                        ))}
 
-                         {/* Add Button */}
-                         <button 
+                        {/* Add Button */}
+                        <button
                             onClick={() => { setTempAddress(''); setSettingsSubStep('add'); }}
                             className="w-full p-5 rounded-[12px] border-2 border-slate-100 flex items-center justify-center bg-white hover:bg-slate-50 transition-all active:scale-95 group"
-                         >
+                        >
                             <div className="w-8 h-8 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-400 group-hover:border-[#1E4E82] group-hover:text-[#1E4E82] transition-all">
                                 <Plus size={20} strokeWidth={2.5} />
                             </div>
-                         </button>
+                        </button>
                     </div>
                 </div>
             </div>
