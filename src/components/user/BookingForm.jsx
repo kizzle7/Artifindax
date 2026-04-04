@@ -16,16 +16,20 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
     const [isUploading, setIsUploading] = useState(false);
     const fileInputRef = useRef(null);
 
-    const [fromTime, setFromTime] = useState('06:00 am');
-    const [toTime, setToTime] = useState('04:00 pm');
-    const [fromDate, setFromDate] = useState('16th June');
-    const [toDate, setToDate] = useState('16th June');
+    const [fromTime, setFromTime] = useState('08:00');
+    const [toTime, setToTime] = useState('16:00');
+    const [fromDate, setFromDate] = useState(new Date().toISOString().split('T')[0]);
+    const [zoomedImage, setZoomedImage] = useState(null);
 
     const [bookingNote, setBookingNote] = useState('');
     const [bookingTitle, setBookingTitle] = useState('');
     const [isUrgent, setIsUrgent] = useState(false);
     const [selectedServiceMode, setSelectedServiceMode] = useState('HOME_SERVICE');
     const [submitting, setSubmitting] = useState(false);
+
+    // Initial default address ID
+    const initialAddressId = userProfile?.customerAddresses?.[0]?.id || userProfile?.addresses?.[0]?.id || '';
+    const [selectedAddressId, setSelectedAddressId] = useState(initialAddressId);
 
     const handleSubmit = async () => {
         setSubmitting(true);
@@ -56,10 +60,26 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
 
             const resolvedArtisanId = artisan?.artisanId || artisan?.id || artisan?.userId || 0;
 
-            // Set booking date 5 minutes in the future to avoid backend "past time" errors
-            const futureDate = new Date();
-            futureDate.setMinutes(futureDate.getMinutes() + 5);
-            const formattedDate = futureDate.toISOString().split('.')[0] + 'Z';
+            // Construct a valid ISO Date from the user's selected fromDate and fromTime
+            // Fallback to 5 mins in future ONLY if date parsing fails or is in the past
+            let bookingDateObj = new Date();
+            try {
+                if (fromDate && fromTime) {
+                    bookingDateObj = new Date(`${fromDate}T${fromTime}:00`);
+                    // If selected time is in the past, default to 5 minutes from now to avoid backend errors
+                    if (bookingDateObj < new Date()) {
+                        bookingDateObj = new Date();
+                        bookingDateObj.setMinutes(bookingDateObj.getMinutes() + 5);
+                    }
+                } else {
+                    bookingDateObj.setMinutes(bookingDateObj.getMinutes() + 5);
+                }
+            } catch (e) {
+                bookingDateObj = new Date();
+                bookingDateObj.setMinutes(bookingDateObj.getMinutes() + 5);
+            }
+            const formattedDate = bookingDateObj.toISOString().split('.')[0] + 'Z';
+
 
             const payload = {
                 artisanId: resolvedArtisanId,
@@ -68,7 +88,7 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                 bookingMedia: images || [],
                 serviceMode: selectedServiceMode,
                 artisanSkillId: resolvedSkillId,
-                customerAddressId: userProfile?.customerAddresses?.[0]?.id || userProfile?.addresses?.[0]?.id || 1 // Fallback to 1 instead of 0
+                customerAddressId: selectedAddressId ? parseInt(selectedAddressId) : (userProfile?.customerAddresses?.[0]?.id || userProfile?.addresses?.[0]?.id || 1)
             };
 
             console.log('[BookingForm] FINAL PAYLOAD:', JSON.stringify(payload, null, 2));
@@ -227,18 +247,23 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
 
                         {/* Add Images */}
                         <div>
-                            <label className="block text-xs font-medium text-slate-500 mb-2">Add Images(Optional)</label>
-                            <div className="flex flex-wrap gap-3">
+                            <label className="block text-xs font-medium text-slate-500 mb-2">Add Images (Optional)</label>
+                            <div className="flex flex-wrap gap-4">
                                 {images.map((img, index) => (
-                                    <div key={index} className="relative w-24 h-24 rounded-[12px] overflow-hidden border border-slate-200">
-                                        <img src={img} alt="" className="w-full h-full object-cover" />
-                                        <button onClick={() => removeImage(index)} className="absolute top-1 right-1 p-1 bg-white/80 rounded-full text-slate-600 hover:bg-white shadow-sm transition-all cursor-pointer"><X size={12} /></button>
+                                    <div key={index} className="relative w-32 h-32 rounded-2xl overflow-hidden border border-slate-200 shadow-sm group">
+                                        <img 
+                                            src={img} 
+                                            alt="" 
+                                            className="w-full h-full object-cover transition-transform group-hover:scale-105 cursor-pointer" 
+                                            onClick={() => setZoomedImage(img)}
+                                        />
+                                        <button onClick={(e) => { e.stopPropagation(); removeImage(index); }} className="absolute top-2 right-2 p-1.5 bg-white/90 backdrop-blur-sm rounded-full text-slate-600 hover:text-red-600 hover:bg-white shadow-sm transition-all cursor-pointer z-10"><X size={14} /></button>
                                     </div>
                                 ))}
                                 {images.length < 5 && (
                                     <div
                                         onClick={() => !isUploading && fileInputRef.current?.click()}
-                                        className={`w-28 h-28 rounded-[12px] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50/50 hover:bg-slate-50 hover:border-[#1E4E82]/30 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        className={`w-32 h-32 rounded-2xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center cursor-pointer transition-all bg-slate-50 hover:bg-slate-100 hover:border-[#1E4E82]/50 ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                                     >
                                         {isUploading ? (
                                             <div className="flex flex-col items-center gap-2">
@@ -266,7 +291,24 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                         {/* Address */}
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-2">Address</label>
-                            <input type="text" defaultValue={userProfile?.addresses?.[0]?.address || "17 Ajao Rd, Ikeja, Lagos, Nigeria"} className="w-full px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm" />
+                            <div className="relative">
+                                <select 
+                                    className="w-full px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm appearance-none bg-white"
+                                    value={selectedAddressId}
+                                    onChange={(e) => setSelectedAddressId(e.target.value)}
+                                >
+                                    {(!userProfile?.customerAddresses && !userProfile?.addresses) || (userProfile?.customerAddresses?.length === 0 && userProfile?.addresses?.length === 0) ? (
+                                        <option value="1">17 Ajao Rd, Ikeja, Lagos, Nigeria</option>
+                                    ) : (
+                                        (userProfile?.customerAddresses || userProfile?.addresses || []).map((addr, i) => (
+                                            <option key={addr.id || i} value={addr.id}>
+                                                {addr.address || addr.addressLine1 || `Address ${i + 1}`} {addr.city ? `, ${addr.city}` : ''}
+                                            </option>
+                                        ))
+                                    )}
+                                </select>
+                                <ChevronRight size={16} className="absolute right-5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
+                            </div>
                         </div>
 
                         {/* Time */}
@@ -274,30 +316,47 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                             <div>
                                 <label className="block text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Time</label>
                                 <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase tracking-wider">From</label>
-                                <select className="w-full px-4 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm appearance-none bg-white" value={fromTime} onChange={(e) => setFromTime(e.target.value)}>
-                                    <option>06 : 00 am</option>
-                                    <option>07 : 00 am</option>
-                                </select>
+                                <div className="relative">
+                                    <select className="w-full px-4 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm appearance-none bg-white" value={fromTime} onChange={(e) => setFromTime(e.target.value)}>
+                                        {Array.from({ length: 15 }).map((_, i) => {
+                                            const hour = i + 6; // 6 AM to 8 PM
+                                            const formattedHour = hour.toString().padStart(2, '0');
+                                            const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+                                            const ampm = hour >= 12 ? 'pm' : 'am';
+                                            return <option key={`from-${hour}`} value={`${formattedHour}:00`}>{`${displayHour.toString().padStart(2, '0')} : 00 ${ampm}`}</option>;
+                                        })}
+                                    </select>
+                                    <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
+                                </div>
                             </div>
                             <div>
                                 <div className="h-5" /> {/* Spacer */}
                                 <label className="block text-[9px] font-bold text-slate-400 mb-1 uppercase tracking-wider">To</label>
-                                <select className="w-full px-4 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm appearance-none bg-white" value={toTime} onChange={(e) => setToTime(e.target.value)}>
-                                    <option>16 : 00 pm</option>
-                                    <option>17 : 00 pm</option>
-                                </select>
+                                <div className="relative">
+                                    <select className="w-full px-4 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm appearance-none bg-white" value={toTime} onChange={(e) => setToTime(e.target.value)}>
+                                        {Array.from({ length: 15 }).map((_, i) => {
+                                            const hour = i + 6; // 6 AM to 8 PM
+                                            const formattedHour = hour.toString().padStart(2, '0');
+                                            const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+                                            const ampm = hour >= 12 ? 'pm' : 'am';
+                                            return <option key={`to-${hour}`} value={`${formattedHour}:00`}>{`${displayHour.toString().padStart(2, '0')} : 00 ${ampm}`}</option>;
+                                        })}
+                                    </select>
+                                    <ChevronRight size={16} className="absolute right-4 top-1/2 -translate-y-1/2 rotate-90 text-slate-400 pointer-events-none" />
+                                </div>
                             </div>
                         </div>
 
                         {/* Date */}
                         <div>
                             <label className="block text-xs font-medium text-slate-500 mb-2">Date</label>
-                            <div className="relative">
-                                <select className="w-full px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm appearance-none bg-white">
-                                    <option>16th June, 2025</option>
-                                </select>
-                                <ChevronRight size={16} className="absolute right-5 top-1/2 -translate-y-1/2 rotate-90 text-slate-400" />
-                            </div>
+                            <input 
+                                type="date" 
+                                value={fromDate}
+                                min={new Date().toISOString().split('T')[0]} // Prevent selecting past dates
+                                onChange={(e) => setFromDate(e.target.value)}
+                                className="w-full px-5 py-4 rounded-[12px] border border-slate-300 focus:border-[#1E4E82] focus:outline-none font-bold text-[#0f172a] text-sm bg-white"
+                            />
                         </div>
 
                         {/* Service mode */}
@@ -329,6 +388,36 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                     </div>
                 </div>
             </div>
+
+            {/* Image Zoom Modal */}
+            <AnimatePresence>
+                {zoomedImage && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
+                        onClick={() => setZoomedImage(null)}
+                    >
+                        <button 
+                            className="absolute top-6 right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors"
+                            onClick={(e) => { e.stopPropagation(); setZoomedImage(null); }}
+                        >
+                            <X size={24} />
+                        </button>
+                        <motion.img
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                            src={zoomedImage}
+                            alt="Zoomed"
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl cursor-default"
+                            onClick={(e) => e.stopPropagation()} // Prevent clicking image from closing modal
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
