@@ -91,6 +91,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
             return;
         }
 
+        setLoad(true); // Show skeleton immediately while connecting
+
         let wsUrl = API_CONFIG.WEBSOCKET_URL.replace(/^http/, 'ws');
         if (!wsUrl.endsWith('/websocket')) {
             wsUrl = wsUrl.endsWith('/') ? `${wsUrl}websocket` : `${wsUrl}/websocket`;

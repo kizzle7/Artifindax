@@ -2,7 +2,7 @@ import React from 'react';
 import { ChevronLeft, X, Menu, Phone, MessageSquare } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking, setSelectedBooking, notificationsViewStep, setNotificationsViewStep, currentChat, setCurrentChat, messagesViewStep, setMessagesViewStep, setCurrentView, selectedArtisan, setSelectedArtisan, settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, isBookingFormOpen, setIsBookingFormOpen, userProfile }) => {
+const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking, setSelectedBooking, notificationsViewStep, setNotificationsViewStep, currentChat, setCurrentChat, messagesViewStep, setMessagesViewStep, setCurrentView, selectedArtisan, setSelectedArtisan, settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, isBookingFormOpen, setIsBookingFormOpen, userProfile, bookingsData }) => {
     const getHeaderTitle = () => {
         if (isBookingFormOpen) return 'Booking Form';
         if (selectedBooking) return 'Order Details';
@@ -60,10 +60,10 @@ const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking,
                                     (selectedBooking?.phoneNumber || selectedBooking?.phone || selectedBooking?.artisanPhone ||
                                         selectedBooking?.artisan?.phoneNumber || selectedBooking?.artisan?.phone ||
                                         selectedBooking?.artisan?.appUser?.phoneNumber || selectedBooking?.artisan?.appUser?.phone ||
-                                        selectedBooking?.artisan?.bio) ||
+                                        (selectedBooking?.artisan?.bio && /^[0-9+ \-]{8,20}$/.test(selectedBooking?.artisan?.bio) ? selectedBooking?.artisan?.bio : null)) ||
                                     (selectedArtisan?.phoneNumber || selectedArtisan?.phone ||
                                         selectedArtisan?.appUser?.phoneNumber || selectedArtisan?.appUser?.phone ||
-                                        selectedArtisan?.bio || '');
+                                        (selectedArtisan?.bio && /^[0-9+ \-]{8,20}$/.test(selectedArtisan?.bio) ? selectedArtisan?.bio : null) || '');
 
                                 if (phone) {
                                     navigator.clipboard.writeText(phone);
@@ -93,7 +93,8 @@ const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking,
                                 } else if (selectedArtisan) {
                                     const artisanIdToMatch = selectedArtisan.artisanId || selectedArtisan.id;
                                     const existingBooking = (bookingsData || []).find(b =>
-                                        b.artisanId === artisanIdToMatch || b.artisan?.id === artisanIdToMatch
+                                        String(b.artisanId) === String(artisanIdToMatch) || 
+                                        String(b.artisan?.id) === String(artisanIdToMatch)
                                     );
                                     if (existingBooking) {
                                         setCurrentChat({

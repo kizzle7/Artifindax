@@ -114,6 +114,15 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                                     artisan.contact ||
                                     '';
 
+                                console.log('[Phone Debug]', {
+                                    artisanId: artisan.artisanId || artisan.id,
+                                    bio: artisan.bio,
+                                    bioMatch: artisan.bio ? /^[0-9+ \-]{8,20}$/.test(artisan.bio) : false,
+                                    phoneNumber: artisan.phoneNumber,
+                                    phone_field: artisan.phone,
+                                    resolvedPhone: phone || 'NONE'
+                                });
+
                                 if (phone) {
                                     navigator.clipboard.writeText(phone);
                                     toast.success(`Phone number copied`);
@@ -130,8 +139,24 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                                     return;
                                 }
                                 const artisanIdToMatch = artisan.artisanId || artisan.id;
+
+                                console.log('[Chat Debug]', {
+                                    artisanIdToMatch,
+                                    typeOfMatch: typeof artisanIdToMatch,
+                                    totalBookings: (bookingsData || []).length,
+                                    bookings: (bookingsData || []).map(b => ({
+                                        bookingId: b.id,
+                                        bArtisanId: b.artisanId,
+                                        bArtisanIdType: typeof b.artisanId,
+                                        bArtisanObjId: b.artisan?.id,
+                                        matchesById: b.artisanId === artisanIdToMatch,
+                                        matchesByObjId: b.artisan?.id === artisanIdToMatch,
+                                    })),
+                                });
+
                                 const existingBooking = (bookingsData || []).find(b =>
-                                    b.artisanId === artisanIdToMatch || b.artisan?.id === artisanIdToMatch
+                                    String(b.artisanId) === String(artisanIdToMatch) || 
+                                    String(b.artisan?.id) === String(artisanIdToMatch)
                                 );
                                 if (existingBooking) {
                                     setCurrentChat({
@@ -319,7 +344,25 @@ const ArtisanProfileView = ({ artisan, setSelectedArtisan, setIsBookingFormOpen,
                                 toast.error('Your account is not yet verified. Communication is restricted.');
                                 return;
                             }
-                            toast('Please book this artisan to start chatting.', { icon: '💬' });
+                            const artisanIdToMatch = artisan.artisanId || artisan.id;
+                            const existingBooking = (bookingsData || []).find(b =>
+                                String(b.artisanId) === String(artisanIdToMatch) || 
+                                String(b.artisan?.id) === String(artisanIdToMatch)
+                            );
+                            if (existingBooking) {
+                                setCurrentChat({
+                                    id: existingBooking.id,
+                                    artisan: `${existingBooking.artisan?.appUser?.firstName || ''} ${existingBooking.artisan?.appUser?.lastName || ''}`.trim() || existingBooking.artisanName || 'Artisan',
+                                    artisanPhone: existingBooking.artisan?.appUser?.phoneNumber || existingBooking.artisan?.phoneNumber || '',
+                                    bookingId: existingBooking.id,
+                                    artisanId: existingBooking.artisanId || existingBooking.artisan?.id,
+                                    status: existingBooking.bookingStatus || 'ACTIVE'
+                                });
+                                setMessagesViewStep('chat');
+                                setCurrentView('messages');
+                            } else {
+                                toast('Please book this artisan to start chatting.', { icon: '💬' });
+                            }
                         }}
                         className="flex-1 bg-white text-[#1E4E82] py-3.5 rounded-lg font-bold text-sm border-2 border-[#1E4E82] active:scale-[0.98] transition-all cursor-pointer"
                     >
