@@ -456,10 +456,23 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                 {/* <div className="flex items-center gap-1.5">
                     {currentChat?.hasInvoice && <button onClick={() => setMessagesViewStep('invoice_detail')} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors animate-pulse"><CreditCard size={20} strokeWidth={2.5} /></button>}
                     <button onClick={() => {
-                        const phone = currentChat?.phoneNumber || currentChat?.artisan?.phoneNumber || '';
+                        if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                            toast.error('Your account is not yet verified. Communication is restricted.');
+                            return;
+                        }
+                        const phone = 
+                            currentChat?.phoneNumber || 
+                            currentChat?.phone || 
+                            currentChat?.artisan?.phoneNumber || 
+                            currentChat?.artisan?.phone || 
+                            currentChat?.artisan?.appUser?.phoneNumber || 
+                            currentChat?.artisan?.appUser?.phone || 
+                            currentChat?.artisan?.bio ||
+                            '';
+                            
                         if (phone) {
                             navigator.clipboard.writeText(phone);
-                            toast.success('Phone number copied');
+                            toast.success(`Phone number copied: ${phone}`);
                         } else {
                             toast.error('Phone number not available');
                         }
@@ -548,40 +561,42 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
         </div>
     );
 
-    const renderInvoiceDetail = () => (
-        <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0">
-            <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 items-center gap-4 border-b border-gray-50">
-                <button onClick={() => setMessagesViewStep('chat')} className="p-2 -ml-2 text-[#0f172a] cursor-pointer"><ChevronLeft size={32} strokeWidth={2.5} /></button>
-                <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Invoice - IN00254</h1>
-            </div>
-            <div className="p-6 space-y-8 overflow-y-auto pb-32">
-                <div className="bg-slate-50 border-2 border-slate-100 rounded-[32px] p-6">
-                    <div className="flex justify-between items-start mb-6">
-                        <div><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Booking ID</span><h4 className="text-xl font-black text-[#0f172a]">#001345</h4></div>
-                        <span className="bg-[#1E4E82] text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">AC Repair</span>
-                    </div>
-                    <div className="space-y-4 text-sm font-bold text-slate-500">
-                        <div className="flex items-center gap-2">📅 24th June, 2025</div>
-                        <div className="flex items-center gap-2">🕐 12:00pm</div>
-                        <div className="flex items-center gap-2">📍 14 Selsun Street, Maitama, Abuja</div>
+    const renderInvoiceDetail = () => {
+        const booking = bookingsData.find(b => String(b.id) === String(activeBookingId));
+        const artisanName = booking?.artisan?.appUser ? `${booking.artisan.appUser.firstName} ${booking.artisan.appUser.lastName}` : (currentChat?.artisan || 'Artisan');
+        const serviceName = booking?.artisanCategorySkill?.artisanCategory?.category?.name || 'Professional Service';
+        const displayAddress = booking?.customerAddress?.address?.address || booking?.location || 'Location to be shared';
+
+        const dateObj = booking?.bookingDate ? new Date(booking.bookingDate.replace(' ', 'T')) : null;
+        const displayDate = dateObj && !isNaN(dateObj) ? dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'To be decided';
+        const displayTime = dateObj && !isNaN(dateObj) ? dateObj.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '--:--';
+
+        return (
+            <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0">
+                <div className="hidden lg:flex sticky top-0 left-0 right-0 bg-white z-40 px-6 h-24 lg:h-20 items-center gap-4 border-b border-gray-50">
+                    <button onClick={() => setMessagesViewStep('chat')} className="p-2 -ml-2 text-[#0f172a] cursor-pointer"><ChevronLeft size={32} strokeWidth={2.5} /></button>
+                    <h1 className="text-2xl font-black text-[#0f172a] tracking-tight">Invoice - #{booking?.id || '---'}</h1>
+                </div>
+                <div className="p-6 space-y-8 overflow-y-auto pb-32">
+                    <div className="bg-slate-50 border-2 border-slate-100 rounded-[32px] p-6 shadow-sm">
+                        <div className="flex justify-between items-start mb-6">
+                            <div><span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Booking ID</span><h4 className="text-xl font-black text-[#0f172a]">#{booking?.id || '---'}</h4></div>
+                            <span className="bg-[#1E4E82] text-white px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">{serviceName}</span>
+                        </div>
+                        <div className="space-y-4 text-xs font-bold text-slate-500">
+                            <div className="flex items-center gap-2">📅 {displayDate}</div>
+                            <div className="flex items-center gap-2">🕐 {displayTime}</div>
+                            <div className="flex items-center gap-2">📍 {displayAddress}</div>
+                        </div>
                     </div>
                 </div>
-                <div className="space-y-6">
-                    <h3 className="text-[11px] font-black text-gray-400 uppercase tracking-widest px-2">Payment Summary</h3>
-                    {/* <div className="space-y-4 px-2">
-                        <div className="flex justify-between font-bold text-gray-500"><span>Service Charge</span><span className="text-[#0f172a]">₦900</span></div>
-                        <div className="flex justify-between font-bold text-gray-500"><span>Artisan Fee</span><span className="text-[#0f172a]">₦8,000</span></div>
-                        <div className="flex justify-between font-bold text-gray-500"><span>Discount (5%)</span><span className="text-emerald-500">- ₦445</span></div>
-                        <div className="flex justify-between text-3xl font-black text-[#0f172a] pt-6 border-t border-slate-100"><span>Total</span><span>₦8,455</span></div>
-                    </div> */}
+                <div className="fixed lg:sticky bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 space-y-4">
+                    <button onClick={() => setMessagesViewStep('payment')} className="w-full py-5 bg-[#1E4E82] text-white rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all cursor-pointer">Make Payment</button>
+                    <button onClick={() => { setChatMessages(prev => [...prev.filter(m => m.type !== 'invoice'), { id: Date.now(), type: 'rejected', sender: 'artisan', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]); setMessagesViewStep('chat'); }} className="w-full py-5 text-[#1E4E82] font-black text-base active:scale-95 transition-all uppercase tracking-widest cursor-pointer">Reject Invoice</button>
                 </div>
             </div>
-            <div className="fixed lg:sticky bottom-0 left-0 right-0 p-6 bg-white border-t border-gray-100 space-y-4">
-                <button onClick={() => setMessagesViewStep('payment')} className="w-full py-5 bg-[#1E4E82] text-white rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all cursor-pointer">Make Payment</button>
-                <button onClick={() => { setChatMessages(prev => [...prev.filter(m => m.type !== 'invoice'), { id: Date.now(), type: 'rejected', sender: 'artisan', time: '2:30pm' }]); setMessagesViewStep('chat'); }} className="w-full py-5 text-[#1E4E82] font-black text-base active:scale-95 transition-all uppercase tracking-widest cursor-pointer">Reject Invoice</button>
-            </div>
-        </div>
-    );
+        );
+    };
 
     const renderPaymentMethod = () => (
         <div className="flex-1 lg:ml-[280px] bg-white min-h-screen flex flex-col pt-16 lg:pt-0">
@@ -647,34 +662,48 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
             </div>
             <h1 className="text-4xl font-black text-[#0f172a] mb-4">Payment Successful!</h1>
             {/* <p className="text-gray-400 font-bold mb-12 max-w-xs leading-relaxed uppercase tracking-tight text-sm">Your payment of ₦8,455 has been processed successfully.</p> */}
-            <div className="w-full max-w-sm space-y-4">
+            <div className="w-full max-sm space-y-4">
                 <button onClick={() => setMessagesViewStep('receipt')} className="w-full py-5 bg-[#1E4E82] text-white rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all cursor-pointer">View Receipt</button>
                 <button onClick={() => { setCurrentView('home'); setMessagesViewStep('list'); }} className="w-full py-5 text-[#1E4E82] font-black text-base active:scale-95 transition-all uppercase tracking-widest cursor-pointer">Go to Dashboard</button>
             </div>
         </div>
     );
 
-    const renderReceipt = () => (
-        <div className="flex-1 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen flex flex-col pt-16 lg:pt-10">
-            <div className="hidden lg:flex fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-16 items-center justify-between border-b border-gray-50">
-                <button onClick={() => setMessagesViewStep('chat')} className="p-2 -ml-2 text-[#0f172a] cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
-                <h1 className="text-xl font-black text-[#0f172a] tracking-tight">Receipt</h1>
-                <button className="p-2 bg-slate-50 rounded-xl text-blue-900 cursor-pointer"><Share2 size={18} /></button>
-            </div>
-            <div className="p-4 lg:p-10 flex-1">
-                <div className="bg-white border border-slate-100 rounded-[24px] p-6 lg:p-8 shadow-xl space-y-6 max-w-2xl mx-auto">
-                    {/* <div className="text-center pb-6 border-b border-slate-50"><h2 className="text-3xl font-black text-[#0f172a] mb-1">₦8,455</h2><span className="px-3 py-1 bg-emerald-50 text-emerald-500 rounded-full text-[9px] font-black uppercase tracking-widest">Successful</span></div> */}
-                    <div className="space-y-4">{[{ label: 'Date & Time', value: '24th June, 2025 | 2:30pm' }, { label: 'Transaction ID', value: 'ART-092-124-912' }, { label: 'Paid To', value: 'Chinedu Eze' }, { label: 'Service', value: 'AC Repair' }].map((item, idx) => <div key={idx} className="flex justify-between items-center"><span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{item.label}</span><span className="font-bold text-[#0f172a] text-xs">{item.value}</span></div>)}</div>
-                    {/* <div className="pt-6 border-t border-slate-50 space-y-3">
-                        <div className="flex justify-between font-bold text-slate-400 text-xs"><span>Service Charge</span><span className="text-[#0f172a]">₦900</span></div>
-                        <div className="flex justify-between font-bold text-slate-400 text-xs"><span>Artisan Fee</span><span className="text-[#0f172a]">₦8,000</span></div>
-                        <div className="flex justify-between font-bold text-slate-400 text-xs"><span>Discount</span><span className="text-emerald-500">- ₦445</span></div>
-                    </div> */}
+    const renderReceipt = () => {
+        const booking = bookingsData.find(b => String(b.id) === String(activeBookingId));
+        const artisanName = booking?.artisan?.appUser ? `${booking.artisan.appUser.firstName} ${booking.artisan.appUser.lastName}` : (currentChat?.artisan || 'Artisan');
+        const serviceName = booking?.artisanCategorySkill?.artisanCategory?.category?.name || 'Professional Service';
+        const dateObj = booking?.bookingDate ? new Date(booking.bookingDate.replace(' ', 'T')) : new Date();
+        const displayDateTime = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) + ' | ' + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        return (
+            <div className="flex-1 lg:ml-[240px] bg-white lg:bg-[#F8FAFC] min-h-screen flex flex-col pt-16 lg:pt-0">
+                <div className="hidden lg:flex fixed lg:sticky top-0 left-0 right-0 bg-white z-40 px-6 h-16 items-center justify-between border-b border-gray-50">
+                    <button onClick={() => setMessagesViewStep('chat')} className="p-2 -ml-2 text-[#0f172a] cursor-pointer"><ChevronLeft size={24} strokeWidth={2.5} /></button>
+                    <h1 className="text-xl font-black text-[#0f172a] tracking-tight">Receipt</h1>
+                    <button className="p-2 bg-slate-50 rounded-xl text-blue-900 cursor-pointer"><Share2 size={18} /></button>
                 </div>
+                <div className="p-4 lg:p-10 flex-1">
+                    <div className="bg-white border border-slate-100 rounded-[24px] p-6 lg:p-8 shadow-xl space-y-6 max-w-2xl mx-auto">
+                        <div className="space-y-4">
+                            {[
+                                { label: 'Date & Time', value: displayDateTime },
+                                { label: 'Transaction ID', value: `ART-${booking?.id || '0000'}-${Date.now().toString().slice(-4)}` },
+                                { label: 'Paid To', value: artisanName },
+                                { label: 'Service', value: serviceName }
+                            ].map((item, idx) => (
+                                <div key={idx} className="flex justify-between items-center">
+                                    <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{item.label}</span>
+                                    <span className="font-bold text-[#0f172a] text-xs">{item.value}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-auto p-5 pb-10 max-w-2xl mx-auto w-full"><button className="w-full py-4 bg-[#1E4E82] text-white rounded-xl font-black text-base shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all cursor-pointer"><Download size={20} /> Download Receipt</button></div>
             </div>
-            <div className="mt-auto p-5 pb-10 max-w-2xl mx-auto w-full"><button className="w-full py-4 bg-[#1E4E82] text-white rounded-xl font-black text-base shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all cursor-pointer"><Download size={20} /> Download Receipt</button></div>
-        </div>
-    );
+        );
+    };
 
     console.log(chatMessages)
 

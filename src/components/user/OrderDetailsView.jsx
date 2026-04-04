@@ -1,7 +1,7 @@
 import { ChevronLeft, MapPin, Phone, MessageSquare, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 
-const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, setCurrentChat, setCurrentView, setMessagesViewStep, setSelectedArtisan }) => {
+const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, setCurrentChat, setCurrentView, setMessagesViewStep, setSelectedArtisan, userProfile }) => {
     if (!booking) return null;
     return (
         <div className="flex-1 lg:ml-[240px] bg-[#F8FAFC] min-h-screen transition-all duration-300">
@@ -40,6 +40,8 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                                             yearsOfExperience: booking.artisan.yearsOfExperience,
                                             availability: booking.artisan.artisanAvailability,
                                             gender: booking.artisan.appUser?.gender || booking.artisan.gender,
+                                            phoneNumber: booking.artisan?.appUser?.phoneNumber || booking.artisan?.phoneNumber || booking.artisan?.bio || '',
+                                            phone: booking.artisan?.phone || '',
                                             hideBookNow: true
                                         };
                                         setSelectedArtisan(profileArtisan);
@@ -72,6 +74,8 @@ const OrderDetailsView = ({ booking, setSelectedBooking, handleCancelBooking, se
                                                 yearsOfExperience: booking.artisan.yearsOfExperience,
                                                 availability: booking.artisan.artisanAvailability,
                                                 gender: booking.artisan.appUser?.gender || booking.artisan.gender,
+                                                phoneNumber: booking.artisan?.appUser?.phoneNumber || booking.artisan?.phoneNumber || booking.artisan?.bio || '',
+                                                phone: booking.artisan?.phone || '',
                                                 hideBookNow: true
                                             };
                                             setSelectedArtisan(profileArtisan);

@@ -167,10 +167,21 @@ const BookingForm = ({ artisan, userProfile, setIsBookingFormOpen, selectedSkill
                         </div>
                         <div className="flex gap-2">
                             <button onClick={() => {
-                                const phone = artisan?.appUser?.phoneNumber || artisan?.phoneNumber || artisan?.phone || '';
+                                if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                    toast.error('Your account is not yet verified. Communication is restricted.');
+                                    return;
+                                }
+                                const phone =
+                                    artisan?.phoneNumber ||
+                                    artisan?.phone ||
+                                    artisan?.appUser?.phoneNumber ||
+                                    artisan?.appUser?.phone ||
+                                    (artisan?.bio && /^[0-9+ \-]{8,20}$/.test(artisan?.bio) ? artisan?.bio : null) ||
+                                    '';
+
                                 if (phone) {
                                     navigator.clipboard.writeText(phone);
-                                    toast.success('Phone number copied');
+                                    toast.success(`Phone number copied`);
                                 } else {
                                     toast.error('Phone number not available');
                                 }

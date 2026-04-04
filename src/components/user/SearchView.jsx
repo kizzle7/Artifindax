@@ -10,7 +10,8 @@ const SearchView = ({
     loadingSearch, selectedCategory, setSelectedCategory, selectedSkill, setSelectedSkill,
     handleCategoryClick, handleSkillClick, selectedArtisan, setSelectedArtisan,
     setIsBookingFormOpen, isBookingFormOpen, setCurrentView,
-    setCategorySkills, setSearchResults, userProfile
+    setCategorySkills, setSearchResults, userProfile,
+    bookingsData, setCurrentChat, setMessagesViewStep
 }) => {
     const filteredCategories = (categories || []).filter(cat =>
         cat.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -108,8 +109,8 @@ const SearchView = ({
                                                 className="bg-white border border-gray-100 rounded-[20px] p-4 flex flex-col lg:flex-row gap-4 lg:items-center justify-between shadow-sm hover:border-[#1E4E82]/20 transition-all cursor-pointer group active:scale-[0.99]">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-16 h-16 rounded-full overflow-hidden shrink-0 shadow-inner group-hover:scale-105 transition-transform duration-500 relative">
-                                                        <img 
-                                                            src={artisan.image || artisan.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan.firstName || 'A') + ' ' + (artisan.lastName || ''))}&background=1E4E82&color=fff&size=150`} 
+                                                        <img
+                                                            src={artisan.image || artisan.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan.firstName || 'A') + ' ' + (artisan.lastName || ''))}&background=1E4E82&color=fff&size=150`}
                                                             onError={e => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent((artisan.firstName || 'A') + ' ' + (artisan.lastName || ''))}&background=1E4E82&color=fff&size=150`; }}
                                                             alt="" className="w-full h-full object-cover" />
                                                         {artisan.isVerified && <div className="absolute top-0.5 right-0.5 bg-[#1E4E82] text-white p-0.5 rounded-full border border-white"><CheckCircle2 size={8} strokeWidth={3} /></div>}
@@ -123,7 +124,7 @@ const SearchView = ({
                                                             <span className="text-[#1E4E82]">
                                                                 {typeof (artisan.skillName) === 'object' ? artisan.skillName.name : (artisan.skillName || selectedSkill?.name)}
                                                             </span>
-                                                            <span className="flex items-center gap-1 text-gray-500"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || artisan.artisanRating || 'N/A'}</span>
+                                                            <span className="flex items-center gap-1 text-gray-500"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || artisan.artisanRating || '5.0'} {artisan.reviewCount ? `(${artisan.reviewCount})` : '(New)'}</span>
                                                             <span className="flex items-center gap-1"><MapPin size={10} /> {artisan.distance ? (typeof artisan.distance === 'string' && artisan.distance.includes('km') ? artisan.distance : `${artisan.distance}km away`) : 'Nearby'}</span>
                                                         </div>
                                                     </div>
@@ -153,7 +154,18 @@ const SearchView = ({
                         )}
                     </div>
                 ) : (
-                    <ArtisanProfileView artisan={selectedArtisan} setSelectedArtisan={setSelectedArtisan} setIsBookingFormOpen={setIsBookingFormOpen} isBookingFormOpen={isBookingFormOpen} userProfile={userProfile} selectedSkill={selectedSkill} setCurrentView={setCurrentView} />
+                    <ArtisanProfileView 
+                        artisan={selectedArtisan} 
+                        setSelectedArtisan={setSelectedArtisan} 
+                        setIsBookingFormOpen={setIsBookingFormOpen} 
+                        isBookingFormOpen={isBookingFormOpen} 
+                        userProfile={userProfile} 
+                        selectedSkill={selectedSkill} 
+                        setCurrentView={setCurrentView}
+                        bookingsData={bookingsData}
+                        setCurrentChat={setCurrentChat}
+                        setMessagesViewStep={setMessagesViewStep}
+                    />
                 )}
             </div>
         </div>

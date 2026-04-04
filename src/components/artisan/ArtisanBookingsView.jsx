@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ChevronRight, AlertCircle, Calendar, Clock, MapPin, Phone, MessageSquare, Mail, Plus } from 'lucide-react';
 import DashboardSkeleton from '../ui/DashboardSkeleton';
 
-const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, setCurrentView, activeTab, setActiveTab }) => {
+const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, onCancel, onComplete, onAccept, setCurrentView, activeTab, setActiveTab, onMessageClick, userProfile }) => {
     const tabs = ['New', 'Ongoing', 'Completed', 'Canceled'];
 
     const filteredBookings = (bookingsData || []).filter(b => {
@@ -125,8 +125,27 @@ const ArtisanBookingsView = ({ bookingsData, loadingBookings, onSelectBooking, o
                                         <span className="font-bold text-slate-700 text-sm">{booking.customer?.appUser ? `${booking.customer.appUser.firstName} ${booking.customer.appUser.lastName}` : (booking.customer?.name || 'Customer')}</span>
                                     </div>
                                     <div className="flex gap-2">
-                                        <button className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors"><Phone size={14} /></button>
-                                        <button onClick={() => { if (onMessageClick) onMessageClick(booking); }} className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors"><MessageSquare size={14} /></button>
+                                        <button onClick={() => {
+                                            if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                                toast.error('Your account is not yet verified. Communication is restricted.');
+                                                return;
+                                            }
+                                            const phone =
+                                                booking.customer?.appUser?.phoneNumber ||
+                                                booking.customer?.phoneNumber ||
+                                                booking.customer?.phone ||
+                                                booking.customer?.appUser?.phone ||
+                                                (booking.customer?.bio && /^[0-9+ \-]{8,20}$/.test(booking.customer?.bio) ? booking.customer?.bio : null) ||
+                                                '';
+
+                                            if (phone) {
+                                                navigator.clipboard.writeText(phone);
+                                                toast.success(`Phone number copied`);
+                                            } else {
+                                                toast.error('Phone number not available');
+                                            }
+                                        }} className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors cursor-pointer"><Phone size={14} /></button>
+                                        <button onClick={() => { if (onMessageClick) onMessageClick(booking); }} className="p-2 bg-slate-50 rounded-xl text-[#1E4E82] hover:bg-blue-50 transition-colors cursor-pointer"><MessageSquare size={14} /></button>
                                     </div>
                                 </div>
 

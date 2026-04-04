@@ -507,6 +507,7 @@ const ArtisanDashboard = () => {
                         onAccept={handleAcceptClick}
                         onMessageClick={handleMessageClick}
                         setCurrentView={setCurrentView}
+                        userProfile={userProfile}
                     />
                 ) : (
                     <ArtisanOrderDetailsView
@@ -516,6 +517,7 @@ const ArtisanDashboard = () => {
                         onComplete={handleCompleteClick}
                         onAccept={handleAcceptClick}
                         onMessageClick={handleMessageClick}
+                        userProfile={userProfile}
                     />
                 );
             case 'cancel-reason':

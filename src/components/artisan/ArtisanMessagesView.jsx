@@ -365,13 +365,26 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
                         <div className="flex items-center gap-1 text-xs font-bold text-gray-400 uppercase tracking-widest truncate"><MapPin size={8} /> {currentChat?.location}</div>
                     </div>
                 </div>
-                {/* <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                     {currentChat?.hasInvoice && <button onClick={() => setMessagesViewStep('invoice_detail')} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors animate-pulse"><CreditCard size={20} strokeWidth={2.5} /></button>}
                     <button onClick={() => {
-                        const phone = currentChat?.phoneNumber || currentChat?.customer?.phoneNumber || '';
+                        if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                            toast.error('Your account is not yet verified. Communication is restricted.');
+                            return;
+                        }
+                        const phone =
+                            currentChat?.phoneNumber ||
+                            currentChat?.phone ||
+                            currentChat?.customer?.phoneNumber ||
+                            currentChat?.customer?.phone ||
+                            currentChat?.customer?.appUser?.phoneNumber ||
+                            currentChat?.customer?.appUser?.phone ||
+                            (currentChat?.customer?.bio && /^[0-9+ \-]{8,20}$/.test(currentChat?.customer?.bio) ? currentChat?.customer?.bio : null) ||
+                            '';
+
                         if (phone) {
                             navigator.clipboard.writeText(phone);
-                            toast.success('Phone number copied');
+                            toast.success(`Phone number copied`);
                         } else {
                             toast.error('Phone number not available');
                         }
@@ -385,7 +398,7 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
                             </div>
                         )}
                     </div>
-                </div> */}
+                </div>
             </div>
 
             <div className="flex-1 p-6 space-y-8 overflow-y-auto pb-32 scroll-smooth">

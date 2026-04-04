@@ -1,7 +1,8 @@
 import React from 'react';
-import { ChevronLeft, X, Menu } from 'lucide-react';
+import { ChevronLeft, X, Menu, Phone, MessageSquare } from 'lucide-react';
+import toast from 'react-hot-toast';
 
-const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking, setSelectedBooking, notificationsViewStep, setNotificationsViewStep, currentChat, messagesViewStep, setCurrentView, selectedArtisan, setSelectedArtisan, settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, isBookingFormOpen, setIsBookingFormOpen }) => {
+const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking, setSelectedBooking, notificationsViewStep, setNotificationsViewStep, currentChat, setCurrentChat, messagesViewStep, setMessagesViewStep, setCurrentView, selectedArtisan, setSelectedArtisan, settingsStep, setSettingsStep, settingsSubStep, setSettingsSubStep, isBookingFormOpen, setIsBookingFormOpen, userProfile }) => {
     const getHeaderTitle = () => {
         if (isBookingFormOpen) return 'Booking Form';
         if (selectedBooking) return 'Order Details';
@@ -46,7 +47,78 @@ const MobileHeader = ({ currentView, isMenuOpen, setIsMenuOpen, selectedBooking,
                     {getHeaderTitle()}
                 </h1>
             </div>
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-gray-900 cursor-pointer">{isMenuOpen ? <X size={22} /> : <Menu size={22} />}</button>
+            <div className="flex items-center gap-1">
+                {(selectedBooking || selectedArtisan) && (
+                    <>
+                        <button
+                            onClick={() => {
+                                if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                                    toast.error('Your account is not yet verified. Communication is restricted.');
+                                    return;
+                                }
+                                const phone =
+                                    (selectedBooking?.phoneNumber || selectedBooking?.phone || selectedBooking?.artisanPhone ||
+                                        selectedBooking?.artisan?.phoneNumber || selectedBooking?.artisan?.phone ||
+                                        selectedBooking?.artisan?.appUser?.phoneNumber || selectedBooking?.artisan?.appUser?.phone ||
+                                        selectedBooking?.artisan?.bio) ||
+                                    (selectedArtisan?.phoneNumber || selectedArtisan?.phone ||
+                                        selectedArtisan?.appUser?.phoneNumber || selectedArtisan?.appUser?.phone ||
+                                        selectedArtisan?.bio || '');
+
+                                if (phone) {
+                                    navigator.clipboard.writeText(phone);
+                                    toast.success(`Phone number copied`);
+                                } else {
+                                    toast.error('Phone number not available');
+                                }
+                            }}
+                            className="p-2.5 text-[#0f172a] hover:bg-slate-50 rounded-full transition-all cursor-pointer"
+                        >
+                            <Phone size={19} />
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (selectedBooking) {
+                                    const chatObj = {
+                                        id: selectedBooking.id,
+                                        artisan: `${selectedBooking.artisan?.appUser?.firstName || ''} ${selectedBooking.artisan?.appUser?.lastName || ''}`.trim() || selectedBooking.artisanName || 'Artisan',
+                                        artisanPhone: selectedBooking.artisanPhone || selectedBooking.artisan?.appUser?.phoneNumber || selectedBooking.artisan?.phoneNumber || selectedBooking.artisan?.phone || '',
+                                        bookingId: selectedBooking.id,
+                                        artisanId: selectedBooking.artisanId || selectedBooking.artisan?.id,
+                                        status: selectedBooking.bookingStatus || 'ACTIVE'
+                                    };
+                                    setCurrentChat(chatObj);
+                                    setMessagesViewStep('chat');
+                                    setCurrentView('messages');
+                                } else if (selectedArtisan) {
+                                    const artisanIdToMatch = selectedArtisan.artisanId || selectedArtisan.id;
+                                    const existingBooking = (bookingsData || []).find(b =>
+                                        b.artisanId === artisanIdToMatch || b.artisan?.id === artisanIdToMatch
+                                    );
+                                    if (existingBooking) {
+                                        setCurrentChat({
+                                            id: existingBooking.id,
+                                            artisan: `${existingBooking.artisan?.appUser?.firstName || ''} ${existingBooking.artisan?.appUser?.lastName || ''}`.trim() || existingBooking.artisanName || 'Artisan',
+                                            artisanPhone: existingBooking.artisan?.appUser?.phoneNumber || existingBooking.artisan?.phoneNumber || '',
+                                            bookingId: existingBooking.id,
+                                            artisanId: existingBooking.artisanId || existingBooking.artisan?.id,
+                                            status: existingBooking.bookingStatus || 'ACTIVE'
+                                        });
+                                        setMessagesViewStep('chat');
+                                        setCurrentView('messages');
+                                    } else {
+                                        toast('Please book this artisan to start chatting.', { icon: '💬' });
+                                    }
+                                }
+                            }}
+                            className="p-2.5 text-[#0f172a] hover:bg-slate-50 rounded-full transition-all cursor-pointer"
+                        >
+                            <MessageSquare size={19} />
+                        </button>
+                    </>
+                )}
+                <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 text-gray-900 cursor-pointer">{isMenuOpen ? <X size={22} /> : <Menu size={22} />}</button>
+            </div>
         </header>
     );
 };

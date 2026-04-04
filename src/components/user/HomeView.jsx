@@ -181,9 +181,9 @@ const HomeView = ({ userProfile, setCurrentView, setSettingsStep, setNotificatio
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <h4 className="font-bold text-xs text-[#0f172a] truncate">{artisan.firstName ? `${artisan.firstName} ${artisan.lastName}` : (artisan.name || 'Artisan')}</h4>
-                                        <div className="flex items-center gap-2 text-[9px] text-gray-400 font-bold uppercase tracking-tight">
-                                            <span>{artisan.artisanRole || artisan.role || 'Service Partner'}</span>
-                                            <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" />{artisan.rating || artisan.artisanRating || 5.0}</span>
+                                        <div className="flex flex-wrap items-center gap-2 text-[9px] text-gray-400 font-bold uppercase tracking-tight">
+                                            <span className="text-[#1E4E82] truncate max-w-[120px]">{artisan.artisanRole || artisan.role || 'Service Partner'}</span>
+                                            <span className="flex items-center gap-1"><Star size={10} className="text-yellow-400 fill-yellow-400" /> {artisan.rating || artisan.artisanRating || '5.0'} {artisan.reviewCount ? `(${artisan.reviewCount})` : '(New)'}</span>
                                         </div>
                                     </div>
                                 </div>

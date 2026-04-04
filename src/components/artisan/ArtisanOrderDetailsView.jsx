@@ -15,7 +15,7 @@ export const getDetailStatusBadge = (status) => {
     }
 };
 
-const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAccept, onMessageClick }) => {
+const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAccept, onMessageClick, userProfile }) => {
     if (!booking) return null;
 
     const getActionButtons = (status) => {
@@ -72,15 +72,26 @@ const ArtisanOrderDetailsView = ({ booking, onBack, onCancel, onComplete, onAcce
                 </div>
                 <div className="flex gap-2">
                     <button onClick={() => {
-                        const phone = booking.customer?.appUser?.phoneNumber || booking.customer?.phoneNumber || '';
+                        if (userProfile?.kycApprovalStatus !== 'APPROVED') {
+                            toast.error('Your account is not yet verified. Communication is restricted.');
+                            return;
+                        }
+                        const phone =
+                            booking.customer?.appUser?.phoneNumber ||
+                            booking.customer?.phoneNumber ||
+                            booking.customer?.phone ||
+                            booking.customer?.appUser?.phone ||
+                            (booking.customer?.bio && /^[0-9+ \-]{8,20}$/.test(booking.customer?.bio) ? booking.customer?.bio : null) ||
+                            '';
+
                         if (phone) {
                             navigator.clipboard.writeText(phone);
-                            toast.success('Phone number copied');
+                            toast.success(`Phone number copied`);
                         } else {
                             toast.error('Phone number not available');
                         }
                     }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"><Phone size={16} /></button>
-                    <button onClick={() => { if(onMessageClick) onMessageClick(booking); }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"><MessageSquare size={16} /></button>
+                    <button onClick={() => { if (onMessageClick) onMessageClick(booking); }} className="p-2.5 bg-slate-50 rounded-xl text-blue-900 shadow-sm active:scale-95 transition-all cursor-pointer"><MessageSquare size={16} /></button>
                 </div>
             </div>
 

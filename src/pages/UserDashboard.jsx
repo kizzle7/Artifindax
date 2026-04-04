@@ -110,7 +110,7 @@ const UserDashboard = () => {
     const [visibleFaq, setVisibleFaq] = useState(null);
 
     const toggleFaq = (id) => setVisibleFaq(visibleFaq === id ? null : id);
-    
+
     const fetchPopular = useCallback(async () => {
         setLoadingPopular(true);
         try {
@@ -315,13 +315,9 @@ const UserDashboard = () => {
 
     useEffect(() => {
         const fetchBookings = async () => {
-            if (currentView !== 'bookings' && currentView !== 'messages') return;
             setLoadingBookings(true);
-            setBookingsData([]); // Clear state as requested by user
             try {
                 const data = await customerService.getBookings({ pageNumber: 1, pageSize: 10 });
-                console.log("[Dashboard] Bookings Response Success:", data);
-                console.log("[Dashboard] Bookings Response:", data);
                 const content = Array.isArray(data) ? data : (data.records || data.content || data.data || []);
                 setBookingsData(content);
             } catch (err) {
@@ -456,7 +452,9 @@ const UserDashboard = () => {
                 notificationsViewStep={notificationsViewStep}
                 setNotificationsViewStep={setNotificationsViewStep}
                 currentChat={currentChat}
+                setCurrentChat={setCurrentChat}
                 messagesViewStep={messagesViewStep}
+                setMessagesViewStep={setMessagesViewStep}
                 setCurrentView={setCurrentView}
                 selectedArtisan={selectedArtisan}
                 setSelectedArtisan={setSelectedArtisan}
@@ -466,6 +464,8 @@ const UserDashboard = () => {
                 setSettingsSubStep={setSettingsSubStep}
                 isBookingFormOpen={isBookingFormOpen}
                 setIsBookingFormOpen={setIsBookingFormOpen}
+                userProfile={userProfile}
+                bookingsData={bookingsData}
             />
             <MobileMenu
                 isMenuOpen={isMenuOpen}
@@ -675,6 +675,9 @@ const UserDashboard = () => {
                                     handleCategoryClick={handleCategoryClick}
                                     handleSkillClick={handleSkillClick}
                                     userProfile={userProfile}
+                                    bookingsData={bookingsData}
+                                    setCurrentChat={setCurrentChat}
+                                    setMessagesViewStep={setMessagesViewStep}
                                 />
                             )}
                         </>
@@ -682,15 +685,15 @@ const UserDashboard = () => {
                 </motion.div>
             </AnimatePresence>
             <AnimatePresence>
-                {showOnboardingReminder && 
-                 userProfile?.identityVerificationStatus === 'PHONE_VERIFIED' && 
-                 userProfile?.kycApprovalStatus === 'NOT_STARTED' && (
-                    <OnboardingReminder 
-                        status={userProfile.identityVerificationStatus}
-                        userType="CUSTOMER"
-                        onClose={() => setShowOnboardingReminder(false)}
-                    />
-                )}
+                {showOnboardingReminder &&
+                    userProfile?.identityVerificationStatus === 'PHONE_VERIFIED' &&
+                    userProfile?.kycApprovalStatus === 'NOT_STARTED' && (
+                        <OnboardingReminder
+                            status={userProfile.identityVerificationStatus}
+                            userType="CUSTOMER"
+                            onClose={() => setShowOnboardingReminder(false)}
+                        />
+                    )}
             </AnimatePresence>
         </div>
     );
