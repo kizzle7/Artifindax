@@ -62,8 +62,14 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
 
                         if (chatArray && chatArray.length > 0) {
                             const lastMsg = chatArray[chatArray.length - 1];
+                            const isIncoming = lastMsg.sender?.id && String(lastMsg.sender.id) !== String(currentUserId);
                             const text = lastMsg.messageType === 'MEDIA' ? '📷 Photo' : lastMsg.content;
-                            updates[b.id] = { text, unread: 0, lastMsgId: lastMsg.id, hasMessages: true };
+                            const timestamp = lastMsg.timestamp || lastMsg.time || b.createdOn || b.bookingDate;
+                            
+                            const readArray = JSON.parse(localStorage.getItem('readMessages') || '[]');
+                            const isUnread = isIncoming && !readArray.includes(lastMsg.id);
+                            
+                            updates[b.id] = { text, unread: isUnread ? 1 : 0, lastMsgId: lastMsg.id, hasMessages: true, timestamp };
                         } else {
                             updates[b.id] = { text: '', unread: 0, lastMsgId: null, hasMessages: false };
                         }
@@ -276,7 +282,7 @@ const ArtisanMessagesView = ({ messagesViewStep, setMessagesViewStep, currentCha
                 location: b.customerAddress?.address?.address || b.address || 'Location unavailable',
                 phoneNumber: b.customer?.appUser?.phoneNumber || b.customer?.phoneNumber || '',
                 lastMessage: lastMessageText,
-                time: new Date(b.createdOn || b.bookingDate || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+                time: new Date((msgData && msgData.timestamp) || b.createdOn || b.bookingDate || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' }),
                 unread: unreadCount,
                 lastMsgId: lastMsgId,
                 hasInvoice: false,

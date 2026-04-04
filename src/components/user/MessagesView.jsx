@@ -69,7 +69,8 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                             const text = lastMsg.messageType === 'MEDIA' ? '📷 Photo' : lastMsg.content;
                             const readArray = JSON.parse(localStorage.getItem('readMessages') || '[]');
                             const isUnread = isIncoming && !readArray.includes(lastMsg.id);
-                            updates[b.id] = { text, unread: isUnread ? 1 : 0, lastMsgId: lastMsg.id, hasMessages: true };
+                            const timestamp = lastMsg.timestamp || lastMsg.time || b.createdOn || b.bookingDate;
+                            updates[b.id] = { text, unread: isUnread ? 1 : 0, lastMsgId: lastMsg.id, hasMessages: true, timestamp };
                         } else {
                             updates[b.id] = { text: '', unread: 0, lastMsgId: null, hasMessages: false };
                         }
@@ -292,7 +293,7 @@ const MessagesView = ({ messagesViewStep, setMessagesViewStep, currentChat, setC
                 location: b.customerAddress?.address?.address || b.location,
                 phoneNumber: b.artisan?.appUser?.phoneNumber || b.artisan?.phoneNumber || '',
                 lastMessage: lastMessageText,
-                time: new Date(b.createdOn || b.bookingDate || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' }),
+                time: new Date((msgData && msgData.timestamp) || b.createdOn || b.bookingDate || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' }),
                 unread: unreadCount,
                 lastMsgId: lastMsgId,
                 hasInvoice: false,
